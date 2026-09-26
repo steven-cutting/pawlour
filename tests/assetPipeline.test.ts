@@ -1,11 +1,14 @@
-import { Document } from '@gltf-transform/core';
+import { Document, type Node } from '@gltf-transform/core';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { Matrix4, Vector3 } from 'three';
+import { assetIO } from '../scripts/asset_io.mjs';
 import { makeClipTable, readStride } from '../scripts/clip_table.mjs';
 import { joinSkinned } from '../scripts/join_assets.mjs';
+import { compressCabin, dedupCabin } from '../scripts/optimize_cabin.mjs';
 
 function fixture() {
   const document = new Document();
@@ -64,6 +67,105 @@ function fixture() {
 }
 
 describe('asset pipeline contracts', () => {
+  it('preserves cabin mesh origins, materials and world geometry through compression', async () => {
+    const document = new Document();
+    const buffer = document.createBuffer();
+    const scene = document.createScene();
+    const parent = document
+      .createNode('item.window')
+      .setTranslation([2.5, 1.3, -0.4])
+      .setRotation([0, Math.SQRT1_2, 0, Math.SQRT1_2]);
+    scene.addChild(parent);
+    for (const surface of ['glass', 'plank', 'log']) {
+      const material = document.createMaterial(`cabin.${surface}`);
+      if (surface === 'glass') material.setAlphaMode('BLEND').setBaseColorFactor([1, 1, 1, 0.35]);
+      const position = document
+        .createAccessor()
+        .setType('VEC3')
+        .setBuffer(buffer)
+        .setArray(new Float32Array([0, 0, 0, 0, 2, 0, 0, 0, 3]));
+      const color = document
+        .createAccessor()
+        .setType('VEC3')
+        .setBuffer(buffer)
+        .setArray(new Float32Array([1, 0.5, 0.25, 1, 0.5, 0.25, 1, 0.5, 0.25]));
+      const primitive = document
+        .createPrimitive()
+        .setMaterial(material)
+        .setAttribute('POSITION', position)
+        .setAttribute('COLOR_0', color);
+      const mesh = document.createMesh(`${surface}.mesh`).addPrimitive(primitive);
+      const node = document
+        .createNode(surface === 'glass' ? 'glass.window' : `window.${surface}`)
+        .setTranslation([0, 0, -0.01])
+        .setExtras({ depth: 1.5 })
+        .setMesh(mesh);
+      parent.addChild(node);
+    }
+    function worldPositions(node: Node) {
+      const matrix = new Matrix4().fromArray(node.getWorldMatrix());
+      return (node.getMesh()?.listPrimitives() ?? [])
+        .flatMap((primitive) => {
+          const accessor = primitive.getAttribute('POSITION');
+          if (!accessor) throw new Error('Fixture is missing positions');
+          return Array.from({ length: accessor.getCount() }, (_, index) =>
+            new Vector3()
+              .fromArray(accessor.getElement(index, []))
+              .applyMatrix4(matrix)
+              .toArray()
+              .map((value) => value.toFixed(6))
+              .join(',')
+          );
+        })
+        .sort();
+    }
+    const origins = new Map(
+      document
+        .getRoot()
+        .listNodes()
+        .map((node) => [node.getName(), node.getWorldMatrix()])
+    );
+    const geometry = new Map(
+      document
+        .getRoot()
+        .listNodes()
+        .map((node) => [node.getName(), worldPositions(node)])
+    );
+    await dedupCabin(document);
+    await compressCabin(document);
+    const io = await assetIO();
+    const result = await io.readBinary(await io.writeBinary(document));
+    expect(
+      result
+        .getRoot()
+        .listMaterials()
+        .map((material) => material.getName())
+        .sort()
+    ).toEqual(['cabin.glass', 'cabin.log', 'cabin.plank']);
+    expect(result.getRoot().listNodes()).toHaveLength(origins.size);
+    for (const node of result.getRoot().listNodes()) {
+      const origin = origins.get(node.getName());
+      expect(origin).toBeDefined();
+      node.getWorldMatrix().forEach((value, index) => {
+        expect(value).toBeCloseTo(origin?.[index] ?? NaN, 10);
+      });
+      expect(worldPositions(node)).toEqual(geometry.get(node.getName()));
+    }
+    const glass = result
+      .getRoot()
+      .listNodes()
+      .find((node) => node.getName() === 'glass.window');
+    expect(glass?.getParentNode()?.getName()).toBe('item.window');
+    expect(glass?.getExtras()).toEqual({ depth: 1.5 });
+    expect(glass?.getMesh()?.listPrimitives()[0]?.getMaterial()?.getName()).toBe('cabin.glass');
+    expect(
+      result
+        .getRoot()
+        .listExtensionsRequired()
+        .map((extension) => extension.extensionName)
+    ).toContain('EXT_meshopt_compression');
+  });
+
   it('refuses invalid targets and missing raw inputs before running tools', () => {
     const directory = mkdtempSync(join(tmpdir(), 'pawlour-assets-'));
     const script = resolve('scripts/build_assets.sh');

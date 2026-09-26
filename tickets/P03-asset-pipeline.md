@@ -310,6 +310,18 @@ The cabin branch retains empty leaves, skips flattening, and calls the library's
 flattens even with `keepNamed`, which would break item parents and anchor names.
 The branch preserves the hierarchy P05's checker consumes.
 
+P05's served-asset check exposed two more cabin-specific requirements. Deduplication
+now keeps unique material names: the `cabin.<surface>` names distinguish surfaces
+whose colours live in `COLOR_0`, even when their PBR material factors match.
+`optimize_cabin.mjs` compresses with Meshopt and quantizes attributes other than
+`POSITION`. Position quantization otherwise adds a dequantization offset and scale
+to `glass.window`, moving the origin that places weather behind the pane. Float
+positions preserve the authored mesh-node transforms and geometry; no cabin budget
+or checker tolerance changes. A compressed roundtrip regression covers parented
+mesh origins, material names, extras and rendered geometry.
+The final `just check` passed on 2026-09-25 with all 37 unit tests, including this
+regression, and all 21 served asset entries verified.
+
 `just check-model-asset` proves the ordered skin, five named morphs, live animation
 targets, weights, bounds, texture limits and byte/draw budgets. It also loads the GLB
 with the actual three.js `GLTFLoader` and plays every clip through `AnimationMixer`;

@@ -664,6 +664,11 @@ clip table is written by `scripts/clip_table.mjs`) unless P07a's
 look review keeps them, in which case P07a hands back a one-line change to the script.
 The `cabin` pass skips `join` where P05 needs separate item meshes for hit-testing (§5.2):
 every mesh under an `item.*` empty is kept apart by `join --keepNamed true`.
+Its deduplication also preserves unique material names. The cabin meshopt pass
+quantizes other vertex attributes but keeps positions as compressed floats:
+position quantization would shift the named pane origins that weather and room
+validation use. `scripts/optimize_cabin.mjs` implements those two cabin passes;
+the character keeps the standard compression settings.
 
 `check_assets.py check` then proves the budgets. P03 records, in its hand-back, the
 triangle count, draw-call count (materials × primitives), file size and texture bytes

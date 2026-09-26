@@ -23,7 +23,10 @@ measure() {
 measure "$raw" raw
 "$gt" prune "$raw" "$tmp/$name.1.glb" --keep-leaves true
 measure "$tmp/$name.1.glb" prune
-"$gt" dedup "$tmp/$name.1.glb" "$tmp/$name.2.glb"
+case "$name" in
+    biscuit) "$gt" dedup "$tmp/$name.1.glb" "$tmp/$name.2.glb" ;;
+    cabin) node scripts/optimize_cabin.mjs dedup "$tmp/$name.1.glb" "$tmp/$name.2.glb" ;;
+esac
 measure "$tmp/$name.2.glb" dedup
 case "$name" in
     biscuit)
@@ -50,7 +53,10 @@ measure "$tmp/$name.5o.glb" resize-occlusion
 measure "$tmp/$name.6.glb" webp
 # One scene quantization grid keeps all skinned meshes on the same inverse-bind
 # matrices; the per-mesh default clones the skin once for every mesh.
-"$gt" meshopt "$tmp/$name.6.glb" "$out" --level medium --quantization-volume scene
+case "$name" in
+    biscuit) "$gt" meshopt "$tmp/$name.6.glb" "$out" --level medium --quantization-volume scene ;;
+    cabin) node scripts/optimize_cabin.mjs meshopt "$tmp/$name.6.glb" "$out" ;;
+esac
 measure "$out" meshopt
 if [ "$name" = biscuit ]; then
     node scripts/clip_table.mjs "$out" src/lib/assets/biscuit.clips.json
