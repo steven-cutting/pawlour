@@ -7,6 +7,57 @@ from pathlib import Path
 import bpy
 
 ROOT = Path(__file__).resolve().parent
+SAMPLES_PER_FRAME = 20
+
+
+def export_sampling(rig, clips):
+    """Expose subframes to Blender's integer-only sampler without editing actions.
+
+    Walk contact events fall on twentieths of a source frame. Scaling the NLA
+    timeline and fps together makes those events integer export frames while
+    preserving action evaluation, drivers and elapsed time. This opened scene
+    is disposable: neither its actions nor any saved blend are changed.
+    """
+    scene = bpy.context.scene
+    if scene.render.fps != 30 or scene.render.fps_base != 1:
+        raise ValueError("Expected the authored 30 fps timeline")
+    events = {}
+    for track in rig.animation_data.nla_tracks:
+        if len(track.strips) != 1:
+            raise ValueError(f"{track.name}: expected one clip strip")
+        strip = track.strips[0]
+        start, end = clips[track.name]
+        if strip.scale != 1 or strip.repeat != 1:
+            raise ValueError(f"{track.name}: expected an unscaled, unrepeated source strip")
+        if track.name == "walk":
+            frames = {
+                key.co.x - start
+                for layer in strip.action.layers
+                for action_strip in layer.strips
+                for bag in action_strip.channelbags
+                for curve in bag.fcurves
+                for key in curve.keyframe_points
+            }
+            # Float32 key times can differ slightly from their authored grid.
+            if any(
+                abs(frame * SAMPLES_PER_FRAME - round(frame * SAMPLES_PER_FRAME)) > 0.001
+                for frame in frames
+            ):
+                raise ValueError("Walk event falls outside the export sampling grid")
+            events[track.name] = sorted(frame / 30 for frame in frames)
+        strip.frame_start = start * SAMPLES_PER_FRAME
+        strip.scale = SAMPLES_PER_FRAME
+        if (strip.frame_start, strip.frame_end) != (
+            start * SAMPLES_PER_FRAME,
+            end * SAMPLES_PER_FRAME,
+        ):
+            raise ValueError(f"{track.name}: export retiming changed the strip interval")
+    scene.frame_start *= SAMPLES_PER_FRAME
+    scene.frame_end *= SAMPLES_PER_FRAME
+    scene.render.fps *= SAMPLES_PER_FRAME
+    scene.frame_set(SAMPLES_PER_FRAME)
+    print(f"Export sampling: {scene.render.fps} Hz; original actions and durations preserved")
+    return events
 
 
 def portable_material(source):
@@ -173,7 +224,7 @@ def required_correctives(rig, spec):
     return result
 
 
-def verify(path, spec, clips, corrective_required):
+def verify(path, spec, clips, corrective_required, events):
     document, binary = read_glb(path)
     animations = document.get("animations", [])
     if sorted(animation["name"] for animation in animations) != sorted(clips):
@@ -208,6 +259,19 @@ def verify(path, spec, clips, corrective_required):
         start, end = clips[name]
         if abs(duration - (end - start) / 30) > 0.00001:
             raise ValueError(f"{name}: exported duration does not match the strip")
+        if samples != round((end - start) * SAMPLES_PER_FRAME) + 1:
+            raise ValueError(f"{name}: exported samples do not cover the original frame grid")
+        for values in inputs:
+            if len(values) <= 2:
+                continue  # Blender reduces constant channels to the endpoints.
+            if len(values) != samples or any(
+                abs(value[0] - index / (30 * SAMPLES_PER_FRAME)) > 0.00001
+                for index, value in enumerate(values)
+            ):
+                raise ValueError(f"{name}: exported channel changed the uniform sampling grid")
+            for event in events.get(name, []):
+                if min(abs(value[0] - event) for value in values) > 0.00001:
+                    raise ValueError(f"{name}: exported channel omitted authored event {event}")
         weights = [
             channel
             for channel in animation["channels"]
@@ -241,6 +305,7 @@ def verify(path, spec, clips, corrective_required):
     )
     report = {
         "animations": summary,
+        "sampleRate": 30 * SAMPLES_PER_FRAME,
         "joints": joints,
         "jointOrderMatchesSpec": joints == expected_joints,
         "triangles": triangles,
@@ -260,7 +325,7 @@ def main():
         for track in rig.animation_data.nla_tracks
     }
     corrective_required = required_correctives(rig, spec)
-    bpy.context.scene.frame_set(1)
+    events = export_sampling(rig, clips)
     parts = sorted(
         (obj for obj in bpy.context.scene.objects if obj.type == "MESH" and obj.get("base_part")),
         key=lambda obj: obj.name,
@@ -304,7 +369,7 @@ def main():
         export_image_format="AUTO",
     )
     canonical_joint_order(out, spec)
-    verify(out, spec, clips, corrective_required)
+    verify(out, spec, clips, corrective_required, events)
 
 
 if __name__ == "__main__":

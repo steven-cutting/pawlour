@@ -239,20 +239,20 @@ Nothing under `blender/out/` is committed; `.gitignore` (P00) excludes it.
 
 ## Acceptance criteria
 
-- [ ] `shasum -a 256` of every file under `blender/model/`, `blender/poses/`,
+- [x] `shasum -a 256` of every file under `blender/model/`, `blender/poses/`,
       `blender/model/rig.json` and `blender/src/` equals D's, and the `.blend` digest of
       CONVENTIONS.md §1 fact 1 appears among them (the GLB is not copied).
-- [ ] `git cat-file -p :blender/model/biscuit-poseable.blend` prints an LFS pointer with
+- [x] `git cat-file -p :blender/model/biscuit-poseable.blend` prints an LFS pointer with
       `size 12004899`; `git check-attr filter` on it prints `lfs`.
-- [ ] `blender/model/biscuit-poseable.blend` is unchanged by `just model-clips`
+- [x] `blender/model/biscuit-poseable.blend` is unchanged by `just model-clips`
       (its digest before and after are equal).
-- [ ] `just model-export` prints one animation named `idle.stand` of 120 samples at
+- [x] `just model-export` prints one animation named `idle.stand` of 120 samples at
       30 fps (4.0 s), 33 joints named as `rig.json`, no `CTRL` node, and exits 0.
-- [ ] The IK variant of Step 7 showed motion on `front.lower.L` with no `CTRL` node
+- [x] The IK variant of Step 7 showed motion on `front.lower.L` with no `CTRL` node
       (§11 claim 3 recorded), and the morph-channel assertion's outcome is recorded (§11
       claim 4).
 - [ ] The contact sheet was approved by the maintainer, with the date in the hand-back.
-- [ ] `just check` is green with every D file present.
+- [x] `just check` is green with every D file present.
 
 ## Verification
 
@@ -303,7 +303,8 @@ committed separately from P03, P04 and P05.
 - The contact sheet is `ai_tmp/clips/idle.stand.jpg`, rendered with P04's
   `scripts/contact_sheet.py`. Maintainer approval is pending, not inferred.
 - Targeted Python checks and the source provenance check pass. The aggregate
-  gate is recorded after all four tickets finish their local checks.
+  `just check` passed on 2026-09-25 with all copied files present, before P03's
+  commit. Visual approval remains the only outstanding acceptance criterion.
 
 Corrections to assumptions discovered in implementation:
 
@@ -336,3 +337,31 @@ Corrections to assumptions discovered in implementation:
 - **The undressed display.** The `.blend` can hide the sweater parts; `PRD.md` leaves
   whether she undresses at night to the maintainer. The exporter takes no flag for it
   in v1.
+
+### P04 follow-up: preserve fractional foot-contact events
+
+P04's corrected walk passes the native whole-sole contact check, but the original
+30 Hz export omitted fractional touchdown and liftoff frames. The raw and served
+GLBs consequently drifted by up to 0.037662 model units during a planted stance.
+Blender 5.2's `export_frame_step` is an integer property, and its sampling cache
+evaluates `frame_set(int(frame))`, so a fractional step is not supported.
+
+The exporter now stretches each NLA strip and the scene frame rate by twenty in
+the disposable opened scene. The ordinary exporter therefore evaluates at
+600 Hz, including the walk's twentieth-frame contact events and quarter-frame
+paw compensation. Action keys, clip durations, the authored 30 fps scene, and
+both saved `.blend` files remain unchanged. Assertions check strip bounds,
+the walk event grid, exported event coverage, sample counts and durations.
+The existing whole-sole regression retains its 0.003-model-unit limit.
+
+`just model-export` and the verification-only diagnostic pass with all ten clips;
+the walk contains 581 samples over the unchanged 0.966667 s interval. The raw
+GLB is 19,161,548 bytes, including the additional baked animation samples.
+`just check-model-asset blender/out/biscuit-raw.glb` passes the expanded checks
+for all ten clips with maximum planted-sole drift 0.000986281 model units after
+the final play-paw return correction.
+The final compressed model also passes all ten contact checks at that drift,
+including whole-motion floor clearance, with a served size of 2,524,748 bytes
+against the 6,291,456-byte budget.
+The final `just check` passed again on 2026-09-25 after this correction, with no
+worktree changes from the checks. Visual approval of `idle.stand` remains pending.

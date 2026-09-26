@@ -620,6 +620,13 @@ export_anim_slide_to_zero=True,
 export_image_format='AUTO',
 ```
 
+For the 2026-09-25 paw-contact correction, the exporter temporarily scales NLA
+strip times and scene fps by 20 in memory, sampling at 600 Hz. Blender's integer
+frame sampler otherwise drops authored fractional-frame contacts and introduces
+sliding between them. Clip durations stay unchanged; the saved scene and source
+actions remain at 30 fps. Export assertions check every changing channel's sample
+grid, original duration and authored walk-contact boundaries.
+
 Output: `blender/out/biscuit-raw.glb` (gitignored). The exporter asserts, by reading the
 GLB's JSON chunk afterwards, that `animations` has one entry per clip named after its
 track, that the `Sweater.Fabric.001` node's morph weights are animated in every clip
