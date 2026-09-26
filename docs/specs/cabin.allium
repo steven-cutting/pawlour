@@ -1,0 +1,414 @@
+-- allium: 3
+--
+-- Pawlour — the cabin
+--
+-- Scope
+--   The one room of v1 and what Biscuit does in it: what a tap on a thing
+--   asks of her and when she answers it, what the narrator says once she has,
+--   how the time of day is decided, and what the room still owes a player who
+--   has not turned sound on, whose device asks for less motion, or whose
+--   device has stopped drawing the room.
+--
+-- Includes
+--   - The four kinds the room is described in: the phase of the day, the
+--     weather outside, the things in the room a tap can reach, and what she is
+--     doing.
+--   - The hour each phase begins, the least time she gives an activity before
+--     she answers another tap, and the floor under how many captions the
+--     narrator has.
+--   - The Cabin surface and its eight guarantees, and the four platform
+--     clauses it fulfils in its own right, restated in the platform's words.
+--
+-- Excludes
+--   - What the room is made of and how she is drawn: the model, the room, the
+--     clips, the look and the camera positions. They are assets, not
+--     behaviour.
+--   - Colour values, markup and mechanism. This module says what is owed,
+--     never what draws it, what listens for a tap, or what plays a sound.
+--   - Sound files, and the licence each one carries.
+--   - Photo mode, the loading card and the performance budget. The product
+--     requirements state them and the device verifies them.
+--   - How long each activity lasts, how long she idles before choosing for
+--     herself, and how she weighs one thing against another when she does.
+--     They are tuning rather than promises, and live beside the code that
+--     uses them.
+--   - The treat jar and stoking the fire. Both are in the room and neither
+--     does anything in v1.
+--   - Every platform clause not restated below. operation.allium and
+--     appearance.allium apply to this surface whole; the four below are
+--     restated because the Cabin answers to them in particular, not because
+--     the others apply any less.
+--
+-- Dependencies
+--   None within this game. pawlour.allium imports this module, and this one
+--   imports nothing. The four platform clauses below, and the two platform
+--   figures one of them names, are restated so tests/platformSpecs.test.ts
+--   can hold each equal to what @steven-cutting/biscuit-games ships.
+
+------------------------------------------------------------
+-- Given
+------------------------------------------------------------
+
+given {
+    -- The hour the device's clock reads, from 0 to 23, in the device's own
+    -- time zone. The game reads it through its clock port. This module states
+    -- what the hour decides and never how it is read.
+    hour_of_day: Integer
+
+    -- The reader asked their operating system for less motion. The platform's
+    -- preferences port supplies it, under the name appearance.allium gives it.
+    prefers_reduced_motion: Boolean
+
+    -- The platform's animations setting, as the reader left it. The platform's
+    -- appearance settings supply it; appearance.allium calls it
+    -- settings.animations.
+    animations_setting: Boolean
+
+    -- The room as it stands: the phase in effect, the weather behind the
+    -- window, what she is doing, and the thing she is at or on her way to,
+    -- absent while she is on bare floor. They are declared rather than
+    -- derived because what moves them is stated below as guarantees in prose,
+    -- not as rules; every obligation below is owed of whatever they hold.
+    phase: Phase
+    weather: Weather
+    activity: Activity
+    at: Item?
+}
+
+------------------------------------------------------------
+-- Enumerations
+------------------------------------------------------------
+
+-- The three parts of the day. Each is a way of lighting the room and a bias
+-- in what she chooses for herself; config below says which hours are which.
+enum Phase {
+    -- The window is the light, and she is quickest to play.
+    morning
+    -- The fire takes a larger share of the light, and the lamp is on.
+    | evening
+    -- The fire and the practical lights are all the light there is, and she
+    -- goes to bed sooner and wakes slower.
+    | night
+}
+
+-- What is behind the window for a visit. It is chosen once per visit, and it
+-- never comes into the room.
+enum Weather {
+    clear
+    | rain
+    | snow
+}
+
+-- Every thing in the room a tap can reach in v1. The treat jar and the fire
+-- are in the room as well, and a tap on either does nothing until v1.1.
+enum Item {
+    -- She sleeps on it, in front of the fire.
+    bed
+    -- She climbs up, curls up and sleeps in it, under the window.
+    | chair
+    -- The water bowl: she drinks.
+    | water
+    -- The food bowl: she eats.
+    | food
+    -- The rope: she plays with it.
+    | toy
+    -- The floor lamp and the string lights: practical lights. A tap toggles
+    -- one and turns her head toward it; neither is somewhere she goes.
+    | lamp
+    | lights
+}
+
+-- What she is doing. The code spells the two idles with a dot, idle.stand and
+-- idle.sit; Allium's literals are snake_case, and they are the same states.
+enum Activity {
+    -- Standing or sitting where she is: breathing, an ear, the tail. She is
+    -- idle, and what she does next is hers to choose.
+    idle_stand
+    | idle_sit
+    -- On her way to a thing, having turned to face it first.
+    | walk
+    -- Transitions between standing and lying, each as long as its clip: sit
+    -- and lie on the way down to a bed or the chair, stand on the way up.
+    | sit
+    | lie
+    | stand
+    -- The activities a thing is for.
+    | sleep
+    | drink
+    | eat
+    | play
+    -- A reaction to a tap on her rather than an activity of its own. It plays
+    -- over what she was doing and hands her back to it.
+    | pet
+}
+
+------------------------------------------------------------
+-- Config
+------------------------------------------------------------
+
+config {
+    -- The hour of the device's clock at which each phase begins. Morning runs
+    -- from morning_starts until evening_starts, evening from evening_starts
+    -- until night_starts, and night from night_starts through midnight until
+    -- morning_starts. These are the game's own figures, and nothing holds them
+    -- equal to the platform.
+    morning_starts: Integer = 5
+    evening_starts: Integer = 14
+    night_starts: Integer = 21
+
+    -- Seconds. The least time she gives whatever she has settled into before
+    -- she answers another tap.
+    minimum_activity_seconds: Integer = 4
+
+    -- The fewest sentences the narrator has, across everything she does. A
+    -- floor rather than a target: the bank may hold more, and never fewer.
+    caption_floor: Integer = 40
+
+    -- CSS pixels across a control, in both directions, and the narrowest
+    -- viewport every figure has to survive. Stated by the platform in
+    -- operation.allium and restated here only because the invariant below
+    -- names them; pawlour.allium states them too, and
+    -- tests/platformSpecs.test.ts holds every copy equal to the platform's.
+    minimum_touch_target: Integer = 44
+    narrowest_supported_width: Integer = 320
+}
+
+------------------------------------------------------------
+-- Contracts
+------------------------------------------------------------
+
+-- operation.allium's contract for every surface with a control a reader can
+-- tap, named here so the Cabin has a contract to fulfil: Allium has no
+-- cross-repository import. It restates the one invariant the Cabin answers to
+-- in particular, word for word. The platform's other three —
+-- ATapDoesOnlyWhatTheControlDoes, DeliberateZoomIsNeverTakenAway and
+-- ATouchIsAcknowledged — bind the Cabin by citation, unrestated.
+contract DirectManipulation {
+    @invariant EveryControlIsAComfortableTarget
+        -- Every control is at least config.minimum_touch_target across, in both
+        -- directions. Two shapes cannot be. The first is a row of like controls
+        -- sharing the full width, where what the row would need is more room
+        -- than it is given: the figure for every control that builds a turn,
+        -- the gaps between them all, and whatever more a control that ends a
+        -- turn is given over one that builds one.
+        --
+        -- Three terms, and each was left out of a wrong version of this clause.
+        -- How many controls are in the row is not the test on its own: seven
+        -- controls at that figure fit inside config.narrowest_supported_width
+        -- and the six gaps between them do not, so a row this invariant
+        -- declined to exempt could not meet the figure either — a rack of seven
+        -- tiles is the shape that found it. The room is what the row is
+        -- actually given rather than the whole viewport, because a row inside a
+        -- page's margins has less than the screen it is drawn on. And the extra
+        -- a turn-ending control takes is counted rather than assumed away: the
+        -- clause below grants it, so a row carrying two of them has that much
+        -- less to divide among the rest, and leaving the term out declared a
+        -- ten-share row unexempted at a width that renders it below the figure.
+        --
+        -- There the row meets the figure top to bottom, divides its width
+        -- equally among the controls that build a turn, and keeps a gap between
+        -- them, so what such a control gives up is bounded by the width of the
+        -- screen and by nothing else. A control in that row that ends a turn
+        -- rather than builds one may be wider than the others, and never
+        -- narrower: those are the last place to save width.
+        --
+        -- The second is a control inside a line of running text, a link in a
+        -- sentence being the one that occurs: its size is set by the text around
+        -- it, and a control given the figure there would break the line it sits
+        -- in. A surface owes such a control a reading distance from the words
+        -- beside it, and owes it nothing else. Where the same destination is
+        -- also offered away from the prose, that offer meets the figure like any
+        -- other control.
+        --
+        -- Every other control meets the figure outright, and a control the
+        -- reader activates by pressing a label that contains it meets the figure
+        -- in that label rather than in its own box: the label is what the finger
+        -- is aimed at, so the label is what has to answer, and the words beside
+        -- the control are part of the target rather than next to it.
+        --
+        -- A label bound to a control it does not contain is the surface's own to
+        -- size. The platform cannot see that binding from the label — it is a
+        -- name matched against an identifier elsewhere in the document — so a
+        -- surface that binds that way answers for the row itself. Stated rather
+        -- than left out, because the shape is legal, common, and would otherwise
+        -- fall through the figure with nothing saying whose it was.
+        --
+        -- A control a surface builds out of a generic element is the surface's
+        -- own to size for the same reason: an element the platform cannot tell
+        -- from ordinary content is one no shared rule can reach. What the
+        -- platform answers for is what it can name — every native control the
+        -- two shapes above do not exempt, and the label that contains one — and
+        -- it answers for all of those rather than for the few a stylesheet
+        -- happened to list. A link in a sentence is named as easily as any of
+        -- them and is still exempt, because the exemption is about where the
+        -- control sits rather than about whether it can be reached.
+        --
+        -- All of this holds down to config.narrowest_supported_width, at which
+        -- the surface is usable without scrolling sideways.
+}
+
+------------------------------------------------------------
+-- Surfaces
+------------------------------------------------------------
+
+-- The room, and everything that reaches into it: the picture of the room, the
+-- controls beside it, the caption, and the settings that change the time of
+-- day and the sound. It is shown on pawlour.allium's Play.
+surface Cabin {
+    -- The phase the device's clock is in. phase, the one in effect, is this
+    -- one until the player chooses another, as
+    -- TimeFollowsTheClockUntilOverridden says.
+    let clock_phase =
+        if hour_of_day < config.morning_starts: night
+        else if hour_of_day < config.evening_starts: morning
+        else if hour_of_day < config.night_starts: evening
+        else: night
+
+    -- appearance.allium's animations_active, derived the same way from the
+    -- same two answers.
+    let motion_active = animations_setting and not prefers_reduced_motion
+
+    exposes:
+        phase
+        weather
+        activity
+        at
+        clock_phase
+        motion_active
+
+    contracts:
+        fulfils DirectManipulation
+
+    @guarantee EveryItemIsAControl
+        -- Every thing in the room a tap can reach is also a control of its
+        -- own, outside the picture of the room and named in words: each thing
+        -- she can be sent to, each of the two lights, and she herself. A tap
+        -- on the picture reaches nothing those controls do not, so a player
+        -- who cannot see the picture, or cannot aim at it, loses no part of
+        -- the game. The one thing only the picture offers is a tap on bare
+        -- floor, which turns her head toward the spot and changes nothing
+        -- else. It is a gesture of attention rather than an operation, and
+        -- FullyKeyboardOperable owes it no key.
+
+    @guarantee ATapIsAnInvitation
+        -- A tap on a thing asks, and she decides when. She walks over when she
+        -- is ready, and gives whatever she settles into at least
+        -- config.minimum_activity_seconds before she answers another tap. A
+        -- tap that arrives before then waits, and a later tap replaces a
+        -- waiting one, so nothing queues and the last tap wins. A tap on the
+        -- thing she is at, or already on her way to, changes nothing. A tap on
+        -- a light turns it on or off at once and turns her head toward it, and
+        -- never walks her.
+        --
+        -- A tap on her is a reaction rather than an invitation. While she
+        -- idles, drinks, eats or plays, the pet plays at once over what she is
+        -- doing and then hands her back to it, with the time she had already
+        -- spent on it intact and any waiting tap still waiting. While she
+        -- walks, sits down, lies down, stands up or is already being petted, a
+        -- tap on her changes nothing. Asleep, it wakes her as any tap does.
+
+    @guarantee ACaptionIsShownAndAnnounced
+        -- A caption is the narrator's one sentence about what she is doing,
+        -- and it follows her rather than the player. It appears once she is
+        -- doing what she was asked, at the thing rather than on her way to it,
+        -- or once she has idled for a long stretch; a tap on her is answered
+        -- by the reaction itself, so its caption comes as the pet plays.
+        -- Nothing appears merely because something was tapped. A caption is
+        -- shown in words and announced in the same words, as
+        -- AChangeNobodyIsLookingAtIsAnnounced requires.
+        --
+        -- No sentence is shown twice in one visit. The narrator has at least
+        -- config.caption_floor sentences across everything she does, and when
+        -- every sentence for what she is doing has been shown, she settles
+        -- into it without one rather than repeating one. Being handed back to
+        -- an activity after a pet is not settling into it again, and says
+        -- nothing.
+
+    @guarantee SheIsTheOnlyThingAlive
+        -- She is the one thing in the room that is alive. Nothing else moves
+        -- of its own accord except the fire, the steam from the tea and the
+        -- weather behind the window, together with what their light does to
+        -- the room; every other movement is hers. The light changes with the
+        -- phase and when a light is toggled, and does not otherwise move. The
+        -- weather never comes into the room. All of this is while motion is
+        -- on; MotionOffIsAStillDiorama says what is left when it is off.
+
+    @guarantee TimeFollowsTheClockUntilOverridden
+        -- Until the player chooses a phase, the phase is the one the device's
+        -- clock is in: morning from config.morning_starts, evening from
+        -- config.evening_starts, and night from config.night_starts until the
+        -- next morning. The clock is read when the room opens and again every
+        -- minute, so a visit that crosses a boundary crosses it too. A phase
+        -- the player chooses holds, in this visit and the ones after it, until
+        -- the player hands the choice back to the clock. The phase decides how
+        -- the room is lit and which things she prefers when she chooses for
+        -- herself, and a light the player has toggled stays as they left it
+        -- until the phase next changes.
+
+    @guarantee SoundNeverStartsUnasked
+        -- Sound is off whenever the room opens, on every visit, and nothing is
+        -- heard until the player turns it on in that visit. Turning it on is
+        -- the only thing that starts sound: no tap on the room, no other
+        -- control and no earlier visit's choice does. Once it is on, what is
+        -- heard follows the room — the fire always, the weather outside, and
+        -- what she is doing where it makes a sound — and turning it off stops
+        -- all of it.
+
+    @guarantee MotionOffIsAStillDiorama
+        -- While motion is off, because the animations setting is off or the
+        -- device asks for less motion as
+        -- ReducedMotionOverridesTheAnimationSetting decides, the room is a
+        -- still diorama. The fire does not flicker, the tea does not steam and
+        -- the weather does not fall; she plays no movement and makes no idle
+        -- motion, and no wipe crosses the screen. The room is drawn again only
+        -- when something in it changes, and a tap on a thing cuts to a still of
+        -- her at that thing. The lights, the time of day, the captions and
+        -- every control still work, and time still passes. Nothing the player
+        -- can do depends on motion.
+
+    @guarantee AContextLossLeavesAStill
+        -- If the room can no longer be drawn, a still of her doing what she is
+        -- doing takes its place, with the caption if there is one, and every
+        -- control keeps working against the same state: losing the drawing
+        -- loses nothing else. The next tap tries to bring the drawing back,
+        -- and until it comes back the still is what the player sees.
+
+    -- Restated word for word from operation.allium's Operation. TypedInput is
+    -- operation.allium's, and nothing in the Cabin claims a bare key, so the
+    -- claim it speaks of never arises here.
+    @guarantee FullyKeyboardOperable
+        -- Every operation a surface provides can be reached and invoked from
+        -- the keyboard alone, and the state of the control focus lands on is
+        -- reported as well as drawn. This holds whatever else the surface is
+        -- doing with the keyboard: a surface that claims bare keys for itself
+        -- claims none that a control already needs, which is TypedInput below.
+
+    -- Restated word for word from operation.allium's Operation. In the Cabin,
+    -- the change nobody is looking at is chiefly the caption.
+    @guarantee AChangeNobodyIsLookingAtIsAnnounced
+        -- A surface that changes something without moving focus says so in
+        -- words, and says it again when it happens again — the same thing twice
+        -- over is heard twice. The platform states that an announcement is owed
+        -- and what carries it; which sentence is said belongs to whatever had
+        -- something to say.
+
+    -- Restated word for word from appearance.allium's Appearance. motion_active
+    -- above is that surface's animations_active.
+    @guarantee ReducedMotionOverridesTheAnimationSetting
+        -- Animations run only when the animations setting is on and the device
+        -- expresses no reduced-motion preference. The device preference wins: a
+        -- reader who asked their system for less motion gets none from Biscuit
+        -- Games, whatever the setting says.
+}
+
+------------------------------------------------------------
+-- Open Questions
+------------------------------------------------------------
+
+-- The Cabin is v1's only room, and it restates four platform clauses in its
+-- own right. A second room would be a second surface with things of its own.
+-- Nobody has decided whether that surface restates the same clauses again,
+-- word for word, or whether both rooms inherit them from a surface they share;
+-- nor whether a room is then a type of its own with its own list of things,
+-- which is what Item would become.
+open question "A second room - does its surface restate the platform clauses the Cabin restates, or inherit them?"

@@ -1,7 +1,7 @@
 ---
 id: P01
 title: "Specification: `pawlour.allium`, `cabin.allium`, the restated platform clauses"
-status: open
+status: done
 depends_on: [P00]
 parallel_with: [P02, P03, P04, P05, P09]
 branch: ticket/p01-specification
@@ -209,6 +209,123 @@ Filled in by the agent that executes this ticket.
   before and after, so `CONVENTIONS.md` can be corrected on `main`.
 - Any figure the implementing tickets will need that the config block does not carry,
   as a numbered list for P11.
+
+### Executed 2026-09-25
+
+Executed in the worktree `/Users/scutting/.supacode/repos/pawlour/p_1_and_6` on its
+branch `p_1_and_6`, not `ticket/p01-specification`: the maintainer created both. One
+commit carries the three repository files and this one. The clause prose
+was elicited with the maintainer before writing: two product decisions were taken with
+them (items 3 and 4 below), and the eight bodies were approved in meaning.
+
+**1. `EveryControlIsAComfortableTarget` is an `@invariant` inside a local
+`contract DirectManipulation`, not a `@guarantee`.** `platformSpecs.test.ts` did not
+require it: its clause pattern accepts `@guarantee` and `@invariant` alike and keys on
+`scope.name`, so kind is never compared. The language did. `surface Cabin` fulfils
+`DirectManipulation`, and rule 38 of the vendored language reference says a referenced
+contract name "must resolve to a `contract` declaration in scope (local or imported via
+`use`)"; nothing can be imported across repositories, so the contract is declared in
+`cabin.allium`, which is also what CONVENTIONS.md §8 asks ("restated under the same
+contract name and kind"). The pinned checker does not enforce rule 38: a scratch copy
+with the contract deleted, and another reading `fulfils NoSuchContract`, both check
+clean at 3.6.1, so the contract is held by review, not by the gate. The contract holds
+only the one invariant; its comment says the platform's other three bind the Cabin by
+citation. So `grep -c '@guarantee' docs/specs/cabin.allium` is **11** (eight of the
+game's and three restated) and `grep -c '@invariant'` is 1: the twelve clauses are all
+there. The `tests/restated.ts` rows are `ours: 'DirectManipulation'` for the invariant
+and `ours: 'Cabin'` for the other three. Every row's `file` is `'cabin.allium'`:
+`gameModule` resolves under `docs/specs/`, so Step 4's `'docs/specs/cabin.allium'` would
+have looked for `docs/specs/docs/specs/cabin.allium`.
+
+**2. What else differs from Step 3.**
+
+- `cabin.allium` states `minimum_touch_target = 44` and `narrowest_supported_width = 320`
+  in its own `config`, beside the five game figures. The restated invariant names both as
+  `config.`, and with `alias: null` they have to be this module's. The test permits a
+  non-root module stating a platform figure where it has a surface for it, and holds the
+  value equal: raising the copy to 45 fails "cabin.allium disagrees with
+  operation.allium on minimum_touch_target".
+- The `let` is `clock_phase`, not `phase`: the phase in effect is the clock's only until
+  the player chooses one, and the guarantee beside it says so.
+- The `given` block carries four more fields than Step 3's three: `phase: Phase`,
+  `weather: Weather`, `activity: Activity` and `at: Item?`, the room as it stands, and
+  `surface Cabin` exposes them. The first `just check-specs` reported
+  `allium.definition.unused` on all four enums, `Phase` included even though
+  `clock_phase` uses its literals. A finding is never waived and the diagnostic was right,
+  so the surface now exposes what it really shows. After that both gates were clean.
+- `Activity`'s idles are `idle_stand` and `idle_sit`: Allium literals are snake_case, and
+  a comment says the code spells them with a dot.
+- The unused `use "./cabin.allium" as cabin` in the root draws no diagnostic, so the import
+  direction stays as the ticket says. The managed `docs/how-to/work-with-the-specs.md`
+  says the opposite ("Every module the game adds imports this one", and its module table
+  lists only the root). It was not edited here, because it is a template-managed file;
+  P09, or the template, owes it a row for `cabin.allium` and a reconciled sentence.
+
+**3. CONVENTIONS.md §8 prose changed in meaning, before and after.**
+
+- `ATapIsAnInvitation`. Before: "returns her to it with the minimum unspent". After:
+  "hands her back to it, with the time she had already spent on it intact and any waiting
+  tap still waiting". PRD "What she does" wins on behaviour. Also stated now, from PRD and
+  §6.1: the pet plays over idle, drink, eat and play only; a tap on her while walking,
+  sitting down, lying down, standing up or being petted changes nothing; asleep, it wakes
+  her; a tap on a light toggles it at once and never walks her.
+- `EveryItemIsAControl`. Before: "the canvas's own hit-test adds nothing a control does
+  not offer". After: a tap on the picture reaches nothing the controls do not, "the one
+  thing only the picture offers is a tap on bare floor, which turns her head toward the
+  spot and changes nothing else", a gesture of attention that `FullyKeyboardOperable`
+  owes no key. Decided with the maintainer, who chose the floor head-turn as decoration
+  over dropping it. "Canvas" and "hit-test" went as markup words.
+- `SoundNeverStartsUnasked`. Before: "no audio plays before the switch is turned on, in
+  that visit, by the player". After: "Sound is off whenever the room opens, on every
+  visit", and "no earlier visit's choice" starts it. Decided with the maintainer: the
+  switch is not remembered, so **CONVENTIONS.md §7's "persisted under `pawlour.sound`"
+  is to be dropped** (and P08's `SoundControl` with it).
+- `ACaptionIsShownAndAnnounced`. Before: "appears once an activity has settled, never on
+  the tap". After: once she is doing what she was asked, at the thing rather than on her
+  way to it, or after a long idle stretch; "nothing appears merely because something was
+  tapped", and the pet's caption "comes as the pet plays", because the reaction is its
+  own answer. Added from §6.3 and P06: when every sentence for what she is doing has been
+  shown she settles without one, and being handed back after a pet says nothing. The pet
+  caption's timing is my reading, flagged at approval and not contested; P06 should
+  raise it if the director wants the caption after the pet.
+- `MotionOffIsAStillDiorama` and `SheIsTheOnlyThingAlive` are widened from PRD's
+  "Motion off" and pillar 2 without a change in meaning.
+
+**4. Figures the implementing tickets need that the config block does not carry (for
+P11).** The module's Excludes calls these tuning, stated beside the code; P11 decides
+whether any becomes a clause.
+
+1. Weather weights. PRD says "weighted clear, rain, snow" and no document states the
+   weights.
+2. How often the clock is re-read: once a minute. The clause says "every minute" in prose.
+3. Activity durations: drink 6, eat 10, play 15, pet 2 seconds.
+4. Sleep duration by phase: 90, 150 and 300 seconds.
+5. The idle interval (uniform 20 to 40 seconds) and its phase scaling (×0.7 by morning,
+   ×1.5 by night).
+6. The `idle.long` threshold: the scaled 20 seconds.
+7. The phase weights for the idle choice (§6.1's three rows).
+8. Fire level by phase: 0.35, 0.7 and 1.0.
+9. The director's 250 ms tick.
+10. The transition lengths: `sit` 1.0 and `lie` 1.2 seconds, which are the clip lengths.
+
+Also for P11, not a figure: the managed how-to's "Diagnostics and waivers" section, which
+lists the checker's known gaps, owes one more. At 3.6.1 the checker resolves nothing in
+`contracts: fulfils …`, so rule 38 is held by review alone (item 1). The fix is the
+template's or the checker's to make, not this repository's.
+
+**Checks, all run in this worktree after `just sync` and `just install-allium`.**
+`just check-specs` and `just analyse-specs`: "2 specifications, no diagnostics and no
+findings". `npx vitest run tests/platformSpecs.test.ts`: 14 passed, the four
+"'cabin.allium' states … exactly as …" cases among them. Deleting one comma from the
+restated `EveryControlIsAComfortableTarget` failed that case alone (1 failed, 13
+passed), and the file was restored byte for byte. `git diff` of `pawlour.allium` touches
+lines 1 to 36 only (the header and the `use`), and everything from `-- Given` to the end
+is byte-identical to the seed. A scan of the eight game clause bodies for colour,
+component, port, file, library and markup words found none. `just frontend-coverage`: 4
+files, 34 tests passed, 100% on all four measures. `just check` exited 0 through all
+thirteen stages (lock-check, lint, frontend-static, frontend-coverage, frontend-build,
+storybook-build, storybook-test, check-docs, check-agents, check-specs, analyse-specs,
+check-assets, check-clean), ending "All checks passed and the worktree is unchanged."
 
 ## Open points
 
