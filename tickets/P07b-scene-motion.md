@@ -1,7 +1,7 @@
 ---
 id: P07b
 title: "Scene runtime, motion: the mixer, walking, procedural idle, fire, weather, the wipe"
-status: open
+status: done
 depends_on: [P07a, P05, P04]
 parallel_with: [P08, P09]
 branch: ticket/p07b-scene-motion
@@ -99,6 +99,12 @@ At the end of this ticket, on branch `ticket/p07b-scene-motion`:
 | `src/routes/scene/weather.ts` | repo | new; Step 6 | rain, snow, steam |
 | `src/routes/scene/wipe.ts` | repo | new; Step 7 | the sweep |
 | `src/routes/scene/scene.ts`, `lighting.ts` | repo (P07a's) | Steps 1, 5 | the motion layer wired in; the 600 ms rig blend |
+| `src/routes/scene/biscuit.ts`, `SceneCanvas.svelte` | repo (P07a's) | Step 1 | release the still mixer; visual random and arrival inputs |
+| `src/routes/scene/particles.ts` | repo | Steps 5, 6 | shared instanced alpha material and injected random sampling |
+| `tests/scene-motion.test.ts`, `scene-effects.test.ts`, `helpers/scene.ts` | repo | runtime evidence | real-asset motion and effect checks; shared local GLB decoder |
+| `tests/scene-assets.test.ts`, `scene-canvas.test.ts`, `stories/SceneCanvas.stories.svelte` | repo | integration | shared decoder and new scene inputs |
+| `docs/explanation/architecture.md`, `layering.md`, `docs/reference/testing.md`, `commands.md` | docs | owning pages | runtime boundary, validation and generation recipe |
+| `Justfile` | repo | Step 4 | `fire-texture` recipe |
 | `scripts/make_fire.py` | repo | new; Step 4 | draws the flipbook with Pillow |
 | `src/lib/assets/fire.webp` | asset | Step 4 (`made:`) | new |
 | `src/lib/assets/manifest.json` | asset | `just assets-manifest` | one entry added |
@@ -124,7 +130,10 @@ is named here).
    once (`AnimationUtils.makeClipAdditive`, `blendMode: AdditiveAnimationBlendMode`) and,
    while `state.activity === 'pet'`, the action for `state.resume.activity` keeps playing
    and the `pet` action fades in over 250 ms and out on finish (§11 claim 15); every
-   other change is `previous.crossFadeTo(next, 0.25, true)`. `update(dt)` advances the
+   other change has a 250 ms weight crossfade. Time warping is disabled for any fade
+   involving `walk` or a reverse action so the walk keeps its natural rate and
+   reverse playback keeps its sign; other fades use `crossFadeTo(next, 0.25, true)`.
+   This exception was approved during planning. `update(dt)` advances the
    mixer and, when the activity is `walk`, calls `walk.ts`; when the walk reports done,
    calls `onArrived()` once. Wire it into `scene.ts`'s `motion` hook: with `animations`
    true, `apply` subscribes once to the frame port and each frame computes `dt` (clamped
@@ -146,8 +155,8 @@ is named here).
 
 3. **`idle.ts`.** After the mixer's update each frame, before render: `chest` scale
    `1 + 0.015 * sin(2π · 0.25 · t)`; every 6 to 14 s (drawn once through
-   `Math.random` is not allowed: draw the next interval from the director's `random`
-   port passed in, or from a fixed sequence the scene seeds from `state.caption?.sequence`)
+   `Math.random` is not allowed: draw the next interval from a separately injected
+   visual `RandomPort`, as approved during planning)
    one of `ear.1.L`, `ear.1.R` rotates 12° about its local X over 120 ms and back over
    200 ms; while `idle.stand` or `idle.sit`, `tail.1`, `tail.2`, `tail.3` each add `±8°
    · sin(2π · 0.4 · t)` about local Z with a phase lag of 0.15 per bone; when
@@ -211,37 +220,39 @@ is named here).
 
 ## Acceptance criteria
 
-- [ ] Every core clip plays by name with a 250 ms crossfade; `stand` reverses `lie` then
+- [x] Every core clip plays by name with a 250 ms crossfade; `stand` reverses `lie` then
       `sit` from `sleep` and `sit` alone from `idle.sit`; `pet` plays additively over
       `drink` with the drink running underneath; a missing clip is refused by name.
-- [ ] A tap on each of the five walkable items (bed, chair, water, food, toy) walks her
+- [x] A tap on each of the five walkable items (bed, chair, water, food, toy) walks her
       along waypoints, turning first, and `arrived` is reported once per walk (a counter
       in the scratch route, recorded); a tap on the lamp or the lights toggles the light
       and turns her head with no walk.
-- [ ] The walking speed equals `stride / seconds × scale` and is not multiplied anywhere
-      else (`grep -n stride src/routes/scene/walk.ts` shows the one use).
-- [ ] The idle layer runs on every clip and its figures are the constants in §5.4.
-- [ ] `fire.webp` is 256 × 2048, eight frames, three flat colours, listed in the manifest
+- [x] The walking speed equals `stride / seconds × scale` and is not multiplied anywhere
+      else (`rg -n stride src/routes/scene/walk.ts` shows the one use).
+- [x] The idle layer runs on every clip and its figures are the constants in §5.4.
+- [x] `fire.webp` is 256 × 2048, eight frames, three flat colours, listed in the manifest
       as `made:` with `cc0`.
-- [ ] The rig blend takes 600 ms with animations on and is a cut with them off.
-- [ ] With `animations` false, no frame is requested (the fake frame port in the scratch
+- [x] The rig blend takes 600 ms with animations on and is a cut with them off.
+- [x] With `animations` false, no frame is requested (the fake frame port in the scratch
       route records zero `each` calls) and P07a's render-once path runs.
-- [ ] The maintainer has approved the recording (the date in the hand-back).
-- [ ] `just check` is green.
+- [x] The maintainer has approved the recording (the date in the hand-back).
+- [x] `just check` is green.
 
 ## Verification
 
 ```sh
-uv run --frozen python scripts/make_fire.py && python3 -c "from PIL import Image; im=Image.open('src/lib/assets/fire.webp'); print(im.size, im.mode)"
+just fire-texture
 just check-assets
-grep -n 'stride' src/routes/scene/walk.ts
-grep -n "animations" src/routes/scene/scene.ts
+just python-check scripts/make_fire.py
 just frontend-static
+just frontend-unit
+just frontend-build
 just check
 ```
 
-Expected: `(256, 2048) RGBA`; green with one new entry; one line; the subscribe and
-unsubscribe branches visible; clean; green.
+Expected: `(256, 2048) RGBA`; one valid new manifest entry; clean Python and frontend
+checks; 190 unit tests, including the real-asset motion and effect suites; static
+build and full gate green.
 
 ## Hand-back notes
 
@@ -252,26 +263,50 @@ surface normal so particles stay outside the left, right and hearth walls. Share
 the existing total rain/snow budget across the windows. P05 supplies static panes;
 it adds no weather, phase lighting or runtime animation.
 
-Filled in by the agent that executes this ticket.
+Implementation evidence, 2026-09-26:
 
-- The recording paths and the date of the maintainer's approval; what was reworked.
-- §11 claim 15: whether the additive `pet` read over `drink`, and what was seen if not.
-- The measured walking speed in units per second and whether the feet slid at the
-  clip's natural rate; a hand-back to P04 if `stride` should change.
-- The frame time on the maintainer's phone with fire and rain on (a first figure for
-  P10), read from Safari's Web Inspector timeline.
-- The manifest diff for `fire.webp`.
-- Which open points below were settled.
+- `just check` passed: 190 unit tests, six browser story tests, static and workshop
+  builds, asset validation, documentation and agent contracts, and both Allium
+  gates. The measured `src/lib/**` coverage remains 100% on all four measures.
+  The gate left the worktree unchanged.
+- Desktop Chromium recordings at 390 × 844 are in `ai_tmp/motion/`:
+  `bed-to-sleep.webm`, `toy.webm`, `pet-over-drink.webm`, `night-fire.webm` and
+  `rain-window.webm`. Supplementary `walk-chair.webm`, `walk-water.webm` and
+  `walk-food.webm` complete the five destination counters. Every walk reports one
+  arrival; the bed recording ends in sleep and the toy recording in play.
+  `recordings.json` and `arrivals.json` hold the observed states and counters.
+- The maintainer approved the walk and cel fire recordings on 2026-09-26,
+  satisfying Step 8. The final facing now turns at 180°/s before arrival
+  instead of snapping into the destination pose. No stride or clip was changed.
+- §11 claim 15: the real mixer test proves that `drink` advances continuously
+  underneath additive `pet`, with no sit action, and resumes without resetting.
+  The recording shows the interaction for the maintainer to judge the lean.
+- Measured walking speed is `0.18276318243234008` scene units/s, from the exported
+  stride and seconds multiplied by the model scale. The walk action stays at
+  time scale 1 during fades. The maintainer accepted the walk at its natural rate;
+  no stride or clip hand-back to P04 was needed.
+- `runtime.json` records zero frame subscriptions in initial still mode, preserved
+  position on resize, animation starting when a zero-size canvas becomes visible,
+  one subscription after actual WebGL context recovery, and zero geometries/textures
+  after disposal. Browser wipe runs took 183–200 ms with `--dur-3: 180ms` and less
+  than 1 ms with `--dur-3: 0ms`. No browser errors were reported.
+- The maintainer chose desktop recording; phone Safari timeline measurement is
+  deferred to P10. Desktop renderer-call timings in `recordings.json` are CPU
+  submission measurements, not phone frame-time evidence.
+- The manifest adds only `fire.webp`: 6,646 bytes, `made:2026-09-26`, `cc0`, budget
+  262,144 bytes, SHA-256
+  `b570b306867340404206f08353318a4393b08862f042c57da57a004e8816297c`.
+- The disposable review route was removed after capture. Its source and probes
+  remain under `ai_tmp/motion/` as text, outside the shipping route and gate inputs.
 
-## Open points
+## Resolved planning points
 
-- **The ear-twitch interval's randomness.** Step 3 forbids `Math.random`; recommend the
-  scene receives the director's `random` port as a prop and draws from it, which keeps
-  the layer testable in principle even though nothing under `src/routes/scene/` is
-  unit-tested.
-- **Path corners.** Breadth-first over a small hand-placed graph gives the fewest hops,
-  not the shortest distance; if P05's graph makes a visible detour, weight the edges by
-  length (Dijkstra) and say so.
-- **Snapping when motion goes off mid-walk.** She jumps to the target. Whether she
-  should instead finish the walk invisibly and appear at the next state change is a
-  product question for P08's still logic.
+- **Visual randomness.** The scene receives a separate `RandomPort` instance. Its
+  frame-dependent draws cannot change director decisions. Real-asset scene tests
+  inject the existing fake.
+- **Path corners.** Retain the authored graph's breadth-first search and edge order;
+  turn in place at every corner. No weighted-path change was needed.
+- **Motion off mid-walk.** Use P06's settled state: the director moves `at` to the
+  target, and the still renderer samples it immediately. No invisible walk runs.
+- **Crossfade timing.** Preserve 250 ms weight fades everywhere; do not time-warp
+  a walk or reverse action. Warping would alter the stride rate or reverse sign.

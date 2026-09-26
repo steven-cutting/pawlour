@@ -1,7 +1,7 @@
 ---
 id: P08
 title: "Interface: the components, the page, the ports in `onMount`, captions, settings, photo mode, audio"
-status: open
+status: done
 depends_on: [P06, P07a]
 parallel_with: [P04, P05, P07b, P09]
 branch: ticket/p08-interface
@@ -286,26 +286,26 @@ and licence page are recorded. Pushing and the pull request are separately autho
 
 ## Acceptance criteria
 
-- [ ] Eight components under `src/lib/components/`, each with a test that queries by
+- [x] Eight components under `src/lib/components/`, each with a test that queries by
       role and name and a story whose narrowest-width play measures 44 px.
-- [ ] `src/routes/+page.svelte` constructs every port in `onMount` and nowhere else;
+- [x] `src/routes/+page.svelte` constructs every port in `onMount` and nowhere else;
       `grep -n 'globalThis\|window\.\|document\.' src/lib/components/` finds nothing.
-- [ ] The Pet button in `ItemControls` dispatches `tapBiscuit` through
+- [x] The Pet button in `ItemControls` dispatches `tapBiscuit` through
       `onselect('biscuit')`, is reachable and activated by keyboard, and is asserted by
       name in `tests/item-controls.test.ts` and `tests/route.test.ts`.
-- [ ] `audio.enable()` is called from `SoundControl`'s handler only, and a page test
+- [x] `audio.enable()` is called from `SoundControl`'s handler only, and a page test
       with the fake audio port proves no `play` precedes it.
-- [ ] `tests/overlay-contrast.test.ts` measures every text pair at or above 4.5 and the
+- [x] `tests/overlay-contrast.test.ts` measures every text pair at or above 4.5 and the
       boundary pairs at or above 3.0, reading `overlay.css` from disk.
-- [ ] The five audio files are under 524,288 bytes each, listed with `licence: "cc0"`
+- [x] The five audio files are under 524,288 bytes each, listed with `licence: "cc0"`
       and a `made:` or `cc0:` source; `just check-assets` is green.
-- [ ] The hidden sentence names activity, phase and weather from `SceneState`.
-- [ ] Photo mode downloads a PNG whose card carries no first-person copy; §11 claim 12
+- [x] The hidden sentence names activity, phase and weather from `SceneState`.
+- [x] Photo mode downloads a PNG whose card carries no first-person copy; §11 claim 12
       is recorded.
-- [ ] §11 claims 8 and 10 are recorded with the exact outcome.
-- [ ] `ai_tmp/p08-320.png` exists and the hand-back records every control's measured
+- [x] §11 claims 8 and 10 are recorded with the exact outcome.
+- [x] `ai_tmp/p08-320.png` exists and the hand-back records every control's measured
       size at 320 px.
-- [ ] `just frontend-coverage` at or above 90 on all four figures; `just check` green.
+- [x] `just frontend-coverage` at or above 90 on all four figures; `just check` green.
 
 ## Verification
 
@@ -327,26 +327,253 @@ it; one `onMount` in the page; `just check` green.
 
 ## Hand-back notes
 
-Filled in by the agent that executes this ticket.
+Executed on branch `P08-interface` on 2026-09-26, from `main` at `3f72648`, with
+`@steven-cutting/biscuit-games` 1.1.0. Every gate below ran on this machine.
 
-- Every prop `SceneCanvas` takes and every director command, as read from `main`.
-- §11 claim 10: whether the cold-cache story run needed subpaths listed, and which.
-- §11 claim 8 (second half): whether headless Chromium drew a WebGL2 frame.
-- §11 claim 12: whether the capture was blank, and what P07a was handed.
-- The scarlet chosen and the measured ratios for every overlay pair.
-- Which encoder produced the audio (`ffmpeg`, `afconvert`) or which CC0 URLs, and each
-  file's bytes.
-- The measured size of every control at 320 px and the screenshot path.
-- Which open points below were settled.
+**Every prop `SceneCanvas` takes and every director command, as read from `main`.**
+`SceneCanvas` (`src/routes/scene/SceneCanvas.svelte`) takes `state: SceneState`,
+`animations: boolean` (the ticket's `animationsActive`), `frames: FramePort`,
+`assets: SceneAssets` (`{ biscuit, cabin, clips, still(state) }`), `onProgress(fraction)`,
+`onReady()`, `onTap(hit: Hit)`, `onContextLost()` and `webgl?: boolean` (P07b, merged
+below, adds `random: RandomPort`, `onArrived()` and `assets.fire`; this ticket adds
+`onError()`); it exports
+`capture(): string` (throws `'The scene has no drawable frame to capture'` before the
+first frame, after a loss and under jsdom) and `forceContextRestore(): void`. `Hit` is
+`{ kind: 'item'; item: 'item.<name>' }` for all twelve room items, `{ kind: 'biscuit' }`
+or `{ kind: 'floor'; point }`; the page strips `item.` and dispatches `tap` for the seven
+director items only, so a tap on the jar, fire, window, table or shelf sends nothing
+(v1.1). The director is `step(state, command, deps: { random })` returning only the next
+state (no effects), with `initialState(phase, weather, motion)`; the twelve command kinds
+are `tap`, `tapBiscuit`, `tapFloor`, `tick`, `arrived`, `setPhase`, `clockPhase`,
+`setWeather`, `toggleLight`, `setSound`, `setCamera` and `motionChanged`. `tap`,
+`tapBiscuit`, `tapFloor` and `clockPhase` are command kinds, not exported functions, and
+`step(state, tick)` in Step 7 reads as `step(state, { kind: 'tick', ms: TICK_MS }, deps)`.
+
+**Where the build departs from the ticket's text, and why.** Each is a hand-back to
+P11 for the ticket wording or `CONVENTIONS.md`:
+
+- `ItemControls` marks where she is with the platform `Button`'s `current` prop, which
+  renders `aria-current="true"`, plus the words "she is here" in the accessible name.
+  The platform `Button` has no `aria-pressed` and takes no rest props; `aria-current`
+  is the right semantics for "where she is". The maintainer chose this on 2026-09-26.
+- `Caption` is one platform `Notice` and no `Announcer`. `Notice` is a visible sentence
+  with `role="status"`, stays mounted while silent, and re-announces on `sequence`; its
+  own comment says a message there must not be duplicated into `Announcer` or it is
+  heard twice. §7's "a `Notice` … and an `Announcer`" is corrected accordingly.
+- The platform's icon map (22 names) has no bed, chair, bowl, lamp, string lights, paw
+  or camera. The row's icons are the game's own: nine Lucide SVGs under
+  `src/lib/icons/` (bed, armchair, glass-water, bone, toy-brick, lamp-floor, sparkles,
+  hand, camera; fetched from
+  `https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/<name>.svg`,
+  restroked to 1.5 as the platform's are, with `LICENSE-lucide.txt` beside them),
+  rendered by `src/lib/components/GameIcon.svelte`. They live outside
+  `src/lib/assets/` because the manifest checker walks that directory and has no source
+  form for an ISC file. Hand-back to the hub: add item icons upstream so a game need not
+  carry them.
+- `pawlour.sound` is not persisted. `cabin.allium`'s `SoundNeverStartsUnasked` says sound
+  is off whenever the room opens, and P01 and P06 already recorded that §7's
+  "persisted under `pawlour.sound`" is to be dropped. Only `pawlour.time` and
+  `pawlour.camera` are read and written, and a stored value that is not a phase or a
+  camera is ignored.
+- `setPhase('auto')` only clears the override (P06 hand-back 4i), so the page follows it
+  at once with `clockPhase(phaseAt(clock.now()))`.
+- The installed Vite 8.2.1 does not list `glb` in its known asset types (`webp` and
+  `mp3` it does), and `vite.config.ts` is reserved, so the page imports the GLBs with
+  `?url`. `CONVENTIONS.md` §1 fact 8 is corrected: `.glb` needs `?url`.
+- The page takes one optional prop, `ports?: Ports` (`src/lib/ports/index.ts`), so the
+  route test can inject the seven fakes; the app passes nothing and `onMount` builds the
+  real adapters. `eslint-plugin-svelte`'s `valid-prop-names-in-kit-pages` refuses any
+  prop on a route, so that one line carries a single-rule disable with the reason.
+- Four pure modules beyond the ticket's list, because decision 17 puts anything with a
+  decision in it under coverage: `src/lib/sentence.ts` (the hidden sentence),
+  `src/lib/cues.ts` (the audio the page derives from one state and the next; the
+  director returns no effects), `src/lib/data/controls.ts` (the row's entries) and
+  `src/lib/drawn.ts` (below).
+- The runtime draws once per state it is handed (`scene.ts` `apply` has no comparison
+  of its own) and every tick returns a new state object, so a page that handed the
+  canvas `scene` directly would redraw the still four times a second. The page hands
+  it the previous state again unless a field the runtime draws changed
+  (`drawsTheSame` in `src/lib/drawn.ts`: activity, at, target, lookAt, phase, weather,
+  lights, fire, camera, caption, motion), which is MotionOffIsAStillDiorama's "drawn
+  once per change".
+- The loading card is for the first load only. A restore after a context loss reloads
+  the assets and reports `onProgress` again but never `onReady` a second time
+  (`scene.ts` announces it once), so without the guard the card would return and stay.
+- The platform `SegmentedControl` with four choices runs to 293 px at its own padding,
+  wider than the `Modal`'s body at 320 px, and Night was cut off. `TimeControl`
+  narrows the segment padding under a scoped `:global` so the four fit on one row with
+  every segment past 44 px (the story measures it). Hand-back to the hub: the control
+  is written for two or three choices; a four-choice fit belongs upstream.
+- `TitleCard` paints its whole box black under the scarlet panel, so the diagonal's cut
+  corner shows black and never the page.
+- P07b adds one manifest entry beside this ticket's five; `CONVENTIONS.md` §10's rule
+  applies: whichever lane merges second re-runs `just assets-manifest` on the merged
+  tree, re-sets its own entries' three hand fields, and reads the diff.
+- `stories/SceneCanvas.stories.svelte` already existed from P07a, still-only, and was
+  left as it was. `stories/narrowest.ts` holds the viewport pin and the 44 px
+  measurement the nine component stories share.
+- The clock is read through a second `timer.every(CLOCK_INTERVAL_MS, …)` rather than
+  every 240th tick; the constant already existed in `timing.ts`.
+- "Saved" is held for `SAVED_MS` (1500 ms in the page) through the timer port as a
+  self-stopping one-shot; `--dur-3` is 180 ms, which is the sweep, not a hold a person
+  can read, and a CSS animation would never end with animations off.
+- Photo mode has no readiness gate: `capture()` is wrapped, and a failure shows a page
+  `Notice` "The room could not be photographed." `SceneCanvas` reports a loss but not a
+  restore, so a gated button could never be re-enabled.
+- `PhotoButton` is the ninth cell of the item grid (`ItemControls` takes a trailing
+  `children` snippet), so 320 px shows Bed Chair Water / Food Toy Lamp / Lights Pet Photo.
+- The Verification grep `grep -rn 'enable()' src/ | grep -v SoundControl.svelte` prints
+  the port's own definitions in `src/lib/ports/audio.ts`, a comment in `cues.ts`, and
+  the page's `await p.audio.enable()` inside the `onenable` callback the switch's change
+  handler invokes; nothing else calls it.
+- `just assets-manifest` exits 1 on its first run over new audio, by design: `write`
+  runs `check` after writing and the new entries are `unsettled`. The three hand fields
+  were then set and `just check-assets` is green.
+- The accessibility review ran the skill's seven steps (findings below) and the 320 px
+  measurements in Playwright's Chromium against `just preview`, because the Claude in
+  Chrome extension was not connected in this session.
+
+**§11 claim 10.** Two `just storybook-test` runs from a cold cache, the first straight
+after `just sync` and the second after `rm -rf node_modules/.vite`, with the SceneCanvas
+story (which imports `three` and `three/addons/...`) among them. Both green: Vite logged
+"Forced re-optimization of dependencies" once and no "new dependencies optimized" reload;
+no story failed on a dependency first met inside it. `'three'` alone in
+`optimizeDeps.include` is enough. Held; no subpaths to list.
+
+**§11 claim 8 (second half).** An uncommitted probe story (`ai_tmp/claim8/`, copied into
+`stories/` for one run and removed) mounted `SceneCanvas` with `webgl` on and the real
+`?url` assets under the story job's headless Chromium: `onReady` fired, and the frame
+`capture()` returned decoded to more than 50 distinct colours. Against the built page in
+the same Chromium: a WebGL2 context exists, renderer
+"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)),
+SwiftShader driver)", canvas 358×460, first frame drawn. Held.
+
+**§11 claim 12.** Not blank. Under `just preview` in headless Chromium at 320×568, Photo
+downloaded `pawlour-night-1.png`, 576×512, 12,472 distinct colours, 10 % of pixels near
+black (the hearth wall), with the card drawn over it (`ai_tmp/pawlour-night-1.png`). The
+premise holds too: `gl.readPixels` on the live canvas after a frame returned
+`[0, 0, 0, 0]` because the renderer is created with `preserveDrawingBuffer: false`, which
+is why P07a's `capture()` renders synchronously first. Nothing handed to P07a.
+
+**The scarlet and the measured ratios.** `--overlay-scarlet: #f5222d`, `--overlay-black:
+#000000`, `--overlay-white: #ffffff`, the same in all four combinations. Black on
+scarlet 5.15; white on black 21.00; black on white 21.00; scarlet against black 5.15;
+scarlet against white 4.08; white on scarlet 4.08, which is below 4.5 and is the record
+of why the word is black. `tests/overlay-contrast.test.ts` reads the file from disk and
+asserts every pair per combination.
+
+**Audio.** Encoder: `ffmpeg` at `/opt/homebrew/bin/ffmpeg` (`libmp3lame`, `-q:a 6`),
+from `scripts/make_audio.py` (standard library, seeded, 200 ms tail-into-head crossfade),
+so the extension is `.mp3` and §3 is unchanged. Bytes: `fire.mp3` 85,211 (11.8 s),
+`rain.mp3` 73,248 (9.8 s), `wind.mp3` 110,938 (15.8 s), `lapping.mp3` 51,765 (8.0 s),
+`squeak.mp3` 33,794 (8.0 s); mono, 44.1 kHz; manifest `source` `made:2026-09-26`,
+`licence` `cc0`, `budget` 524288.
+
+**Every control at 320 px** (Playwright Chromium, 320×568, `ai_tmp/p08-320.png`; the
+dialog in `ai_tmp/p08-320-settings.png`; the figures in `ai_tmp/p08-review.json`).
+Settings 44×44; Bed, Chair, Water, Food, Toy, Lamp, Lights, Pet, Photo each 90.66×48;
+in the dialog Close 44×44, Auto 61.67×44, Morning 83.83×44, Evening 81.22×44, Night
+66.05×44, the Ambient sound row 254×75.56, Hearth 74.48×44, Window 83.16×44, Chair
+65.31×44 (radios and the switch measured on the label that contains them).
+`documentElement.scrollWidth` 320 = `clientWidth`; the canvas's `touch-action` is
+`manipulation`; the viewport meta is `width=device-width, initial-scale=1`;
+`data-animations="on"` with no reduced-motion preference. Focus enters the dialog, Escape
+closes it and focus returns to Settings; Enter on Pet captions the pet.
+
+**Accessibility review** (the skill's seven steps against `cabin.allium` and H
+`operation.allium`): no findings. Colour: where she is carries `aria-current` and the
+words; each light's button carries "on" or "off" in its name and as a visible word (added
+by the adversarial review below); the switch's state is the knob, the word and `checked`;
+the progress rule carries `aria-valuenow` and the copy. Keyboard: every control is a platform control; the canvas
+is `aria-hidden` and out of the tab order, and the row is the control. Announcements:
+the caption through `Notice`'s `role="status"`, the room in words through the polite
+hidden sentence, the card's copy through a polite region, failures through `Notice`.
+Nothing withheld is exposed. Motion: `animationsActive(true, prefersReducedMotion)`
+writes `data-animations` and the director's `motion`, the device wins, and the canvas
+stops its loop when it is false. Step 7's gates, `just frontend-static` and `just check`,
+ran green. The built Storybook was also looked at, not only tested: screenshots of the
+title card (loading and saved), the dialog open and at 320 px, the icon set, the row
+with her at the bed, the failed sound switch and the caption are under `ai_tmp/story-*.png`
+and `ai_tmp/story2-*.png`; the two defects they showed (the card's ground and the time
+control's fit, above) were fixed and re-shot.
+
+**Verification, as run.**
+
+```text
+$ just frontend-coverage
+ Test Files  24 passed (24)   Tests  320 passed (320)
+All files          |     100 |    97.93 |     100 |     100 |
+$ just storybook-build && just storybook-test
+ Test Files  11 passed (11)   Tests  34 passed (34)
+$ just check-assets
+check-assets: checked 26 file(s) against src/lib/assets/manifest.json
+$ ls -l src/lib/assets/audio/
+85211 fire.mp3  51765 lapping.mp3  73248 rain.mp3  33794 squeak.mp3  110938 wind.mp3
+$ grep -rn 'enable()' src/ | grep -v SoundControl.svelte
+src/lib/cues.ts:8 (comment), src/lib/ports/audio.ts:6,12,92,171 (the port), src/routes/+page.svelte:214 (comment), :220 `await p.audio.enable();`
+$ grep -n 'onMount' src/routes/+page.svelte
+8 (import), 75 and 90 (comments), 321 `onMount(() => {`
+$ grep -n 'globalThis\|window\.\|document\.' src/lib/components/
+(nothing)
+$ just check
+All checks passed and the worktree is unchanged.
+```
+
+**Codex adversarial review, 2026-09-26.** `main` (P07b, `db92a71`) was merged into the
+branch first, so the fixes stand against the real motion runtime. Four findings, all
+confirmed against the code and fixed:
+
+1. *Motion on stalled every walk.* The page set the director's `motion` from the device
+   but the branch's `SceneCanvas` predated P07b, so nothing sent `arrived` and a tap on
+   Water left her walking for good; the route tests hid it by asking for reduced motion.
+   Fixed by the merge: the page now passes P07b's `random`, `assets.fire` and
+   `onArrived`, which dispatches `arrived`. jsdom has no WebGL2, so a route test cannot
+   reach the runtime; `tests/route.test.ts` states the contract instead (with motion on
+   a tap leaves her "walking to the water bowl" and captions nothing until the runtime
+   reports), `svelte-check` holds the prop, and P07b's `tests/scene-motion.test.ts`
+   proves one arrival per walk. The walk end to end is P10's device pass.
+2. *A failed first load left the loading card over the retry button.* `scene.ts` reports
+   progress before fetching, `SceneCanvas` kept its failure to itself, and the fixed card
+   (`z-index: 10`) never went. `SceneCanvas` gains `onError()` beside `onContextLost()`
+   (the one change under `src/routes/scene/` in this ticket, made after P07b was done,
+   per CONVENTIONS.md §10); the page hides the card and says "The room could not be
+   drawn." through the page `Notice`, which is now one notice for a photo that failed and
+   a room that would not draw. A retry re-reports progress, so the card returns for it.
+   *Not unit-tested:* the path needs `window.WebGL2RenderingContext`, which jsdom lacks
+   and invariant 3 forbids stubbing; `src/routes/**` is outside the coverage floor. Carried
+   to P10 to verify on the device by blocking `cabin.glb`, and to P14
+   (`P14-webgl-test-lane.md`), which puts a real-Chromium WebGL2 lane in the gate so this
+   path, context loss and arrival stop depending on throwaway review routes.
+3. *A stale `enable()` overwrote Off.* The port resolves an enable that a later disable
+   overtook without starting anything, and the page took that for sound on; On, Off, On
+   in quick succession then never started the bed. The page keeps a request counter that
+   Off, unmount and every On bump, and only the latest request turns `sound` on. Tested
+   with a deferred `enable` in `tests/route.test.ts`.
+4. *Lamp and Lights exposed no state.* The row knew only where she is; the canvas is
+   `aria-hidden` and the sentence says nothing about lights, so a reader toggled a light
+   and heard nothing. `ItemControls` takes `lights` and names each light's button
+   "Lamp, on" / "Lights, off" in the hidden-name pattern the current marker uses, with a
+   visible word. The platform `Button` has no `pressed`, so the state rides in the name
+   rather than `aria-pressed`, which a reader would announce more reliably on change;
+   *hand-back to the platform:* a `pressed?: boolean` on `Button`, after which the two
+   buttons should carry `aria-pressed` and keep the word.
+
+Follow-up outside this review: P07b's `wipe.ts` (its step 7) is meant for the title card
+on load-in and photo mode; `TitleCard` still runs its own CSS `sweep`. Left as it is here.
 
 ## Open points
 
 - **Jar in v1.** `ItemControls` takes its items as a prop; the treat jar's button is a
   one-line addition when the `treat` clip lands (v1.1). Recommend leaving it out of the
-  row rather than shipping a button that does nothing.
+  row rather than shipping a button that does nothing. *Settled: left out; the row is
+  `ITEM_CONTROLS` in `src/lib/data/controls.ts`.*
 - **The camera control's place.** §7 puts it in the dialog. The edge tap or swipe on the
   canvas is v1.1 (`PRD.md`, "The room"), so the dialog control is the only route in v1.
+  *Settled: in the dialog only.*
 - **The `.m4a` fallback.** If `ffmpeg` is absent, the extension change touches §3 and
-  the port's map; record it and let P11 carry the `CONVENTIONS.md` edit.
+  the port's map; record it and let P11 carry the `CONVENTIONS.md` edit. *Settled: not
+  needed; `ffmpeg` was present and the files are `.mp3`. The script keeps the fallback.*
 - **`Notice` for a failed `enable()`.** Whether Safari ever rejects inside a gesture is
-  unmeasured; P10 tries it on the device.
+  unmeasured; P10 tries it on the device. *Carried forward to P10: the path is built and
+  tested with a rejecting `onenable` (`tests/sound-control.test.ts`, the "Could not
+  start" story), not measured on a device.*

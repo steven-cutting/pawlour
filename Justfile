@@ -227,6 +227,11 @@ scene-stub:
 scene-review script:
     node "$1"
 
+# Rebuild the deterministic eight-frame cel fire atlas (P07b).
+[group('assets')]
+fire-texture:
+    uv run --frozen python scripts/make_fire.py
+
 # ----------------------------------------------------------------- develop ---
 
 # The preview server on every interface, for a phone on the same network.

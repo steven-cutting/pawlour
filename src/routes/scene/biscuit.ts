@@ -46,6 +46,7 @@ export interface Biscuit {
   scale: number;
   bindBounds: Box3;
   apply(state: SceneState, cabin: Cabin): void;
+  stop(): void;
   dispose(): void;
 }
 
@@ -106,6 +107,9 @@ export function requireBiscuit(gltf: GLTF, clips: ClipTable): Biscuit {
     bones,
     scale,
     bindBounds,
+    stop() {
+      mixer.stopAllAction();
+    },
     apply(state, cabin) {
       const anchor = isWalkItem(state.at)
         ? state.at === 'bed' || state.at === 'chair'

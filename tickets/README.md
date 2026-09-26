@@ -32,6 +32,7 @@ authoritative; this table is a snapshot.
 | P11 | Follow-up: what P00 to P10 handed back | `P11-follow-up.md` | P01, P02, P03, P04, P05, P06, P07a, P07b, P08, P09, P10 | none | open |
 | P12 | Repository: create it, grant the package, enable Pages, first push, first deploy | `P12-repository.md` | P11, C01 | none | open |
 | P13 | Maintainer docs: `README.md`, `CHANGELOG.md` 0.1.0, `AGENTS.md` provenance and deviations | `P13-maintainer-docs.md` | P12 | none | open |
+| P14 | A WebGL2 test lane: the scene runtime and its page wiring proved in real Chromium, inside the gate | `P14-webgl-test-lane.md` | P07b, P08 | P09, P10 | open |
 
 Cross-repository and design tickets. Each is a recommendation written to be picked up on
 its own; C01 gates the first deploy.

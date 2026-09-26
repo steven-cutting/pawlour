@@ -2,6 +2,7 @@
   import { onMount, tick, untrack } from 'svelte';
   import type { SceneState } from '$lib/domain/director';
   import type { FramePort } from '$lib/ports/frame';
+  import type { RandomPort } from '$lib/ports/random';
   import { createScene } from './scene';
   import type { SceneAssets, SceneHandle } from './scene';
   import { tapGesture } from './hit';
@@ -11,22 +12,28 @@
     state: SceneState;
     animations: boolean;
     frames: FramePort;
+    random: RandomPort;
     assets: SceneAssets;
     onProgress: (fraction: number) => void;
     onReady: () => void;
     onTap: (hit: Hit) => void;
+    onArrived: () => void;
     onContextLost: () => void;
+    onError: () => void;
     webgl?: boolean;
   }
   let {
     state: sceneState,
     animations,
     frames,
+    random,
     assets,
     onProgress,
     onReady,
     onTap,
+    onArrived,
     onContextLost,
+    onError,
     webgl = true
   }: Props = $props();
   let ready = $state(false);
@@ -66,7 +73,11 @@
           pixelRatio: window.devicePixelRatio || 1,
           size: { width: container.clientWidth, height: container.clientHeight },
           frames,
+          random,
           assets,
+          onArrived: () => {
+            onArrived();
+          },
           onProgress: (fraction) => {
             onProgress(fraction);
           },
@@ -88,11 +99,13 @@
           onError: () => {
             failed = true;
             ready = false;
+            onError();
           }
         });
         scene.apply(sceneState, animations);
       } catch {
         failed = true;
+        onError();
       }
     };
     capable = typeof window.WebGL2RenderingContext !== 'undefined';
