@@ -92,7 +92,9 @@ def render_reviews():
 def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     subprocess.run(
-        [str(ROOT / ".venv/bin/python"), str(Path(__file__).parent / "textures.py")], check=True
+        ["uv", "run", "--frozen", "python", str(Path(__file__).parent / "textures.py")],
+        cwd=ROOT,
+        check=True,
     )
     items = layout.build()
     props.build(palette.create(), items)

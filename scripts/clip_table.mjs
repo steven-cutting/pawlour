@@ -6,7 +6,7 @@ import { getBounds } from '@gltf-transform/core';
 import { Matrix4, Vector3 } from 'three';
 import { assetIO } from './asset_io.mjs';
 
-const loops = new Set(['idle.stand', 'idle.sit', 'walk', 'sleep', 'drink', 'eat', 'play']);
+export const loops = new Set(['idle.stand', 'idle.sit', 'walk', 'sleep', 'drink', 'eat', 'play']);
 
 /** @param {string} source */
 export function readStride(source) {
@@ -78,13 +78,12 @@ export function makeClipTable(document, strides = new Map()) {
   return { clips, height };
 }
 
-async function main() {
-  const [input, output] = process.argv.slice(2);
-  if (!input || !output || process.argv.length !== 4) {
-    throw new Error('usage: clip_table.mjs input.glb output.json');
-  }
-  const io = await assetIO();
-  const document = await io.read(input);
+/**
+ * Authored strides, read as literals from each clip's script; no script means none.
+ * @param {import('@gltf-transform/core').Document} document
+ * @returns {Promise<Map<string, number>>}
+ */
+export async function readStrides(document) {
   const strides = new Map();
   for (const animation of document.getRoot().listAnimations()) {
     const name = animation.getName();
@@ -97,7 +96,17 @@ async function main() {
       strides.set(name, 0);
     }
   }
-  const table = makeClipTable(document, strides);
+  return strides;
+}
+
+async function main() {
+  const [input, output] = process.argv.slice(2);
+  if (!input || !output || process.argv.length !== 4) {
+    throw new Error('usage: clip_table.mjs input.glb output.json');
+  }
+  const io = await assetIO();
+  const document = await io.read(input);
+  const table = makeClipTable(document, await readStrides(document));
   await writeFile(output, `${JSON.stringify(table, null, 2)}\n`);
   console.log(`clip-table: ${table.clips.length} clips; bind height ${table.height}`);
 }

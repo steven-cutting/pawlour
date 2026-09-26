@@ -39,6 +39,9 @@ def main():
     paths = [
         path for path in sorted((ROOT / "clips").glob("*.py")) if not path.stem.startswith("_")
     ]
+    unknown = set(only) - {""} - {path.stem for path in paths}
+    if unknown:
+        raise ValueError(f"Unknown clips: {sorted(unknown)}")
     selected = [path for path in paths if only == [""] or path.stem in only]
     if not selected:
         raise ValueError("No clips selected")

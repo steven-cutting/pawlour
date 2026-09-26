@@ -1,12 +1,16 @@
 """Export the derived scene with portable materials and verify baked deformation."""
 
+import importlib
 import json
 import struct
+import sys
 from pathlib import Path
 
 import bpy
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT.parent))
+glb = importlib.import_module("scripts.glb")
 SAMPLES_PER_FRAME = 20
 
 
@@ -104,37 +108,13 @@ def portable_material(source):
     return material
 
 
-def read_glb(path):
-    raw = path.read_bytes()
-    if struct.unpack_from("<III", raw) != (0x46546C67, 2, len(raw)):
-        raise ValueError("Invalid GLB header")
-    length, kind = struct.unpack_from("<II", raw, 12)
-    if kind != 0x4E4F534A:
-        raise ValueError("First GLB chunk must be JSON")
-    return json.loads(raw[20 : 20 + length]), raw[28 + length :]
-
-
-def floats(document, binary, index):
-    accessor = document["accessors"][index]
-    if accessor["componentType"] != 5126 or "sparse" in accessor:
-        raise ValueError("Expected ordinary float animation accessor")
-    width = {"SCALAR": 1, "VEC3": 3, "VEC4": 4}[accessor["type"]]
-    view = document["bufferViews"][accessor["bufferView"]]
-    offset = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
-    stride = view.get("byteStride", width * 4)
-    return [
-        struct.unpack_from("<" + "f" * width, binary, offset + row * stride)
-        for row in range(accessor["count"])
-    ]
-
-
 def canonical_joint_order(path, spec):
     """Keep Blender's skin intact while putting its palette in rig.json order.
 
     Blender exports hierarchy traversal order. Reorder the inverse-bind matrices
     and each JOINTS_0 value together, so every vertex still names the same bone.
     """
-    document, original = read_glb(path)
+    document, original = glb.read_glb(path)
     binary = bytearray(original)
     skin = document["skins"][0]
     names = [document["nodes"][index]["name"] for index in skin["joints"]]
@@ -225,7 +205,7 @@ def required_correctives(rig, spec):
 
 
 def verify(path, spec, clips, corrective_required, events):
-    document, binary = read_glb(path)
+    document, binary = glb.read_glb(path)
     animations = document.get("animations", [])
     if sorted(animation["name"] for animation in animations) != sorted(clips):
         raise ValueError("Export did not preserve one animation per NLA track")
@@ -253,7 +233,9 @@ def verify(path, spec, clips, corrective_required, events):
     summary = []
     for animation in animations:
         name = animation["name"]
-        inputs = [floats(document, binary, sampler["input"]) for sampler in animation["samplers"]]
+        inputs = [
+            glb.floats(document, binary, sampler["input"]) for sampler in animation["samplers"]
+        ]
         duration = max(value[0] for values in inputs for value in values)
         samples = max(map(len, inputs))
         start, end = clips[name]
@@ -282,7 +264,7 @@ def verify(path, spec, clips, corrective_required, events):
             raise ValueError(f"{name}: active correctives lost their baked weights")
         if weights and corrective_required[name]:
             outputs = [
-                floats(document, binary, animation["samplers"][channel["sampler"]]["output"])
+                glb.floats(document, binary, animation["samplers"][channel["sampler"]]["output"])
                 for channel in weights
             ]
             if not any(value[0] > 0.00001 for values in outputs for value in values):

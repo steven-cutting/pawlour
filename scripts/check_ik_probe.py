@@ -1,16 +1,13 @@
 """Compare the temporary IK export with the ordinary proof at the deform joint."""
 
-import json
-import struct
 import sys
 from pathlib import Path
 
+from glb import floats, read_glb
+
 
 def lower_leg(path):
-    raw = Path(path).read_bytes()
-    length = struct.unpack_from("<I", raw, 12)[0]
-    document = json.loads(raw[20 : 20 + length])
-    binary = raw[28 + length :]
+    document, binary = read_glb(Path(path))
     names = [node.get("name", "") for node in document["nodes"]]
     if any(name.startswith("CTRL.") for name in names):
         raise ValueError("IK control node leaked into export")
@@ -21,14 +18,7 @@ def lower_leg(path):
         if channel["target"] == {"node": names.index("front.lower.L"), "path": "rotation"}
     )
     sampler = animation["samplers"][channel["sampler"]]
-    accessor = document["accessors"][sampler["output"]]
-    view = document["bufferViews"][accessor["bufferView"]]
-    offset = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
-    stride = view.get("byteStride", 16)
-    return [
-        struct.unpack_from("<4f", binary, offset + row * stride)
-        for row in range(accessor["count"])
-    ]
+    return floats(document, binary, sampler["output"])
 
 
 def main():

@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { Matrix4, Vector3 } from 'three';
 import { assetIO } from '../scripts/asset_io.mjs';
-import { makeClipTable, readStride } from '../scripts/clip_table.mjs';
+import { makeClipTable, readStride, readStrides } from '../scripts/clip_table.mjs';
 import { joinSkinned } from '../scripts/join_assets.mjs';
 import { compressCabin, dedupCabin } from '../scripts/optimize_cabin.mjs';
 
@@ -184,6 +184,23 @@ describe('asset pipeline contracts', () => {
     expect(readStride('# STRIDE = 9\nSTRIDE = 0.45 # model units\n')).toBe(0.45);
     expect(readStride('STRIDE = danger()\n')).toBe(0);
     expect(readStride('OTHER_STRIDE = 8\n')).toBe(0);
+  });
+
+  it('reads every clip script for its stride so the served table and the checker agree', async () => {
+    const { document, animate } = fixture();
+    animate('walk', 1);
+    animate('pet', 2);
+    animate('idle.sit', 4);
+    animate('nosuch', 1);
+    const strides = await readStrides(document);
+    expect(strides.get('walk')).toBeGreaterThan(0);
+    expect([...strides.entries()].filter(([name]) => name !== 'walk')).toEqual([
+      ['pet', 0],
+      ['idle.sit', 0],
+      ['nosuch', 0]
+    ]);
+    animate('Bad Name', 1);
+    await expect(readStrides(document)).rejects.toThrow('invalid clip name: Bad Name');
   });
 
   it('measures transformed bind geometry and records sorted clip metadata', () => {

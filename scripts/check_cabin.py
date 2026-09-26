@@ -6,12 +6,13 @@ the authoring scripts. Counts, hierarchy and extras survive meshopt unchanged.
 
 import argparse
 import copy
-import json
 import math
 import struct
 import sys
 from collections import Counter, deque
 from pathlib import Path
+
+from glb import read_glb
 
 POSITIONS = {
     "item.fire": (-0.6, 0.30, -1.85),
@@ -123,21 +124,6 @@ EDGES = {
     (2, 4),
 }
 IDENTITY = [[float(row == column) for column in range(4)] for row in range(4)]
-
-
-def read_glb(path):
-    data = path.read_bytes()
-    if len(data) < 20:
-        raise ValueError("truncated GLB header")
-    magic, version, length, chunk_length, chunk_type = struct.unpack_from("<4sIIII", data)
-    if magic != b"glTF" or version != 2 or length != len(data):
-        raise ValueError("invalid GLB magic, version or length")
-    if chunk_type != 0x4E4F534A or chunk_length % 4 or 20 + chunk_length > length:
-        raise ValueError("invalid or truncated JSON chunk")
-    document = json.loads(data[20 : 20 + chunk_length])
-    if not isinstance(document, dict):
-        raise TypeError("GLB JSON must be an object")
-    return document
 
 
 def multiply(a, b):
@@ -363,7 +349,7 @@ def check(document):
 
 def self_test(path):
     """Mutate real output, including JSON-only changes to compressed buffers."""
-    original = read_glb(path)
+    original, _ = read_glb(path)
     baseline, _, _ = check(original)
     if baseline:
         raise ValueError(f"self-test input is invalid: {baseline}")
@@ -424,7 +410,7 @@ def main():
         if args.self_test:
             self_test(args.path)
             return 0
-        findings, triangles, primitives = check(read_glb(args.path))
+        findings, triangles, primitives = check(read_glb(args.path)[0])
     except (OSError, TypeError, ValueError, struct.error) as error:
         print(f"{args.path}: {error}", file=sys.stderr)
         return 1

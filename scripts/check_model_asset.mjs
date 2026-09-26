@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { AnimationMixer, DataTexture, Matrix4, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import sharp from 'sharp';
 import { assetIO } from './asset_io.mjs';
-import { makeClipTable, readStride } from './clip_table.mjs';
+import { loops, makeClipTable, readStrides } from './clip_table.mjs';
 
 const input = process.argv[2] ?? 'src/lib/assets/biscuit.glb';
 const io = await assetIO();
@@ -58,7 +59,6 @@ const expectedClips = [
   'walk'
 ];
 if (names.length !== 1) assert.deepEqual([...names].sort(), expectedClips);
-const loops = new Set(['idle.stand', 'idle.sit', 'walk', 'sleep', 'drink', 'eat', 'play']);
 const additiveBones = new Set(['neck', 'head', 'tail.1', 'ear.1.L', 'ear.1.R']);
 for (const animation of root.listAnimations()) {
   assert(animation.listChannels().length > 0);
@@ -110,11 +110,9 @@ for (const animation of root.listAnimations()) {
     }
   }
 }
-const strides = new Map();
+const strides = await readStrides(document);
 if (names.includes('walk')) {
-  const stride = readStride(await readFile('blender/clips/walk.py', 'utf8'));
-  assert(stride > 0, 'walk needs a positive authored stride');
-  strides.set('walk', stride);
+  assert((strides.get('walk') ?? 0) > 0, 'walk needs a positive authored stride');
 }
 const table = makeClipTable(document, strides);
 const expectedSeconds = {
@@ -136,7 +134,7 @@ for (const clip of table.clips) {
   );
 }
 assert(Math.abs(table.height - 3.113) < 0.01, `bind height ${table.height} differs from 3.113`);
-const served = input === 'src/lib/assets/biscuit.glb';
+const served = resolve(input) === resolve('src/lib/assets/biscuit.glb');
 if (served) {
   assert.deepEqual(
     JSON.parse(await readFile('src/lib/assets/biscuit.clips.json', 'utf8')),
@@ -260,7 +258,6 @@ const paws = [
     )
   };
 });
-const stationary = new Set(['idle.stand', 'idle.sit', 'sleep', 'pet', 'drink', 'eat', 'play']);
 const steps = {
   sit: [
     [0.4, 0.65],
@@ -278,7 +275,7 @@ const steps = {
 let maximumSoleDrift = 0;
 const contactFindings = [];
 for (const clip of gltf.animations) {
-  if (clip.name !== 'walk' && !stationary.has(clip.name) && !(clip.name in steps)) continue;
+  if (!expectedClips.includes(clip.name)) continue;
   const action = mixer.clipAction(clip).play();
   const stride = table.clips.find((entry) => entry.name === clip.name)?.stride ?? 0;
   for (const [pawIndex, paw] of paws.entries()) {

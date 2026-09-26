@@ -39,6 +39,9 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@gltf-transform/cli": "4.5.0",
+    "@gltf-transform/core": "4.5.0",
+    "@gltf-transform/extensions": "4.5.0",
+    "@gltf-transform/functions": "4.5.0",
     "@storybook/addon-a11y": "10.5.7",
     "@storybook/addon-docs": "10.5.7",
     "@storybook/addon-svelte-csf": "5.1.2",
@@ -61,6 +64,7 @@
     "eslint-plugin-svelte": "3.22.0",
     "globals": "17.9.0",
     "jsdom": "30.0.1",
+    "meshoptimizer": "1.2.0",
     "playwright": "1.62.1",
     "prettier": "3.9.6",
     "prettier-plugin-svelte": "4.1.1",
