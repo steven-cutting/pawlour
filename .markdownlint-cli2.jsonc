@@ -20,6 +20,8 @@
     "coverage",
     "storybook-static",
     "ai_tmp",
-    ".venv"
+    ".venv",
+    "blender/src",
+    "tickets"
   ]
 }

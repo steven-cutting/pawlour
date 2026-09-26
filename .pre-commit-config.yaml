@@ -75,6 +75,9 @@ repos:
     hooks:
       - id: check-added-large-files
         args: [--maxkb=768]
+        # The served assets are the one place a large file is allowed:
+        # docs/decisions/0011-served-assets-are-blobs-and-blends-are-lfs.md.
+        exclude: ^src/lib/assets/
       - id: check-case-conflict
       - id: check-executables-have-shebangs
       - id: check-json

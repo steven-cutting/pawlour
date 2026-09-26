@@ -12,4 +12,5 @@ exclude_path = [
   "coverage",
   "node_modules",
   "storybook-static",
+  "blender/src",
 ]

@@ -19,3 +19,8 @@ docs/manifest.yml
 # Prettier would reformat YAML it does not own, so without this line
 # `prettier --check` and the regenerated file fight after every update.
 .copier-answers.yml
+
+# The model's own build tooling, copied byte for byte and never reformatted; and
+# the served assets, which are binaries plus a manifest check-json owns.
+blender/src
+src/lib/assets

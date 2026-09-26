@@ -42,9 +42,10 @@ export default defineConfig({
    * operations. It is a cold-cache failure, so it clears on a second run
    * locally and never clears in CI, where every cache is cold — which is the
    * worst shape a failure can have. Vite asks for this list by name when it
-   * happens.
+   * happens. The game appends its own story dependencies here, so `copier
+   * update` will conflict on this line and is resolved by re-appending them.
    */
-  optimizeDeps: { include: ['@steven-cutting/biscuit-games'] },
+  optimizeDeps: { include: ['@steven-cutting/biscuit-games', 'three'] },
   test: {
     name: 'storybook',
     browser: {

@@ -11,6 +11,10 @@ __pycache__/
 
 ai_tmp/
 
+# What the Blender recipes write: the clips .blend and the raw GLBs. Rebuilt,
+# never committed.
+blender/out/
+
 # Assistant state written on first use; the agent contract covers only the
 # committed surface, so these must never enter the inventory.
 .claude/settings.local.json

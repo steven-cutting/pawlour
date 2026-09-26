@@ -10,6 +10,7 @@ dev = [
   "biscuit-games-tooling @ git+https://github.com/steven-cutting/biscuit_games_tooling@v0.2.0",
   "prek==0.4.12",
   "ruff==0.16.2",
+  "pillow==12.3.0",
 ]
 
 [tool.uv]
@@ -24,6 +25,9 @@ line-length = 99
 target-version = "py314"
 unsafe-fixes = false
 src = ["scripts"]
+# The model's own build tooling, copied byte for byte and never edited here; and
+# the tickets, whose fenced Python is prose that `ruff format .` would rewrite.
+extend-exclude = ["blender/src", "tickets"]
 
 [tool.ruff.lint]
 select = [
@@ -47,6 +51,11 @@ ban-relative-imports = "all"
   "ANN", "BLE001", "EM101", "EM102", "INP001", "PLR0912", "PLR0915",
   "PLR2004", "S404", "S603", "S607", "T201", "TRY003",
 ]
+# The Blender scripts print, shell out and run inside Blender, like the above.
+"blender/**" = [
+  "ANN", "BLE001", "EM101", "EM102", "INP001", "PLR0912", "PLR0915",
+  "PLR2004", "S404", "S603", "S607", "T201", "TRY003",
+]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -58,6 +67,9 @@ line-ending = "lf"
 extend-exclude = [
   "package-lock.json",
   "uv.lock",
+  # The model's copied build tooling, and the served binaries and their manifest.
+  "blender/src/",
+  "src/lib/assets/",
 ]
 
 [tool.biscuit-games-tooling]
@@ -66,7 +78,7 @@ extend-exclude = [
 recipes = [
   "lock-check", "lint", "frontend-static", "frontend-coverage", "frontend-build",
   "storybook-build", "storybook-test", "check-docs", "check-agents", "check-specs",
-  "analyse-specs",
+  "analyse-specs", "check-assets",
 ]
 # Predicates a page's `requires` may name, true when enabled. None yet.
 predicates = {}

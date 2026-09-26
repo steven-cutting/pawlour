@@ -122,6 +122,49 @@ check-docs:
 check-agents:
     uv run --frozen bg-validate-agents
 
+# ------------------------------------------------------------------ assets ---
+
+# Every file under src/lib/assets/ against src/lib/assets/manifest.json:
+# present, listed, byte-identical to the recorded sha256, within its budget,
+# and carrying a settled licence. Part of `just check`.
+check-assets:
+    uv run --frozen python scripts/check_assets.py check
+
+# Rewrites the manifest from the worktree after the checker's self-test. Keeps
+# every entry's `source`, `licence` and `budget`; recomputes the rest. Read the
+# diff before committing.
+assets-manifest:
+    uv run --frozen python scripts/check_assets.py write
+
+# One served GLB (and, for biscuit, the clip table) from blender/out/, through
+# gltf-transform: `just assets-build biscuit` or `just assets-build cabin`.
+# Needs `just model-export` or `just cabin-export` to have run.
+assets-build name:
+    sh scripts/build_assets.sh {{name}}
+
+# ------------------------------------------------------------------- model ---
+
+# blender/out/biscuit-clips.blend: the approved .blend plus every clip under
+# blender/clips/ as an NLA track. Needs Blender; never part of `just check`.
+model-clips:
+    "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background --python-exit-code 1 --python blender/build_clips.py
+
+# blender/out/biscuit-raw.glb: the clips .blend exported with animations and
+# the portable materials. Needs `just model-clips`.
+model-export:
+    "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background --python-exit-code 1 --python blender/export_animated_glb.py
+
+# blender/out/cabin-raw.glb: the room, built and exported in one run.
+cabin-export:
+    "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background --python-exit-code 1 --python blender/cabin/build.py
+
+# ----------------------------------------------------------------- develop ---
+
+# The preview server on every interface, for a phone on the same network.
+# `just preview` stays on 127.0.0.1.
+preview-lan:
+    npm run preview -- --host 0.0.0.0
+
 # The specifications, checked mechanically rather than by review: syntax,
 # references, and names a module reaches for that no import defines. Every
 # module must report an empty `diagnostics` array; anything reported is a
