@@ -169,18 +169,19 @@ Nothing under `blender/out/` is committed; `.gitignore` (P00) excludes it.
    saves over the source.
 
 5. **The proof clip, `blender/clips/idle_stand.py`.** `build(rig, start)` applies
-   `standing.json` through `pose_io.apply(spec, doc)` at frame `start`, creates an
-   action `idle.stand`, and keyframes on the deform bones only: `pelvis` a weight shift
-   of ±2° roll peaking at a quarter and three quarters, `neck` and `head` a turn of 12°
-   to Biscuit's left peaking at the midpoint and returning, `ear.1.L` and `ear.1.R` a
-   3° settle following the head with a six-frame lag, `tail.1` to `tail.3` a slow ±5°
-   sway at one cycle per 120 frames; frame `start` and frame `start + 119` carry
-   identical values on every keyed bone (a loop, CONVENTIONS.md §4.1); Bezier handles
-   with `ease`; no keyframe on `root`'s location; no shape key touched; `IK influence`
-   left at 0. It pushes the action as a strip on a new NLA track named `idle.stand`
-   at `start`, clears the active action so the next clip starts clean, and returns
-   `start + 120`. Comments name the bones by `rig.json`'s names and say what each
-   motion reads as.
+   `standing.json` through `pose_io.apply(spec, doc)` at frame `start`, creates an action
+   `idle.stand`, and keyframes on the deform bones only: `pelvis` a weight shift of ±2°
+   roll peaking at a quarter and three quarters, `neck` and `head` a turn of 12° to
+   Biscuit's left peaking at the midpoint and returning, `ear.1.L` and `ear.1.R` a 3°
+   settle following the head with a six-frame lag, `tail.1` to `tail.3` a slow ±5° sway at
+   one cycle per 120 frames; frame `start` and frame `start + 119` carry identical values
+   on every keyed bone (a loop, CONVENTIONS.md §4.1); Bezier handles with `ease`; no
+   keyframe on `root`'s location; no shape key touched; `IK influence` keyed to 0 on all
+   four paws at frame `start` and at the clip's last frame (CONVENTIONS.md §4.1: every
+   clip keys it on its own first and last frame). It pushes the action as a strip on a new
+   NLA track named `idle.stand` at `start`, clears the active action so the next clip
+   starts clean, and returns `start + 120`. Comments name the bones by `rig.json`'s names
+   and say what each motion reads as.
 
 6. **`blender/export_animated_glb.py`.** Opens `blender/out/biscuit-clips.blend`;
    defines `portable_material(src)` ported from D's lines 542–566 with the source cited
@@ -239,8 +240,8 @@ Nothing under `blender/out/` is committed; `.gitignore` (P00) excludes it.
 ## Acceptance criteria
 
 - [ ] `shasum -a 256` of every file under `blender/model/`, `blender/poses/`,
-      `blender/model/rig.json` and `blender/src/` equals D's, and the two digests of
-      CONVENTIONS.md §1 fact 1 appear among them.
+      `blender/model/rig.json` and `blender/src/` equals D's, and the `.blend` digest of
+      CONVENTIONS.md §1 fact 1 appears among them (the GLB is not copied).
 - [ ] `git cat-file -p :blender/model/biscuit-poseable.blend` prints an LFS pointer with
       `size 12004899`; `git check-attr filter` on it prints `lfs`.
 - [ ] `blender/model/biscuit-poseable.blend` is unchanged by `just model-clips`

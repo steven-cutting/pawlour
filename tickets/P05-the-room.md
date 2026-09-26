@@ -79,7 +79,7 @@ separately authorised.
 | `blender/cabin/layout.py` | repo | Step 2 | new; every position and every empty |
 | `blender/cabin/textures/rug.png`, `blender/cabin/textures/sleeves.png` | repo | Step 3 | new; 512², made by the script or by hand, `made:` source |
 | `scripts/check_cabin.py` | repo | Step 5 | new |
-| `src/lib/assets/cabin.glb` | gen | `just assets-build` | new; committed |
+| `src/lib/assets/cabin.glb` | gen | `just assets-build cabin` | new; committed |
 | `src/lib/assets/manifest.json` | gen | `just assets-manifest` | one entry added |
 | `tickets/P05-the-room.md` | tickets | this file | `status: done` |
 
@@ -98,12 +98,12 @@ Renders go to `ai_tmp/cabin/<camera>.png` and are not committed.
    | --- | --- | --- |
    | `cabin.log` | `#7a4a2c` | walls; alternate log courses ±4% value |
    | `cabin.plank` | `#8c5a34` | floor; alternate planks ±3% value |
-   | `cabin.rug` | `#a0522d` | rug, with `rug.png` |
-   | `cabin.leather` | `#5c2f1d` | armchair |
+   | `cabin.rug` | `#a0582d` | rug, with `rug.png` |
+   | `cabin.leather` | `#5c331d` | armchair |
    | `cabin.cloth` | `#b07a52` | bed, cushion |
    | `cabin.ceramic` | `#d9b58c` | bowls, mug, jar |
    | `cabin.metal` | `#4a3a30` | fire grate, lamp stem, string-light wire |
-   | `cabin.paper` | `#e6cfae` | lampshade, books, record sleeves with `sleeves.png` |
+   | `cabin.paper` | `#e6ceae` | lampshade, books, record sleeves with `sleeves.png` |
    | `cabin.stone` | `#6e5646` | hearth surround |
    | `cabin.glass` | `#cfd9e6` at alpha 0.35 | the window pane; `blend_method` blend |
 
@@ -212,8 +212,8 @@ Renders go to `ai_tmp/cabin/<camera>.png` and are not committed.
    names, extras and accessor counts survive).
 
 6. **Export, check, build.** `just cabin-export`; `python3 scripts/check_cabin.py
-   blender/out/cabin-raw.glb`; `sh scripts/build_assets.sh cabin` (or `just
-   assets-build` if P00's recipe takes the argument); `python3 scripts/check_cabin.py
+   blender/out/cabin-raw.glb`; `just assets-build cabin` (P00's recipe, CONVENTIONS.md
+   §2.3; it runs `sh scripts/build_assets.sh cabin`); `python3 scripts/check_cabin.py
    src/lib/assets/cabin.glb`; confirm with `npx gltf-transform inspect` that the `item.*`
    meshes were not joined into each other (`--keepNamed true` keeps named meshes and
    nodes apart) while the walls and floor were; record the primitive count (the room's

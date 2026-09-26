@@ -131,7 +131,8 @@ separately authorised: stop and ask.
      what is owed and never how it is read.
    - The types, as `enum` or `entity` in the platform's syntax (copy the form
      `play-surfaces.allium` uses for `PlayMark` at lines 70–87): `Phase`, `Weather`,
-     `Item { bed | chair | water | food | toy | lamp | lights | jar }`, `Activity` as
+     `Item { bed | chair | water | food | toy | lamp | lights }` (`jar` arrives with
+     v1.1, CONVENTIONS.md §6.1), `Activity` as
      CONVENTIONS.md §6.1 lists the values.
    - `config { morning_starts: Integer = 5, evening_starts: Integer = 14, night_starts: Integer = 21, minimum_activity_seconds: Integer = 4, caption_floor: Integer = 40 }`,
      each with a comment; these are the game's own figures and are not held equal to the

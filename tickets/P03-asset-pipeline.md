@@ -47,7 +47,7 @@ Sources, at the commits CONVENTIONS.md §0 pins (read-only):
 - S `tickets/C03-threejs-viewer.md` lines 159–176: how three.js is expected to consume
   the skinned meshes and morph targets, which is what `join` must not break.
 - P00's `scripts/check_assets.py` and CONVENTIONS.md §3 (the manifest fields, the
-  budgets in bytes: `biscuit.glb` 6,291,456; total 12,582,912).
+  budgets in bytes: `biscuit.glb` 6,291,456; no whole-tree total).
 - CONVENTIONS.md §4.3 (the pipeline, the clip table), §5.1 (the scale the runtime
   applies, which `stride` is stated in model units for), §11 claims 5, 6 and 7, §12 (draw
   calls).
@@ -175,7 +175,7 @@ is gitignored; `just check` fails if any of them lands anywhere else.
    `platform`, `budget` 262144. P04 replaces the file and keeps the entry's shape.
 
 6. **Run the pipeline** with `just assets-build biscuit` (P00's recipe, CONVENTIONS.md
-   §2.3, calls `sh scripts/build_assets.sh "$1"`). After each stage run `npx gltf-transform inspect ai_tmp/biscuit.<n>.glb
+   §2.3, calls `sh scripts/build_assets.sh {{name}}`). After each stage run `npx gltf-transform inspect ai_tmp/biscuit.<n>.glb
    --format md` and record meshes, primitives, triangles, bytes and texture bytes into a
    table in the hand-back notes.
 

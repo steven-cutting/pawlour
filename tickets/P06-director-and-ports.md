@@ -107,19 +107,22 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
 
    - `items.ts`: `type Item = 'bed' | 'chair' | 'water' | 'food' | 'toy' | 'lamp' | 'lights'`
      (`jar` and `fire` are v1.1 and are not items the director accepts in v1; a tap on
-     them is `tapFloor`); `type Settled = 'sleep.bed' | 'sleep.chair' | 'drink' | 'eat' |
-     'play' | 'pet' | 'idle.long'`; `activityFor(item): { transition?: 'sit' | 'lie'; activity: Activity; settled?: Settled; spot: string }`
-     with `bed → lie → sleep at spot.bed`, `chair → lie → sleep at spot.chair` (the climb
-     is the same clip; the runtime places her on `spot.chair`), `water → drink at
-     item.water.approach`, `food → eat`, `toy → play`, and `lamp`/`lights` → no
-     activity (a light toggle and a `lookAt` at the item).
+     them is `tapFloor`); `type WalkItem = Exclude<Item, 'lamp' | 'lights'>`; `type Settled
+     = 'sleep.bed' | 'sleep.chair' | 'drink' | 'eat' | 'play' | 'pet' | 'idle.long'`;
+     `activityFor(item: WalkItem): { transitions: readonly ('sit' | 'lie')[]; activity: Activity; settled: Settled; spot: string }`
+     with `bed → sit, lie → sleep at spot.bed`, `chair → sit, lie → sleep at spot.chair`
+     (the climb is the same pair of clips; the runtime places her on `spot.chair`),
+     `water → drink at item.water.approach`, `food → eat`, `toy → play`, each with no
+     transition; and `lightFor(item: 'lamp' | 'lights'): 'lamp' | 'strings'`. The lamp
+     and the lights are never walked to: the `tap` rule in Step 2 toggles the light and
+     turns her head.
    - `phases.ts`: `type Phase = 'morning' | 'evening' | 'night'`; `phaseForHour(hour:
      number): Phase` (5–13 morning, 14–20 evening, otherwise night); `phaseAt(ms: number,
      hourOf: (ms: number) => number = (ms) => new Date(ms).getHours()): Phase` (the
      device's zone is what the player lives in; the function is injected so a test names
-     the hour); `idleWeights(phase): readonly Item[]` returning a weighted list (repeat
-     an item to weight it) from CONVENTIONS.md §6.1's table, and `fireLevel(phase)`
-     (0.35, 0.7, 1.0).
+     the hour); `idleWeights(phase): readonly (WalkItem | 'sit')[]` returning a weighted
+     list (repeat an entry to weight it) from CONVENTIONS.md §6.1's table, `sit`
+     included, and `fireLevel(phase)` (0.35, 0.7, 1.0).
    - `weather.ts`: `type Weather = 'clear' | 'rain' | 'snow'`; `chooseWeather(random:
      RandomPort): Weather` as `random.uniformChoice` over a ten-entry list (five clear,
      three rain, two snow), so `createFakeRandom([0])` gives clear and `[9]` gives snow.
@@ -132,9 +135,11 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
    export const TICK_MS = 250;
    export const MINIMUM_ACTIVITY = 4;
    export const DURATION = { drink: 6, eat: 10, play: 15, pet: 2 } as const;
+   export const TRANSITION = { sit: 1.0, lie: 1.2 } as const; // the clip lengths, §4.1
    export const SLEEP = { morning: 90, evening: 150, night: 300 } as const;
    export const IDLE_INTERVAL = { min: 20, max: 40 } as const;
    export const IDLE_FACTOR = { morning: 0.7, evening: 1, night: 1.5 } as const;
+   export const IDLE_LONG = 20; // idle seconds, × IDLE_FACTOR[phase], before idle.long
    export const CLOCK_INTERVAL_MS = 60_000;
    ```
 
@@ -150,7 +155,7 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
      activity: Activity;
      at: Item | 'floor';
      target?: Target;
-     lookAt?: Point;
+     lookAt?: Point | { item: Item }; // a floor point, or an item the runtime resolves
      phase: Phase;
      phaseOverride?: Phase;
      weather: Weather;
@@ -162,6 +167,7 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
      motion: boolean;
      elapsed: number;         // seconds in the current activity
      resume?: { activity: Activity; elapsed: number }; // what a pet interrupted
+     standFrom?: 'lying' | 'sitting'; // what `stand` reverses; set on entering it
      untilIdleChoice: number; // seconds until she chooses for herself
      shown: readonly string[]; // captions shown this visit
    }
@@ -186,22 +192,30 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
    `arrived` is what the runtime sends when the walk reaches `target` (the director
    does not know distances). Rules the reducer implements, each a test in Step 3:
 
-   - `tap(item)` when `at === item` and the activity is that item's: no change.
+   - `tap('lamp')` and `tap('lights')`: `toggleLight` for `lightFor(item)` and `lookAt =
+     { item }`; `at`, `target` and `activity` are untouched. She never walks to a light.
+   - `tap(item)` for a `WalkItem` when `at === item` and the activity is that item's, or
+     one of its transitions: no change.
    - `tap(item)` otherwise: `target` is set; if `elapsed >= MINIMUM_ACTIVITY` or the
      activity is idle or `sleep`, `activity` becomes `stand` (when lying or sitting) or
      `walk` at once; else the target waits and `tick` starts the walk when the minimum
      has elapsed. A later tap replaces `target`: the last tap wins.
-   - `arrived`: the item's transition (`sit` then `lie`, played by the runtime in that
-     order; the director sets `activity: 'lie'` and lets `tick` advance to the settled
-     activity after the transition's seconds), then the activity; `at` becomes the item;
-     `elapsed` resets.
+   - `arrived`: `at` becomes the item and `elapsed` resets; with transitions, `activity`
+     becomes the first (`sit`), and `tick` advances it to the next (`lie`) after
+     `TRANSITION.sit` seconds and to the settled activity after `TRANSITION.lie`; with
+     none, `activity` becomes the item's at once. The runtime plays whatever `activity`
+     says and never sequences on its own.
    - A settled activity sets `caption` once (`captions.ts`, Step 4) with the next
-     `sequence`, on the tick that settles it, never on the tap; `shown` gains the text.
+     `sequence`, on the command that settles it (`arrived` or `tick`), never on the tap;
+     `shown` gains the text.
    - `drink`, `eat`, `play` end after `DURATION` and return to `idle.stand`; `pet` ends
      after `DURATION.pet` and restores `resume` (the activity and its `elapsed`, exactly
      as they were, and `resume` cleared) without settling that activity again, so it
      sets no second caption; `sleep` ends after `SLEEP[phase]` or on any tap, including
-     a tap on her, through `stand`.
+     a tap on her, through `stand`. Entering `stand` sets `standFrom` (`lying` from
+     `sleep` or `lie`, `sitting` from `idle.sit` or `sit`); `stand` lasts `TRANSITION.lie
+     + TRANSITION.sit` from lying and `TRANSITION.sit` from sitting, then `standFrom`
+     clears and `activity` becomes `walk` when a `target` is set, else `idle.stand`.
    - `tapBiscuit` while `idle.stand`, `idle.sit`, `drink`, `eat` or `play`: `resume`
      records the activity and its `elapsed`, `activity` becomes `pet`, `elapsed` resets,
      `lookAt` is cleared; `target` and any pending target are kept and keep waiting, so
@@ -214,19 +228,23 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
      applies to the restored activity and its restored `elapsed`.
    - `tapFloor(point)`: `lookAt = point`; nothing else.
    - `tick(ms)`: advances `elapsed` and `untilIdleChoice`; when the latter reaches zero
-     while idle, chooses an item by `idleWeights(phase)` through `deps.random`, issues it
-     as a tap, and resets `untilIdleChoice` to a uniform draw in `IDLE_INTERVAL` ×
-     `IDLE_FACTOR[phase]` (the draw through `deps.random` over a list of integers 20 to
-     40); idle for longer than `IDLE_INTERVAL.max` without a choice sets the `idle.long`
-     caption once.
+     while idle, chooses from `idleWeights(phase)` through `deps.random`: an item is
+     issued as `tap(item)`; `sit` while `idle.stand` enters `sit` and `tick` advances it
+     to `idle.sit` after `TRANSITION.sit`; `sit` while `idle.sit` is no change. It then
+     resets `untilIdleChoice` to a uniform draw in `IDLE_INTERVAL` × `IDLE_FACTOR[phase]`
+     (the draw through `deps.random` over a list of integers 20 to 40). Idle (`idle.stand`
+     or `idle.sit`) with `elapsed` past `IDLE_LONG × IDLE_FACTOR[phase]` sets the
+     `idle.long` caption once for that idle stretch (a choice on the same tick wins and
+     sets none), so the key is reachable in every phase.
    - `setPhase('auto')` clears the override; `setPhase(phase)` sets it; `clockPhase`
      sets `phase` only when no override; a phase change resets `lights` to the phase's
      (lamp by evening and night, strings by night) and `fire` to `fireLevel(phase)`.
    - `toggleLight` flips one light and holds it until the next phase change.
    - `setWeather`, `setSound`, `setCamera` set their field.
    - `motionChanged(false)` sets `motion` false and, if walking, jumps `at` to the
-     target with the settled activity (the still shows her there); if `pet`, restores
-     `resume` first (there is no `pet` still); `motionChanged(true)` sets `motion` true.
+     target with the settled activity (the still shows her there); if in `sit`, `lie` or
+     `stand`, jumps to the activity the transition leads to; if `pet`, restores `resume`
+     first (there is no `pet` still); `motionChanged(true)` sets `motion` true.
 
 3. **Write `tests/director.test.ts`** from the rules above and from `cabin.allium`'s
    clauses, one `describe` per clause name, each test's title the plain sentence the
@@ -237,7 +255,13 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
    that activity with the same `elapsed` and no second caption; a pet while a target
    waits on the minimum leaves the target waiting and the minimum unspent; a tap on her
    while walking, in `sit`, `lie` or `stand`, or already being petted changes nothing; a
-   tap on her while asleep ends the sleep through `stand`.
+   tap on her while asleep ends the sleep through `stand`. Also: `tap('lamp')` flips
+   `lights.lamp`, sets `lookAt` to `{ item: 'lamp' }` and leaves `at`, `target` and
+   `activity` alone; `arrived` at the bed runs `sit`, `lie`, `sleep` on `TRANSITION`'s
+   clock and the caption lands on the tick that reaches `sleep`; `stand` from `sleep`
+   lasts `lie + sit` and from `idle.sit` lasts `sit`; the idle choice of `sit` enters
+   `idle.sit`; `idle.long` fires in each of the three phases at `IDLE_LONG ×
+   IDLE_FACTOR[phase]`.
 
 4. **Write the captions**: `src/lib/data/captions.ts` exporting `CAPTIONS: Record<Settled,
    readonly string[]>` with CONVENTIONS.md §6.3's seed sentences and enough more that
@@ -368,9 +392,10 @@ Filled in by the agent that executes this ticket.
 - **`pet` while walking.** Step 2 refuses `tapBiscuit` while she walks. Whether a tap
   on her mid-walk should stop her and pet her instead is a product question; recommend:
   keep refusing in v1, since a stop mid-path needs P07b to hand back a position.
-- **The chair's climb.** `chair` uses the `lie` transition on `spot.chair`; a real climb
+- **The chair's climb.** `chair` uses the `sit`, `lie` pair on `spot.chair`; a real climb
   is a v1.1 clip. The director does not need to change when it arrives, only `items.ts`.
-- **`idle.sit`.** Nothing in Step 2 chooses `idle.sit`; recommend the idle choice may
-  pick `sit` (a transition then `idle.sit`) as one of its weighted entries so she is not
-  always standing, and the executing agent adds it to `idleWeights` if the spec's
-  `SheIsTheOnlyThingAlive` reading allows a self-chosen sit.
+- **`idle.long`'s frequency.** At `IDLE_LONG` (the scaled minimum of the idle interval)
+  the caption fires once per idle stretch until the key's five-plus sentences are spent,
+  which is more often than "rare"; if the recording says so, raise `IDLE_LONG` toward the
+  interval's maximum and record the figure. The rule is stated against the scaled
+  interval because a fixed 40 s was unreachable by morning and evening.

@@ -25,8 +25,8 @@ lands: P07b animates against these names and P10 measures with them.
 
 There is no animation tooling in the model package (CONVENTIONS.md §1 fact 3: no script
 keyframes anything), so every clip here is written from the rig's bone names and the four
-approved poses. The rig (D `models/biscuit/model/rig.json`; `blender/rig.json` is the
-byte-identical copy): 33 deform bones — `root`, `pelvis`, `spine`, `chest`, `neck`,
+approved poses. The rig (D `models/biscuit/model/rig.json`; `blender/model/rig.json` is
+the byte-identical copy): 33 deform bones — `root`, `pelvis`, `spine`, `chest`, `neck`,
 `head`, `front.upper.{L,R}`, `front.lower.{L,R}`, `front.paw.{L,R}`, `hind.thigh.{L,R}`,
 `hind.shin.{L,R}`, `hind.hock.{L,R}`, `hind.paw.{L,R}`, `ear.1.{L,R}` to `ear.3.{L,R}`,
 `tail.1` to `tail.7` — quaternion rotation mode, unconnected, +Y roll; and the optional IK
@@ -97,8 +97,8 @@ done without it. Pushing and the pull request are separately authorised.
 | `blender/clips/pet.py` | repo | Step 7 | new |
 | `blender/clips/_keys.py` | repo | Step 1 | new; the shared helpers |
 | `scripts/contact_sheet.py` | repo | Step 8 | new |
-| `src/lib/assets/biscuit.glb` | gen | `just assets-build` | replaced |
-| `src/lib/assets/biscuit.clips.json` | gen | `just assets-build` | replaced; ten entries |
+| `src/lib/assets/biscuit.glb` | gen | `just assets-build biscuit` | replaced |
+| `src/lib/assets/biscuit.clips.json` | gen | `just assets-build biscuit` | replaced; ten entries |
 | `src/lib/assets/stills/<activity>.<phase>.webp` (18) | gen | Step 10 | new |
 | `src/lib/assets/manifest.json` | gen | `just assets-manifest` | eighteen entries added; two updated |
 | `tickets/P04-clips.md` | tickets | this file | `status: done` |
@@ -112,27 +112,29 @@ done without it. Pushing and the pull request are separately authorised.
    preset JSON from `blender/poses/`; `key_all(rig, frame)` inserting a keyframe on every
    deform bone's location, rotation and scale; `key_bone(rig, bone, frame, rotation=None,
    location=None)` taking Euler degrees about the bone's local axes and converting to the
-   bone's quaternion mode; `ik_on(rig, limb, side, frame)` and `ik_off(...)` keyframing
-   the `IK influence` property; `paw_target(rig, limb, side, frame, offset)` keyframing
-   `CTRL.{limb}.paw.{S}`'s location as an offset from its rest position; `ease(fcurves)`
-   setting every keyframe's interpolation to `BEZIER` with `AUTO_CLAMPED` handles;
-   `strip(rig, action, name, start)` pushing the action onto a new NLA track named `name`
-   and returning the frame after the strip. The module is imported by name from
-   `blender/clips/`, so `build_clips.py`'s discovery must skip files starting with `_`; if
-   P02's discovery does not, hand that back and name the scripts explicitly meanwhile.
+   bone's quaternion mode; `ik_on(rig, limb, side, frame)` and `ik_off(rig, frame,
+   limb=None, side=None)` keyframing the `IK influence` property (`ik_off` with no limb
+   keys all four paws to 0; every clip keys every paw on its own first and last frame,
+   §4.1, so no key falls outside the strip and no action inherits another's value);
+   `paw_target(rig, limb, side, frame, offset)` keyframing `CTRL.{limb}.paw.{S}`'s
+   location as an offset from its rest position; `ease(fcurves)` setting every keyframe's
+   interpolation to `BEZIER` with `AUTO_CLAMPED` handles; `strip(rig, action, name,
+   start)` pushing the action onto a new NLA track named `name` and returning the frame
+   after the strip. The module is imported by name from `blender/clips/`, so
+   `build_clips.py`'s discovery must skip files starting with `_`; if P02's discovery does
+   not, hand that back and name the scripts explicitly meanwhile.
 
-2. **`idle.sit`** (120 frames, loop). `preset('sitting')`, `key_all` at 0 and 120 (the
-   loop rule, §4.1). Ears settle: `ear.2.L` and `ear.2.R` ±5° about their local X at
-   frames 20 and 60, back at 100. One look aside: `neck` yaw +18° and `head` yaw +7°
-   from frame 40 to 55, held to 70, back by 85. Nothing on the tail (the runtime sways
-   it, §5.4).
+2. **`idle.sit`** (120 frames, loop). `preset('sitting')`, `key_all` and `ik_off` at 0 and
+   120 (the loop rule, §4.1). Ears settle: `ear.2.L` and `ear.2.R` ±5° about their local X
+   at frames 20 and 60, back at 100. One look aside: `neck` yaw +18° and `head` yaw +7°
+   from frame 40 to 55, held to 70, back by 85. Nothing on the tail (the runtime sways it,
+   §5.4).
 
 3. **`walk`** (30 frames, loop; `STRIDE = 1.6`, a module-level constant with a comment
    that it is model units of ground travel per cycle and that the runtime multiplies it
-   by its scale). `preset('standing')`, `ik_on` for all four paws at frame 0 with
-   influence 1 across the strip and a final `ik_off` key at frame 31, outside the loop
-   (§4.1: "sets influence back to 0 on its last frame", read as the first frame after
-   the loop so the loop's frames 0 and 30 still match). A lateral-sequence walk: paw
+   by its scale). `preset('standing')`, `ik_on` for all four paws at frames 0 and 30
+   (influence 1 across the strip and no key outside it, §4.1, so the action's range is
+   the loop's and frames 0 and 30 match). A lateral-sequence walk: paw
    phase offsets `hind.L` 0, `front.L` 0.25, `hind.R` 0.5, `front.R` 0.75 of the cycle.
    Each paw target, over its cycle: stance for 60% of the cycle, moving on the ground from
    `−STRIDE/2` to `+STRIDE/2` along local Y (forward is −Y, so the paw travels backward
@@ -147,30 +149,35 @@ done without it. Pushing and the pull request are separately authorised.
    keys delayed 4 frames so it settles last. `lie`: `preset('sitting')` at 0,
    `preset('lying')` at 36, `neck` and `head` keys delayed 8 frames ("head coming down
    last", §4.1). Both are played in reverse by the runtime for standing up (§5.4), so
-   nothing in them depends on direction.
+   nothing in them depends on direction. `ik_off` on the first and last frame of each.
 
-5. **`sleep`** (180 frames, loop). `preset('lying')` at 0 and 180. The head tucked: `neck`
-   yaw −55° and pitch −20°, `head` pitch −15°, keyed at 0 and 180 (held, part of the
-   pose), so the face turns down toward her left flank and away from any camera
-   (`PRD.md`, "Her face"). A slow breath is the runtime's (§5.4); the clip adds only one
-   settling: `ear.1.L` +6° from 60 to 120 and back.
+5. **`sleep`** (180 frames, loop). `preset('lying')` and `ik_off` at 0 and 180. The head
+   tucked: `neck` yaw −55° and pitch −20°, `head` pitch −15°, keyed at 0 and 180 (held,
+   part of the pose), so the face turns down toward her left flank and away from any
+   camera (`PRD.md`, "Her face"). A slow breath is the runtime's (§5.4); the clip adds
+   only one settling: `ear.1.L` +6° from 60 to 120 and back.
 
 6. **`drink`** and **`eat`** (60 frames each, loop). `preset('standing')`; `ik_on` on
-   both front paws so they stay planted while the body dips; `spine` pitch +8° and
+   both front paws at 0 and 60 so they stay planted while the body dips, the hind paws
+   `ik_off` at 0 and 60; `spine` pitch +8° and
    `chest` pitch +6° down from 0 to 12, held to 50, back by 60; `neck` pitch −45° and
    `head` pitch −25° over the same frames. `drink`: three lapping nods of `head` ±6° at
    frames 18, 26, 34, 42. `eat`: a chewing motion, `head` roll ±4° every 4 frames from
    16 to 44, and one glance up, `neck` pitch back +20° from 46 to 52 and down again by
-   58. `ik_off` at 61.
+   58.
 
 7. **`play`** (90 frames, loop) and **`pet`** (60 frames, one-shot). `play`:
-   `preset('standing')`, `ik_on` front paws; a shake, `neck` yaw ±20° at 6 Hz from frame
-   6 to 30 with `head` following at ±10°; a drop, `neck` pitch −35° from 34 to 44, held to
-   50, back by 58; a paw, `paw_target('front','L',...)` lifting 0.25 and forward 0.3 from
-   62 to 70, down at 78; back to the preset by 90; `ik_off` at 91. `pet`:
-   `preset('sitting')` at 0; a lean, `pelvis` roll +5° and `spine` roll +3° from 8 to 20,
-   `tail.1` +25° up over the same frames, `ear.1.L` and `ear.1.R` −12° back from 10 to
-   24; settle: everything back by 60, ears last.
+   `preset('standing')`, `ik_on` front paws at 0 and 90, hind `ik_off` at 0 and 90; a
+   shake, `neck` yaw ±20° at 6 Hz from frame 6 to 30 with `head` following at ±10°; a
+   drop, `neck` pitch −35° from 34 to 44, held to 50, back by 58; a paw,
+   `paw_target('front','L',...)` lifting 0.25 and forward 0.3 from 62 to 70, down at 78;
+   back to the preset by 90. `pet`: `preset('standing')`, `key_all` and `ik_off` at 0 and
+   60, so every bone the lean does not move is a constant channel (§4.1 makes the clip
+   additive: `makeClipAdditive` turns a constant channel into an identity delta, and the
+   runtime plays the lean over whatever clip is running, standing or sitting; an unkeyed
+   bone would instead export whatever pose the armature held); a lean, `pelvis` roll +5°
+   and `spine` roll +3° from 8 to 20, `tail.1` +25° up over the same frames, `ear.1.L`
+   and `ear.1.R` −12° back from 10 to 24; settle: everything back by 60, ears last.
 
 8. **Write `scripts/contact_sheet.py`.** Two modes. `contact_sheet.py <clip>` runs
    Blender (`"${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background
@@ -203,7 +210,7 @@ done without it. Pushing and the pull request are separately authorised.
    if it reads as sliding or as a trot, halve `STRIDE`, lengthen the stance to 65%, and
    keep the head level before anything else.
 
-10. **Export, build, stills.** `just model-export`; `just assets-build`; then the
+10. **Export, build, stills.** `just model-export`; `just assets-build biscuit`; then the
     eighteen stills (`for a in idle sleep.bed sleep.chair drink eat play; do for p in
     morning evening night; do ...; done; done`); `just assets-manifest`; read the diff:
     ten clips in `biscuit.clips.json` with `walk`'s `stride` 1.6, `biscuit.glb` under
@@ -213,7 +220,8 @@ done without it. Pushing and the pull request are separately authorised.
 11. **Prove the export carries what the runtime needs.** With P03's assertion script
     (or a copy under `ai_tmp/`): ten animations named exactly as §4.1, durations within a
     frame of the table (`walk` 1.0 s, `sit` 1.0, `lie` 1.2, `sleep` 6.0, `drink` 2.0,
-    `eat` 2.0, `play` 3.0, `pet` 2.0, both idles 4.0); morph-weight channels present in
+    `eat` 2.0, `play` 3.0, `pet` 2.0, both idles 4.0; no clip's range runs past its last
+    loop frame, so `walk` is 30 frames, not 31); morph-weight channels present in
     `sit`, `lie`, `walk`, `drink`, `eat` and `play` (the ones that move the corrective
     bones); no animation moves `root`'s X or Z (authored in place); the joined skin still
     has 33 joints.
@@ -241,7 +249,7 @@ done without it. Pushing and the pull request are separately authorised.
 ls blender/clips/
 just model-clips
 uv run --frozen python scripts/contact_sheet.py walk && ls -la ai_tmp/clips/
-just model-export && just assets-build
+just model-export && just assets-build biscuit
 node -e 'const t=require("./src/lib/assets/biscuit.clips.json");console.table(t.clips)'
 ls -la src/lib/assets/stills/ | wc -l
 just check-assets
@@ -259,6 +267,8 @@ Filled in by the agent that executes this ticket.
 
 - Per clip: the sheet path, the date the maintainer approved it, and what was reworked.
 - `STRIDE`'s final value and why, if it moved from 1.6.
+- Whether `sit` or `lie` moved from 30 and 36 frames: P06's `TRANSITION` in `timing.ts`
+  restates those lengths in seconds and follows them, so a change here is a hand-back.
 - The durations and morph-channel presence from Step 11.
 - The final bytes of `biscuit.glb` and of the largest still, and any quality step taken.
 - Whether `build_clips.py` skipped `_keys.py` on its own (Step 1).

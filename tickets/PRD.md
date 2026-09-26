@@ -59,8 +59,9 @@ not a game. Everything else on both hub pages stands.
 One room in v1, the cabin's main room, seen as a diorama from three fixed camera
 positions: **hearth** (the default, the fireplace on the left and her bed in front of
 it), **window** (the armchair under the window, weather behind the glass), and **chair**
-(close on the armchair and the side table). A tap or a swipe on the scene's edge moves
-between them; the move is a cut, not a pan.
+(close on the armchair and the side table). The camera control in Settings moves
+between them; the move is a cut, not a pan. A tap or a swipe on the scene's edge is the
+v1.1 route.
 
 What is in it:
 
@@ -88,8 +89,10 @@ only for load-in and photo mode, so the mechanism exists when a second room does
 Every tap on a thing is answered with a walk and an activity, unless she is already doing
 that thing, in which case she keeps doing it. Tapping something else while she is busy
 queues nothing: she finishes what she is doing, then the last tap wins. A tap on her is
-the one exception: the pet reaction plays at once over whatever she is doing, and she
-goes back to it afterwards, the time she had already spent on it intact.
+the one exception: while she idles, drinks, eats or plays, the pet reaction plays at once
+over what she is doing, and she goes back to it afterwards, the time she had already
+spent on it intact. Mid-walk, or while sitting down, lying down or standing up, a tap on
+her changes nothing; asleep, it wakes her as any tap does.
 
 | Tap | What she does | Caption, once she has settled |
 | --- | --- | --- |
@@ -176,7 +179,7 @@ Measured on an iPhone 17 Pro in Safari and recorded in the device verification t
 | Biscuit, triangles after processing | at most 45,000 (an unverified target; no decimation ships today) |
 | Biscuit, served file | at most 6 MB |
 | Room, served file | at most 3 MB |
-| First load, everything | at most 12 MB |
+| First load: the model, the room, the first still, the fire texture and the code (audio and the other stills load on demand) | at most 12 MB |
 | First frame on a 4G profile | at most 3 seconds |
 | WebGL context lost | a still with the caption; a tap recovers it |
 

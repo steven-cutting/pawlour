@@ -115,29 +115,30 @@ Decisions, taken on 2026-09-25:
     `sleep`, `drink`, `eat`, `play`, `pet`; v1.1 adds `yawn`, `stretch`, `circle`,
     `treat`, `look`.
 
-Technical decisions this document takes, numbered on their own and each recorded in
-the game's own decision records by P09:
+Technical decisions this document takes, numbered 16 to 21 so a ticket cites them as §1
+decisions like the fifteen above, and each recorded in the game's own decision records by
+P09:
 
-1. **three.js is the renderer** (S ticket C03 chose it for the same model and its steps
+16. **three.js is the renderer** (S ticket C03 chose it for the same model and its steps
     5 and 6 are the reference for the cel look), pinned exactly, with `@types/three` at
     the same version; `three/addons` for `GLTFLoader` and `MeshoptDecoder`. Decision 0014.
-2. **The canvas lives outside the coverage glob.** Everything three.js touches sits
+17. **The canvas lives outside the coverage glob.** Everything three.js touches sits
     under `src/routes/scene/`, which `vite.config.ts`'s `include` of `src/lib/**` does
     not measure and jsdom could not run; everything with a decision in it is a pure
     module under `src/lib/` tested to the floor; the browser touchpoints the scene needs
     are ports under `src/lib/ports/` with fakes. `vite.config.ts` is not edited. S C03
     is the precedent. Decision 0012.
-3. **Served assets are ordinary blobs; `.blend` files are LFS.** G's three workflows
+18. **Served assets are ordinary blobs; `.blend` files are LFS.** G's three workflows
     check out without `lfs: true`, so Pages would publish a pointer; nothing the site
     serves may be an LFS object. The `.blend` is never served or read in CI, so it is
     LFS. Decision 0011.
-4. **Assets are imported by Vite** from `src/lib/assets/`, so every URL is hashed and
+19. **Assets are imported by Vite** from `src/lib/assets/`, so every URL is hashed and
     carries `paths.base` (T decision 0010: every path the app builds goes through
     `paths.base`). Nothing goes under `static/`, which Storybook's `staticDirs` would ship
     in every story build.
-5. **The room is built by Blender python scripts**, the way the model itself was built,
+20. **The room is built by Blender python scripts**, the way the model itself was built,
     under `blender/cabin/`, and exported through the same pipeline as Biscuit (§4, §5).
-6. **All dependencies land in P00.** `package.json` and the lockfiles are files no lane
+21. **All dependencies land in P00.** `package.json` and the lockfiles are files no lane
     touches (§10), so P00 adds `three`, `@types/three`, `@gltf-transform/cli` and `sharp`
     at exact pins even though P00 uses none of them. Decision 0013 records the fork of
     the model; the dependency list is recorded in `AGENTS.md`'s deviations.
@@ -291,7 +292,7 @@ Justfile                                     P00   T's, appended: the assets and
 eslint.config.js                             P00   T's, ignores gains 'blender/'
 lychee.toml                                  P00   T's, exclude_path gains "blender/src"
 .markdownlint-cli2.jsonc                     P00   T's, ignores gains "blender/src"
-vitest.storybook.config.ts                   P00   optimizeDeps.include gains 'three' (a deviation, §1 technical decision 6) (no lane)
+vitest.storybook.config.ts                   P00   optimizeDeps.include gains 'three' (a deviation, §1 decision 21) (no lane)
 scripts/check_assets.py                      P00   §3, final (no lane); P03 may extend only through a hand-back
 scripts/build_assets.sh                      P03   the gltf-transform pipeline (§4.3)
 scripts/contact_sheet.py                     P04   renders a clip to a sheet under ai_tmp/ (Blender + Pillow)
@@ -397,7 +398,7 @@ assets-manifest:
 # gltf-transform: `just assets-build biscuit` or `just assets-build cabin`.
 # Needs `just model-export` or `just cabin-export` to have run.
 assets-build name:
-    sh scripts/build_assets.sh "$1"
+    sh scripts/build_assets.sh {{name}}
 
 # ------------------------------------------------------------------- model ---
 
@@ -489,8 +490,11 @@ file). `check` runs `self-test` first so `just check-assets` proves its checker 
 run.
 
 **Budgets** (`PRD.md`'s table, in bytes): `biscuit.glb` 6,291,456; `cabin.glb`
-3,145,728; each still 262,144; each audio file 524,288; everything under
-`src/lib/assets/` together 12,582,912, asserted by `check` as a total.
+3,145,728; each still 262,144; `fire.webp` 262,144; each audio file 524,288. `check`
+asserts each file against its own budget and no total: the per-file budgets sum past
+12 MB by design, because a visit loads the two GLBs, one still and the fire texture and
+fetches audio and the other stills on demand. `PRD.md`'s 12 MB first-load figure is what
+P10 measures on the device, not a rule of the manifest.
 
 **Provenance.** `blender/README.md` names D `1d9d358`, the date, the sha256 of the
 `.blend` and of every copied file, the seven-folder rebuild chain the copied `build.py`
@@ -553,10 +557,18 @@ Rules every clip obeys:
   handles and ease.
 - **IK is allowed and is baked.** A clip may enable a paw's `IK influence`, move its
   `CTRL.*.paw.*` target and keyframe the target; the exporter's sampling bakes the result
-  into the deform bones. A clip that uses IK keys the influence back to 0 on the frame after its strip's last
-  frame, so a loop's first and last frames stay identical.
+  into the deform bones. Every clip keys every paw's `IK influence` on its own first and
+  last frame, 1 across a clip that uses that paw's IK and 0 otherwise, so no action
+  inherits the value another left behind and no key falls outside the strip (a key on
+  the frame after the strip would extend the action's range into the export and break
+  the loop).
 - **Loops loop.** `idle.stand`, `idle.sit`, `walk`, `sleep`, `drink`, `eat`, `play`
   have identical first and last frames. `sit`, `lie` and `pet` are one-shot.
+- **`pet` is additive.** It is authored on `standing.json`, moves only `pelvis`, `spine`,
+  `tail.1`, `ear.1.L` and `ear.1.R`, and keys every other bone constant at the preset, so
+  the runtime can turn it into an additive clip (a constant channel becomes an identity
+  delta) and play it over whatever clip is running (§5.4, §11 claim 15); it is never
+  crossfaded to as a pose of its own.
 - **The correctives take care of themselves**: the drivers stay on the shape keys and
   the exporter bakes them (§1 fact 4). No clip keyframes a shape key.
 - **Every clip has a contact sheet**: `scripts/contact_sheet.py <name>` renders twelve
@@ -577,7 +589,7 @@ The core set, with duration, kind and what it must read as:
 | `drink` | 60 | loop | head down to a bowl, small lapping nods |
 | `eat` | 60 | loop | head down, a chewing motion, one glance up |
 | `play` | 90 | loop | a shake of the head with the toy, a drop, a paw at it |
-| `pet` | 60 | one-shot | a lean into the touch, tail up, ear back, settle |
+| `pet` | 60 | one-shot, additive | a lean into the touch, tail up, ear back, settle, played over the running clip |
 
 v1.1: `yawn`, `stretch`, `circle` (three turns then `lie`), `treat` (sit, take, chew),
 `look` (a head turn to a direction the runtime blends).
@@ -743,12 +755,15 @@ scarlet is the game's own and is declared as a game token with its contrast reco
 - Applies a `SceneState` (§6.1) each time the page hands it one: her position and facing
   (interpolated along the path by `walk.ts`, §5.1's speed, turning in place before
   setting off), her clip (`motion.ts` crossfades on the `AnimationMixer` over 250 ms;
-  `sit` and `lie` reversed by `timeScale = -1` for standing up), the lights, the fire
-  level, the weather, the phase.
+  `stand` reverses, by `timeScale = -1`, the clips that reach the pose she is leaving,
+  `lie` then `sit` from lying and `sit` alone from sitting; `pet` is an additive action
+  layered over the interrupted activity's clip, which keeps playing), the lights, the
+  fire level, the weather, the phase.
 - Layers procedural idle (`idle.ts`) on top of any clip: a breathing scale on `chest` of
   ±1.5% at 0.25 Hz, an ear twitch on `ear.1.L` or `ear.1.R` every 6–14 s, a tail sway on
-  `tail.1`–`tail.3` of ±8° at 0.4 Hz while standing or sitting, a head turn toward the
-  last tap point on `neck` and `head` limited to ±40° and eased over 400 ms. Bone names
+  `tail.1`–`tail.3` of ±8° at 0.4 Hz while standing or sitting, a head turn toward
+  `lookAt` (a floor point, or an item resolved to its node's position) on `neck` and
+  `head` limited to ±40° and eased over 400 ms. Bone names
   are `rig.json`'s; the runtime finds them by name and refuses a GLB missing one.
 - Draws the fire (`fire.ts`): three camera-facing planes at `fire.anchor` stacked in
   depth, each an eight-frame flipbook of a cel flame (three value steps, drawn by P07b
@@ -766,9 +781,15 @@ scarlet is the game's own and is declared as a game token with its contrast reco
   otherwise (`still.ts`) it renders exactly once per `SceneState` it is handed, with the
   fire at a fixed middle frame, no particles, and lighting cuts. Before the first frame
   and on `webglcontextlost` the component shows the still for the current activity and
-  phase (§3) as an `<img>` with the caption as alt text; a tap calls
-  `forceContextRestore` through the `WEBGL_lose_context` extension when present and
-  otherwise reloads the assets.
+  phase (§3) as an `<img>` with the caption as alt text and reports the loss through
+  `onContextLost`; a tap on the still calls the component's exported
+  `forceContextRestore()`, which restores through the `WEBGL_lose_context` extension when
+  present and otherwise rebuilds the renderer and reloads the assets.
+- Exports two functions the page calls on the component instance: `capture(): string`
+  (a synchronous render, then `toDataURL('image/png')`, §11 claim 12; the director and
+  the frame loop are not touched) and `forceContextRestore(): void`. Takes `webgl:
+  boolean` (default `true`; `false` constructs no scene and shows the still, for the
+  story and the tests).
 - The wipe (`wipe.ts` and the `TitleCard` component): a DOM panel that sweeps a
   diagonal across the viewport over `--dur-3` (180 ms when animations are on, 0 when
   off) on load-in and when photo mode opens.
@@ -788,34 +809,40 @@ port and the constants in `timing.ts`. Commands: `tap(item)`, `tapBiscuit`,
 `setCamera(preset)`, `motionChanged(active)`.
 
 `SceneState` (serialisable): `activity` (`idle.stand`, `idle.sit`, `walk`, `sit`, `lie`,
-`sleep`, `drink`, `eat`, `play`, `pet`, `stand` for the reversed transitions), `at`
-(the item she is at or heading to, or `floor`), `target` (a point and facing, or
-absent), `lookAt` (a point, or absent), `phase`, `phaseOverride`, `weather`, `lights`
-(`lamp`, `strings`), `fire` (0 to 1), `camera`, `sound`, `caption` (the sentence and a
-sequence number, or absent), `motion`. P06 embeds the type and the command union in its
-ticket and that text is canonical: it may add bookkeeping fields (`elapsed`,
-`untilIdleChoice`, `shown`, `resume`) and an `arrived` command, and P07 and P08 read
-P06's file.
-`Item` in v1 is `bed`, `chair`, `water`, `food`, `toy`, `lamp`, `lights`; `jar` and `fire`
-ship as room anchors and the director ignores them until v1.1.
+`sleep`, `drink`, `eat`, `play`, `pet`, `stand` for the reversed transitions), `at` (the
+item she is at or heading to, or `floor`), `target` (a point and facing, or absent),
+`lookAt` (a floor point or the item to look toward, or absent), `phase`, `phaseOverride`,
+`weather`, `lights` (`lamp`, `strings`), `fire` (0 to 1), `camera`, `sound`, `caption`
+(the sentence and a sequence number, or absent), `motion`. P06 embeds the type and the
+command union in its ticket and that text is canonical: it may add bookkeeping fields
+(`elapsed`, `untilIdleChoice`, `shown`, `resume`, `standFrom`) and an `arrived` command,
+and P07 and P08 read P06's file. `Item` in v1 is `bed`, `chair`, `water`, `food`, `toy`,
+`lamp`, `lights`; `jar` and `fire` ship as room anchors and the director ignores them
+until v1.1.
 
-Rules: a tap on the item she is using is ignored; a tap while she is busy replaces any
-pending target so the last tap wins once the current activity's minimum has elapsed; a
-tap on her is a reaction, not an activity: `pet` plays at once over `idle.stand`,
-`idle.sit`, `drink`, `eat` or `play`, with that activity's `elapsed` paused and any
-pending target kept, and hands her back to it after the pet duration; a tap on her while
-she walks, sits, lies, stands or is already being petted changes nothing, and asleep it
-wakes her as any tap does; `walk` is entered by turning to face the target first;
-arriving at an item plays its transition and activity; a settled activity sets `caption`
-once (never on the tap); lights follow phase unless toggled, and a toggle holds until
-the phase changes; `fire` is 0.35 by morning, 0.7 by evening, 1.0 by night; `sleep`
-lasts until a tap or the sleep duration, then `stand` and `idle.stand`; when idle for
-the idle interval she chooses an activity by phase-weighted random choice;
-`motionChanged(false)` freezes `activity` at the nearest still-able state.
+Rules: a tap on the item she is using is ignored; a tap on the lamp or the string lights
+toggles that light and turns her head toward it, and never walks her; a tap while she is
+busy replaces any pending target so the last tap wins once the current activity's minimum
+has elapsed; a tap on her is a reaction, not an activity: `pet` plays at once over
+`idle.stand`, `idle.sit`, `drink`, `eat` or `play`, with that activity's `elapsed` paused
+and any pending target kept, and hands her back to it after the pet duration; a tap on
+her while she walks, sits, lies, stands or is already being petted changes nothing, and
+asleep it wakes her as any tap does; `walk` is entered by turning to face the target
+first; arriving at an item plays its transitions (`sit` then `lie` for the bed and the
+chair, each for its clip's length, stepped by the director) and then its activity; a
+settled activity sets `caption` once (never on the tap); lights follow phase unless
+toggled, and a toggle holds until the phase changes; `fire` is 0.35 by morning, 0.7 by
+evening, 1.0 by night; `sleep` lasts until a tap or the sleep duration, then `stand` and
+`idle.stand`; when idle for the idle interval she chooses an item, or a sit, by
+phase-weighted random choice; idle past the interval's scaled minimum sets the
+`idle.long` caption once for that stretch; `motionChanged(false)` freezes `activity` at
+the nearest still-able state.
 
 `timing.ts` constants (seconds): minimum activity 4; drink 6; eat 10; play 15; pet 2;
-sleep 90 by morning, 150 by evening, 300 by night; idle interval uniform 20 to 40, ×0.7
-by morning, ×1.5 by night; walking speed from the clip. Phase weights for the idle
+transitions `sit` 1.0 and `lie` 1.2 (the clip lengths, §4.1; `stand` is their sum from
+lying and `sit` alone from sitting); sleep 90 by morning, 150 by evening, 300 by night;
+idle interval uniform 20 to 40, ×0.7 by morning, ×1.5 by night, and `idle.long` at the
+scaled 20; walking speed from the clip. Phase weights for the idle
 choice: morning play 0.4, water 0.2, sit 0.2, bed 0.1, chair 0.1; evening chair 0.3,
 bed 0.2, sit 0.2, water 0.15, play 0.15; night bed 0.5, chair 0.3, sit 0.2.
 
@@ -879,8 +906,9 @@ persists through the storage port under `pawlour.time`. `SoundControl`: a `Switc
 off by default, persisted under `pawlour.sound`; turning it on calls `audio.enable()`
 inside the handler. `CameraControl`: a `SegmentedControl` Hearth, Window, Chair, persisted under
 `pawlour.camera`.
-`PhotoButton`: freezes the director (`motionChanged(false)` for the duration), asks the
-canvas for `toDataURL('image/png')` at the canvas's size, composes the card in
+`PhotoButton`: asks the canvas for `capture()` (`SceneCanvas` renders once, synchronously,
+and returns `toDataURL('image/png')` at the canvas's size; the director is sent nothing
+and the state does not change), composes the card in
 `src/lib/photo.ts` (pure: given the image size, the caption and the phase, returns the
 panel geometry and text the component draws onto an offscreen canvas), and triggers a
 download named `pawlour-<phase>-<n>.png`. `TitleCard`: the loading and photo overlay in
@@ -1074,6 +1102,11 @@ change that goes back through this document.
     hashed filenames. **P12.**
 14. `scripts/initialize.sh` skipping `install-hooks` in a secondary worktree means the
     `full-cozy` worktree has no hooks until `just install-hooks` is run by hand. **P00.**
+15. `AnimationUtils.makeClipAdditive` on the exported `pet` (every unmoved bone a
+    constant channel under `export_force_sampling` and `export_optimize_animation_size`)
+    yields identity deltas on those bones, and the lean reads over `drink`, `eat` and
+    `play` as well as over the idles. **P07b**, by the maintainer's eye on the recording;
+    the contact sheet cannot show it because it renders the clip alone.
 
 ## 12. Risks every ticket states where it applies
 

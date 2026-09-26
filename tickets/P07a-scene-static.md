@@ -19,8 +19,9 @@ takes every port and the director's `SceneState` as props, and reads `window` in
 `onMount` and nowhere else. This ticket is the static half: load the two GLBs, check the
 room's contract, give Biscuit the cel look and the room the painted one, place the three
 lighting rigs and the three cameras, hit-test a tap, draw once per state when motion is
-off, and show a still before the first frame and when the context is lost. P07b adds
-everything that moves.
+off, show a still before the first frame and when the context is lost, and export the
+two functions the page calls (`capture`, `forceContextRestore`). P07b adds everything
+that moves.
 
 Two things this ticket builds against are not final. P03's `src/lib/assets/biscuit.glb`
 holds one clip, `idle.stand` (P02's proof export through the pipeline); P04 replaces it
@@ -79,8 +80,10 @@ At the end of this ticket, on branch `ticket/p07a-scene-static`:
 - The three lighting rigs and the three cameras switch on `SceneState.phase` and
   `SceneState.camera`; a tap reports `item.<name>`, `biscuit` or `floor` with a point.
 - With `animationsActive` false the scene draws exactly once per `SceneState` it is
-  handed; before the first frame and on `webglcontextlost` an `<img>` of the still for
-  the state is shown with the caption as alt text.
+  handed; before the first frame, on `webglcontextlost` and with `webgl: false` an
+  `<img>` of the still for the state is shown with the caption as alt text; the loss is
+  reported through `onContextLost`; `capture()` returns a PNG data URL of the frame and
+  `forceContextRestore()` brings the drawing back.
 - `tests/scene-canvas.test.ts` proves the component renders its still and no canvas
   when `WebGL2RenderingContext` is absent, and `just check` is green.
 
@@ -123,19 +126,26 @@ P04's; until P04 lands the component shows P03's single placeholder still,
    `animations: boolean` (the page computes `animationsActive(...)` from the hub's port
    and passes the answer), `frames: FramePort`, `assets: { biscuit: string; cabin:
    string; clips: ClipTable; still: (state: SceneState) => string }`, `onProgress:
-   (fraction: number) => void`, `onReady: () => void`, `onTap: (hit: Hit) => void`. Runes
-   only: `$props()`, `$state` for `ready` and `lost`, `$effect` to hand every new `state`
-   to the scene. In `onMount` it reads `window.devicePixelRatio`, the canvas's client
-   size and `WebGL2RenderingContext` and constructs the scene; on destroy it disposes
-   the renderer. The markup is `<div class="scene">` holding `<canvas aria-hidden="true"
-   tabindex="-1">` and, while `!ready || lost`, `<img alt={state.caption?.text ??
-   'Biscuit in the cabin'} src={assets.still(state)}>`. Every selector in `<style>`
+   (fraction: number) => void`, `onReady: () => void`, `onTap: (hit: Hit) => void`,
+   `onContextLost: () => void`, and `webgl: boolean` (default `true`; `false` constructs
+   no scene and shows the still, which is what P08's story and any test asks for). It
+   exports two functions the page calls on the instance: `capture(): string` (Step 7) and
+   `forceContextRestore(): void` (Step 2). Runes only: `$props()`, `$state` for `ready`
+   and `lost`, `$effect` to hand every new `state` to the scene. In `onMount` it reads
+   `window.devicePixelRatio`, the canvas's client size and `WebGL2RenderingContext` and
+   constructs the scene; on destroy it disposes the renderer. The markup is `<div
+   class="scene">` holding `<canvas aria-hidden="true" tabindex="-1">` and, while `!ready
+   || lost`, `<img alt={state.caption?.text ?? 'Biscuit in the cabin'}
+   src={assets.still(state)}>`, whose `onclick` calls
+   `forceContextRestore()` (CONVENTIONS.md §5.4, `AContextLossLeavesAStill`). Every
+   selector in `<style>`
    names an element the markup carries. `touch-action: manipulation` on the canvas.
 
 2. **`scene.ts`**: `createScene({ canvas, pixelRatio, size, frames, assets, onProgress })`
-   returns `{ apply(state, animations): void; hit(x, y): Hit; dispose(): void; lost:
-   boolean }`. It creates the `WebGLRenderer` (`antialias: true`, `preserveDrawingBuffer:
-   false`; P08 revisits for photo mode, §11 claim 12), sets the pixel ratio to
+   returns `{ apply(state, animations): void; hit(x, y): Hit; capture(): string;
+   restore(): void; dispose(): void; lost: boolean }`. It creates the `WebGLRenderer`
+   (`antialias: true`, `preserveDrawingBuffer: false`; `capture()` renders synchronously
+   first, §11 claim 12), sets the pixel ratio to
    `Math.min(pixelRatio, 2)`, loads both files with one `GLTFLoader` whose
    `setMeshoptDecoder(MeshoptDecoder)` is called, reports progress as bytes loaded over
    bytes expected from the manifest's `bytes`, and on both loaded calls `cabin.ts`,
@@ -143,8 +153,12 @@ P04's; until P04 lands the component shows P03's single placeholder still,
    the state and, when `animations` is false, renders once through `still.ts`; when
    true it hands the state to P07b's motion layer (this ticket leaves a
    `motion?: MotionLayer` hook that, absent, renders once as well). Listens for
-   `webglcontextlost` (calls `preventDefault`, sets `lost`) and
-   `webglcontextrestored` (rebuilds the materials, renders once).
+   `webglcontextlost` (calls `preventDefault`, sets `lost`, calls the component's
+   `onContextLost`) and `webglcontextrestored` (rebuilds the materials, renders once,
+   clears `lost`). `restore()` calls `WEBGL_lose_context.restoreContext()` when the
+   extension is present and otherwise disposes the renderer, creates a new one on the
+   same canvas and reloads; the component's exported `forceContextRestore()` is this
+   function.
 
 3. **`cabin.ts` and the stub.** `requireCabin(root: Object3D): Cabin` walks the loaded
    scene and returns typed lookups for every name in CONVENTIONS.md §5.2's table
@@ -208,7 +222,11 @@ P04's; until P04 lands the component shows P03's single placeholder still,
    file, through the `assets.still` prop the page supplies (so the asset URLs are
    imported in the page, where Vite resolves them with `paths.base`). With
    `animations` false, `apply` never subscribes to the frame port; every `apply` renders
-   exactly once; the fire quad shows its middle frame.
+   exactly once; the fire quad shows its middle frame. `capture(): string` renders once
+   through `renderOnce` and returns `renderer.domElement.toDataURL('image/png')` in the
+   same call, so the buffer is read before the browser clears it (§11 claim 12); it
+   touches neither the frame loop nor the state, so P08's photo mode sends the director
+   nothing.
 
 8. **The route test.** `tests/scene-canvas.test.ts` renders `SceneCanvas` with a fake
    frame port, an `initialState`, `animations: false`, and asset URLs that are plain
@@ -216,7 +234,8 @@ P04's; until P04 lands the component shows P03's single placeholder still,
    that an `img` with the state's alt text is present and that no `canvas` is reachable
    (it is `aria-hidden`; assert through the container that it carries the attribute).
    The component must not throw when `getContext('webgl2')` returns `null`: it sets
-   `lost` and shows the still.
+   `lost` and shows the still. A second case renders with `webgl: false` and asserts the
+   same still and no scene construction (the fake frame port records no `each` call).
 
 9. **Check CONVENTIONS.md §11 claim 9.** `BASE_PATH=/biscuit_cozy just frontend-build`
    from a scratch route that imports `$lib/assets/biscuit.glb`, then `grep -o
@@ -249,7 +268,11 @@ P04's; until P04 lands the component shows P03's single placeholder still,
       scratch route, recorded).
 - [ ] A tap on a box returns `item.<name>`; on Biscuit `biscuit`; on the floor a point.
 - [ ] `tests/scene-canvas.test.ts` passes: the still is shown and nothing throws without
-      WebGL.
+      WebGL, and `webgl: false` shows it too.
+- [ ] `capture()` returns a non-blank PNG data URL (in the scratch route, drawn to a 2D
+      canvas and one lit pixel read; recorded); `WEBGL_lose_context.loseContext()` shows
+      the still and fires `onContextLost`; a tap on the still calls
+      `forceContextRestore()` and the scene returns (recorded).
 - [ ] The maintainer has approved the three screenshots (the date in the hand-back).
 - [ ] No file under `src/lib/` changed; `just frontend-coverage` is unchanged from P06.
 - [ ] `just check` is green.
@@ -286,10 +309,11 @@ Filled in by the agent that executes this ticket.
 
 - **A story for `SceneCanvas`.** T requires a story per component under
   `src/lib/components/`; this component is under `src/routes/` and has none. Recommend a
-  story anyway that renders the still (no WebGL in the story), so Chromatic sees the
-  fallback and axe checks the `img`'s name; P08 writes it beside its own stories.
-- **`preserveDrawingBuffer`.** Off here for performance; P08's photo mode either turns it
-  on or re-renders before `toDataURL` (§11 claim 12). Recommend the re-render.
+  story anyway that renders with `webgl: false`, so Chromatic sees the fallback and axe
+  checks the `img`'s name; P08 writes it beside its own stories.
+- **`preserveDrawingBuffer`.** Off here for performance; `capture()` re-renders
+  synchronously before `toDataURL` (§11 claim 12). If P08 still finds the capture blank,
+  the flag goes on for the one render and this ticket's follow-up carries it.
 - **Theme changes.** The scene's ground is its own painting, not the platform's
   `--background`, so no `MutationObserver` on `data-theme` is needed; the `.scene`
   wrapper's background is `var(--background)` for the letterbox. Confirm with P08.

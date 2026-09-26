@@ -227,7 +227,8 @@ adds files, it never renames or reclassifies one.
    sorted by `path`, one trailing newline; the six fields in order (`path`, `bytes`,
    `sha256`, `source`, `licence`, `budget`); every refusal §3 lists, printed one per line
    as `<path>: <reason>` with exit 1; `check` and `write` both run `self-test` first;
-   the total-bytes ceiling of 12,582,912 asserted by `check`; standard library only
+   no whole-tree total (CONVENTIONS.md §3: the per-file budgets are the rule and the
+   12 MB first-load figure is P10's measurement); standard library only
    (`hashlib`, `json`, `pathlib`, `sys`, `tempfile`, `argparse`). Ruff-clean under
    §2.2's per-file ignores. The self-test builds its tree under `tempfile.mkdtemp()`
    and passes that root to the same functions `check` uses, so the checker under test is

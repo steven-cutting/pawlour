@@ -109,9 +109,10 @@ does not tag: it writes the changelog entry the tag will name and stops.
      live and that reconciling with it is recorded as a later ticket (C02).
    - `## Rebuilding the assets`: the four Blender recipes and the pipeline as a `console`
      block (`just model-clips`, `just model-export`, `just cabin-export`, `just
-     assets-build`, then `just check-assets`), that they need Blender 5.2.1 at
-     `/Applications/Blender.app` or `BLENDER` set, that none runs in CI, and that the
-     built files are committed and checked against `src/lib/assets/manifest.json`.
+     assets-build biscuit`, `just assets-build cabin`, then `just check-assets`), that
+     they need Blender 5.2.1 at `/Applications/Blender.app` or `BLENDER` set, that none
+     runs in CI, and that the built files are committed and checked against
+     `src/lib/assets/manifest.json`.
    - In `## Layout`, the `text` block gains `blender/` (the model, its scripts, the clips,
      the room) and `src/lib/assets/` (what the site serves, and the manifest) and
      `src/routes/scene/` (the three.js runtime, outside the coverage glob).

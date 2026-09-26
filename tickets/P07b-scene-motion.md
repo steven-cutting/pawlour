@@ -35,7 +35,7 @@ Sources, at the commits CONVENTIONS.md §0 pins (read-only, never modified):
   `SceneState`, `Command`, `TICK_MS`); `src/lib/ports/frame.ts`; `src/lib/assets/cabin.glb`
   (P05; the real room, `fire.anchor`, `steam.anchor`, `glass.window` with
   `userData.depth`); `src/lib/assets/biscuit.clips.json` (P03/P04: `name`, `seconds`,
-  `loop`, `stride`, `height`); `blender/rig.json` (P02; the bone names `chest`,
+  `loop`, `stride`, `height`); `blender/model/rig.json` (P02; the bone names `chest`,
   `ear.1.L`, `ear.1.R`, `tail.1`, `tail.2`, `tail.3`, `neck`, `head`).
 - D `/Users/scutting/.supacode/repos/biscuit_pics/very_nice_three_deeez` at `1d9d358`:
   `models/biscuit/model/rig.json` `coordinateSystem` ("right-handed Z-up, -Y forward,
@@ -59,8 +59,9 @@ eye is a gate); §12 (the scripted walk).
 At the end of this ticket, on branch `ticket/p07b-scene-motion`:
 
 - `motion.ts` plays the director's `activity` as the named clip with a 250 ms crossfade,
-  loops what loops, plays `sit` and `lie` forward and, for `stand`, in reverse, and
-  reports `arrived` through a callback when a walk reaches its target.
+  loops what loops, plays `sit` and `lie` forward and, for `stand`, in reverse from the
+  pose she is leaving, layers `pet` additively over the interrupted clip, and reports
+  `arrived` through a callback when a walk reaches its target.
 - `walk.ts` finds a path from her position to `target.spot` through the nearest
   waypoints, turns her in place first, then moves her at `stride / seconds` of `walk`
   times the model's scale; the feet do not slide on the maintainer's recording.
@@ -114,13 +115,20 @@ is named here).
    `AnimationMixer` on the model and one `AnimationAction` per clip in `biscuit.glb`,
    refusing a GLB missing any name in CONVENTIONS.md §4.1's core set. `apply(state)`
    maps `state.activity` to an action: loops get `LoopRepeat`, one-shots `LoopOnce` with
-   `clampWhenFinished`; `stand` plays `lie` then `sit` with `timeScale = -1` from their
-   ends (the reverse of lying down, then of sitting); every change is
-   `previous.crossFadeTo(next, 0.25, true)`. `update(dt)` advances the mixer and, when
-   the activity is `walk`, calls `walk.ts`; when the walk reports done, calls
-   `onArrived()` once. Wire it into `scene.ts`'s `motion` hook: with `animations` true,
-   `apply` subscribes once to the frame port and each frame computes `dt` (clamped to
-   50 ms), updates motion, idle, fire, weather and the rig blend, then renders; with
+   `clampWhenFinished`; `stand` reverses, with `timeScale = -1` from their ends, the
+   clips that reach the pose she is leaving: `lie` then `sit` when the action it was
+   playing was `sleep` or `lie`, `sit` alone when it was `idle.sit` or `sit` (the
+   director's `standFrom` and `TRANSITION` say the same, P06); the director sequences
+   `sit` then `lie` on arrival itself, so this layer plays whatever `activity` says and
+   never chains clips of its own; `pet` is never crossfaded to: its clip is made additive
+   once (`AnimationUtils.makeClipAdditive`, `blendMode: AdditiveAnimationBlendMode`) and,
+   while `state.activity === 'pet'`, the action for `state.resume.activity` keeps playing
+   and the `pet` action fades in over 250 ms and out on finish (§11 claim 15); every
+   other change is `previous.crossFadeTo(next, 0.25, true)`. `update(dt)` advances the
+   mixer and, when the activity is `walk`, calls `walk.ts`; when the walk reports done,
+   calls `onArrived()` once. Wire it into `scene.ts`'s `motion` hook: with `animations`
+   true, `apply` subscribes once to the frame port and each frame computes `dt` (clamped
+   to 50 ms), updates motion, idle, fire, weather and the rig blend, then renders; with
    `animations` false it unsubscribes and P07a's render-once path runs. Switching
    `animations` off mid-walk snaps her to the target (the director already moved `at`).
 
@@ -143,7 +151,8 @@ is named here).
    one of `ear.1.L`, `ear.1.R` rotates 12° about its local X over 120 ms and back over
    200 ms; while `idle.stand` or `idle.sit`, `tail.1`, `tail.2`, `tail.3` each add `±8°
    · sin(2π · 0.4 · t)` about local Z with a phase lag of 0.15 per bone; when
-   `state.lookAt` is set, `neck` and `head` each turn half the yaw toward the point,
+   `state.lookAt` is set (a floor point, or `{ item }` resolved to `item.<name>`'s world
+   position through `cabin.ts`), `neck` and `head` each turn half the yaw toward it,
    clamped to ±40° in total, eased over 400 ms with `--ease`'s curve, and ease back
    when it clears. The layer adds to the clip's pose (multiply the bone's quaternion
    after the mixer), so it works on every clip, and is skipped while `sleep` for the
@@ -187,7 +196,8 @@ is named here).
 
 8. **The recording: the gate.** On the maintainer's phone through `just preview-lan`,
    or on the desktop at 390×844, record a screen capture of: a tap on the bed from the
-   hearth camera (turn, walk, arrive, sit, lie, sleep), a tap on the toy, the fire at
+   hearth camera (turn, walk, arrive, sit, lie, sleep), a tap on the toy, a pet while she
+   drinks (§11 claim 15: the lean reads and she does not drop into a sit), the fire at
    night, rain at the window; save under `ai_tmp/motion/` as video or GIF. Stop and ask
    the maintainer to approve the walk (no sliding, no bounce, reads as a dog) and the
    fire (reads as cel, not as a particle effect). Rework before done; if the walk cannot
@@ -200,9 +210,12 @@ is named here).
 ## Acceptance criteria
 
 - [ ] Every core clip plays by name with a 250 ms crossfade; `stand` reverses `lie` then
-      `sit`; a missing clip is refused by name.
-- [ ] A tap on each of the seven items walks her along waypoints, turning first, and
-      `arrived` is reported once per walk (a counter in the scratch route, recorded).
+      `sit` from `sleep` and `sit` alone from `idle.sit`; `pet` plays additively over
+      `drink` with the drink running underneath; a missing clip is refused by name.
+- [ ] A tap on each of the five walkable items (bed, chair, water, food, toy) walks her
+      along waypoints, turning first, and `arrived` is reported once per walk (a counter
+      in the scratch route, recorded); a tap on the lamp or the lights toggles the light
+      and turns her head with no walk.
 - [ ] The walking speed equals `stride / seconds × scale` and is not multiplied anywhere
       else (`grep -n stride src/routes/scene/walk.ts` shows the one use).
 - [ ] The idle layer runs on every clip and its figures are the constants in §5.4.
@@ -233,6 +246,7 @@ unsubscribe branches visible; clean; green.
 Filled in by the agent that executes this ticket.
 
 - The recording paths and the date of the maintainer's approval; what was reworked.
+- §11 claim 15: whether the additive `pet` read over `drink`, and what was seen if not.
 - The measured walking speed in units per second and whether the feet slid at the
   clip's natural rate; a hand-back to P04 if `stride` should change.
 - The frame time on the maintainer's phone with fire and rain on (a first figure for

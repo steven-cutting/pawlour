@@ -134,7 +134,7 @@ and licence page are recorded. Pushing and the pull request are separately autho
 1. **Read the contract.** `CONVENTIONS.md` §5.3, §6.1 (the commands and `SceneState`),
    §6.2, §6.3, §7, §8, §10, §11 claims 8, 10 and 12, §12; `docs/specs/cabin.allium` on
    `main`; the exported surface of `src/routes/scene/SceneCanvas.svelte` (its props and
-   the functions it exposes for a capture and for `forceContextRestore`) and of
+   the two functions it exports, `capture` and `forceContextRestore`) and of
    `src/lib/domain/director.ts`. Write down, in the hand-back, every prop `SceneCanvas`
    takes and every command the director accepts, because the page is where they meet.
 
@@ -157,7 +157,7 @@ and licence page are recorded. Pushing and the pull request are separately autho
      `ondisable: () => void`. A `Switch` named "Ambient sound". `onenable` is awaited
      inside the change handler, so the `AudioContext` starts inside the gesture; if it
      rejects, the switch stays off and a `Notice` says "Sound could not start."
-   - `CameraControl`: props `value: CameraPreset`, `onchange`.
+   - `CameraControl`: props `value: Camera` (P06's type), `onchange`.
    - `Caption`: props `caption?: { text: string; sequence: number }`. A `Notice` showing
      the text and an `Announcer` saying it; the `sequence` prop is what makes the same
      sentence announce again if the director ever repeats one (it does not, §6.3).
@@ -177,8 +177,8 @@ and licence page are recorded. Pushing and the pull request are separately autho
    answers, a default story, and a story at `NARROWEST_SUPPORTED_WIDTH` whose play
    measures every control's `getBoundingClientRect()` at or above `MINIMUM_TOUCH_TARGET`
    in both directions. `stories/SceneCanvas.stories.svelte` renders `SceneCanvas` with
-   `webgl: false` (or whatever prop P07a exposes for the fallback) so the still is what
-   Chromatic sees. Run `just storybook-build` and `just storybook-test`.
+   `webgl={false}` (P07a's prop) so the still is what Chromatic sees. Run `just
+   storybook-build` and `just storybook-test`.
 
 4. **§11 claim 10, `optimizeDeps.include`.** `SceneCanvas` imports `three` and
    `three/addons/...`. Run `just storybook-test` twice from a cold cache (`rm -rf
@@ -209,7 +209,8 @@ and licence page are recorded. Pushing and the pull request are separately autho
    the `Lockup` as the `brand` snippet and one action, the Settings `IconButton`
    (`popup: 'dialog'`). `<main>` holding, in order: `SceneCanvas` (props: the
    `SceneState`, the frame port, `animationsActive`, the asset URLs imported from
-   `$lib/assets/`, callbacks `onhit`, `onprogress`, `oncontextlost`), a visually hidden
+   `$lib/assets/`, callbacks `onTap`, `onProgress`, `onReady`, `onContextLost`, as P07a
+   names them), a visually hidden
    `<p aria-live="polite">` built from `SceneState` ("Biscuit is asleep in the bed. It is
    night. Snow."), `Caption`, `ItemControls`, `PhotoButton`, `TitleCard`. Everything
    per-visitor happens in `onMount`: construct `createWebStorage()`,
@@ -219,7 +220,7 @@ and licence page are recorded. Pushing and the pull request are separately autho
    `animationsActive` from the preferences port and subscribe to it, writing
    `data-animations` on `document.documentElement` as H's how-to says; start the timer at
    250 ms calling `director.step(state, tick)` and, every 240th tick, `clockPhase` from
-   the clock; return the unsubscribes. `onhit` maps `item.<name>` to `tap(item)`,
+   the clock; return the unsubscribes. `onTap` maps `item.<name>` to `tap(item)`,
    `biscuit` to `tapBiscuit`, `floor` to `tapFloor(point)`; `ItemControls`' `onselect`
    maps the same way, an item to `tap(item)` and `biscuit` to `tapBiscuit`, so the
    control row and the canvas issue identical commands. `SceneState` lives in one
@@ -227,18 +228,18 @@ and licence page are recorded. Pushing and the pull request are separately autho
    `<style>` names an element or class the markup carries (T's seed comment;
    `svelte-check --fail-on-warnings`).
 
-8. **Photo mode and §11 claim 12.** `PhotoButton`'s `oncapture` in the page: send
-   `motionChanged(false)` to the director, wait one frame through the frame port, ask
-   `SceneCanvas` for its capture (P07a exposes one; if it returns a blank image because
-   the renderer was created without `preserveDrawingBuffer`, the fix is P07a's and is
-   handed back with the evidence: the claim says the capture must be taken synchronously
-   after a render or the renderer created with the flag), compose the card with
+8. **Photo mode and §11 claim 12.** `PhotoButton`'s `oncapture` in the page: call the
+   `SceneCanvas` instance's `capture()` (P07a's: a synchronous render, then `toDataURL`;
+   if it returns a blank image the fix is P07a's and is handed back with the evidence,
+   because the claim says the capture must be taken synchronously after a render or the
+   renderer created with the flag), compose the card with
    `src/lib/photo.ts` (pure: `composePhoto({ width, height, caption, phase }) → { panels:
    Polygon[]; texts: Placed[] }`, tested for every phase and with and without a caption),
    draw it on an offscreen canvas in the page, and trigger a download named
    `pawlour-<phase>-<n>.png` through an `<a download>` the page creates and removes.
-   `motionChanged(true)` afterwards if motion was on. `TitleCard` shows "Saved" for
-   `--dur-3`.
+   The director is sent nothing for a photo: a walk or a pet in progress is what the
+   picture shows, and `motionChanged` stays the preferences port's. `TitleCard` shows
+   "Saved" for `--dur-3`.
 
 9. **Audio.** `scripts/make_audio.py` (standard library only: `wave`, `struct`,
    `random`, `math`) writes five mono 44.1 kHz WAV loops under `ai_tmp/audio/`: `fire`
@@ -343,9 +344,8 @@ Filled in by the agent that executes this ticket.
 - **Jar in v1.** `ItemControls` takes its items as a prop; the treat jar's button is a
   one-line addition when the `treat` clip lands (v1.1). Recommend leaving it out of the
   row rather than shipping a button that does nothing.
-- **The camera control's place.** §7 puts it in the dialog. A swipe on the canvas edge
-  (`PRD.md`) is P07b's; if P07b does not ship the swipe, the dialog control is the only
-  route, which is fine for v1.
+- **The camera control's place.** §7 puts it in the dialog. The edge tap or swipe on the
+  canvas is v1.1 (`PRD.md`, "The room"), so the dialog control is the only route in v1.
 - **The `.m4a` fallback.** If `ffmpeg` is absent, the extension change touches §3 and
   the port's map; record it and let P11 carry the `CONVENTIONS.md` edit.
 - **`Notice` for a failed `enable()`.** Whether Safari ever rejects inside a gesture is

@@ -65,7 +65,7 @@ pull request are separately authorised.
   sections of `PRD.md` and `CONVENTIONS.md`.
 - Four decision records, 0011 to 0014, in T's shape, each with an index row in
   `docs/decisions/README.md`.
-- `docs/manifest.yml` gaining sixteen entries after decision 0010's, in strict JSON, and
+- `docs/manifest.yml` gaining fourteen entries after decision 0010's, in strict JSON, and
   `docs/README.md` gaining the links under `## This game`.
 - `AGENTS.md`'s deviations sentence replaced by the list of deviations, and nothing else
   in that file changed.
@@ -105,7 +105,7 @@ pull request are separately authorised.
 | `docs/decisions/0013-this-repository-owns-its-animated-model.md` | repo | new | `CONVENTIONS.md` §1 decisions 5 and 21, §3 provenance; names C02 as the reopener |
 | `docs/decisions/0014-three-js-is-the-renderer.md` | repo | new | `CONVENTIONS.md` §1 decision 16; cites S ticket C03 by path |
 | `docs/decisions/README.md` | repo | T's rendered | four rows appended to the table |
-| `docs/manifest.yml` | repo (no lane; this ticket is the one writer) | T's rendered | sixteen entries appended after decision 0010's |
+| `docs/manifest.yml` | repo (no lane; this ticket is the one writer) | T's rendered | fourteen entries appended after decision 0010's |
 | `docs/README.md` | repo (no lane; this ticket is the one writer) | T's rendered | links under `## This game` |
 | `AGENTS.md` | repo | T's rendered | the deviations sentence replaced (Step 6); nothing else |
 | `tickets/P09-handbook.md` | tickets | this file | `status: done` |
@@ -145,7 +145,8 @@ pull request are separately authorised.
    C02; 0014, a renderer the platform adopts. Add the four rows to
    `docs/decisions/README.md`'s table in the same form as T's.
 
-4. **The manifest.** Append sixteen entries to `docs/manifest.yml` after the
+4. **The manifest.** Append fourteen entries (§9's sixteen pages less the two seed
+   pages, which T already registers) to `docs/manifest.yml` after the
    `decisions/0010-a-project-pages-site.md` entry, one per line, in the order of the
    Files-touched table, each `{"path": ..., "title": ..., "kind": ..., "audience": [...],
    "canonical_for": [...], "requires": []}` with the lists in the same order as the page's
@@ -171,7 +172,7 @@ pull request are separately authorised.
    about changing the template instead. Nothing else in `AGENTS.md` changes; the six
    required phrases and the 300 words are untouched.
 
-7. **Gates.** `just check-docs` (sixteen new pages registered and reachable, forty words
+7. **Gates.** `just check-docs` (sixteen game pages registered and reachable, forty words
    each), `just check-agents`, `just lint` (markdownlint over the new pages; lychee
    offline resolves every relative link), `just check`. Set `status: done`. Commit.
    Pushing and the pull request are authorised separately.
@@ -182,7 +183,7 @@ pull request are separately authorised.
       `bg-validate-docs` passes (`just check-docs` green).
 - [ ] Four decision files in T's shape, four rows in `docs/decisions/README.md`.
 - [ ] `docs/manifest.yml` parses as JSON (`python3 -c 'import json;json.load(open("docs/manifest.yml"))'`)
-      and its last sixteen entries are the game's, in the table's order.
+      and its last fourteen entries are the game's new pages, in the table's order.
 - [ ] `docs/README.md` links every new page under `## This game`.
 - [ ] `AGENTS.md` differs from `main` only inside the deviations paragraph
       (`git diff main -- AGENTS.md` shows one hunk).
