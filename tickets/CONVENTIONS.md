@@ -710,7 +710,7 @@ Required empties (glTF nodes with no mesh), by exact name:
 | `nav.0` to `nav.<n>` | waypoints on the floor; each carries `extras.edges`, a list of neighbouring waypoint names; the graph is connected and undirected |
 | `camera.hearth`, `camera.window`, `camera.chair` | the three presets; position and −Z view direction; `extras.fov` vertical degrees |
 | `light.window`, `light.fire`, `light.lamp`, `light.strings.0` to `light.strings.<n>` | positions the lighting rigs place lights at |
-| `glass.window` | the pane, a mesh; weather particles live in the box behind it (`extras.depth` units) |
+| `glass.window`, `glass.window.left`, `glass.window.hearth` | three pane meshes under `item.window`; weather particles live in the box behind each (`extras.depth` units) |
 | `fire.anchor` | where the flame planes and embers sit |
 | `steam.anchor` | the mug's steam |
 
@@ -720,6 +720,22 @@ and a material named `cabin.<surface>` (`cabin.log`, `cabin.plank`, `cabin.rug`,
 `cabin.stone`, `cabin.glass`); no textures in v1 except one 512² `cabin.rug` colour map and one for the
 record sleeves. The window glass is `cabin.glass` and is transparent. Triangles in total
 at most 40,000; P05 records the figure.
+
+The maintainer's 2026-09-25 room revision puts the shelf on the left wall and adds
+two windows. These positions are in glTF metres; all other P05 positions stay as
+specified in its Step 2 table. Each pane is 1.0 wide by 0.9 high with `extras.depth`
+of 1.5, transparent `cabin.glass`, and its own preserved mesh origin:
+
+| Node | Position | Facing into the room |
+| --- | --- | --- |
+| `item.shelf` | (−2.30, 0, −0.40) | local −Z faces +X |
+| `glass.window` | (2.49, 1.30, −0.40) | surface normal −X |
+| `glass.window.left` | (−2.49, 1.50, −0.40) | surface normal +X |
+| `glass.window.hearth` | (1.35, 1.45, −1.99) | surface normal +Z |
+
+All three windows share the `item.window` interaction. P07a's cabin validation and
+phase sky material cover all three panes; P07b places weather outside each wall
+using the pane's orientation, sharing the existing particle budget across them.
 
 ### 5.3 The look, one register per layer
 
@@ -789,8 +805,9 @@ scarlet is the game's own and is declared as a game token with its contrast reco
   as a 256×2048 WebP under `src/lib/assets/`), advanced at 8 fps out of phase; embers as
   twenty instanced quads rising; the point light's intensity is its rig value × (1 +
   0.15 × a 3 Hz smoothed noise). Weather (`weather.ts`): at most 300 instanced quads in
-  the box behind `glass.window`, streaks for rain falling at 4 units/s, flakes for snow
-  at 0.6 units/s with sideways drift; none by clear. Steam at `steam.anchor`: six quads
+  the boxes behind the three `glass.window*` panes, streaks for rain falling at
+  4 units/s, flakes for snow at 0.6 units/s with sideways drift; none by clear.
+  Steam at `steam.anchor`: six quads
   rising and fading.
 - Hit-tests (`hit.ts`) a tap with a `Raycaster` against every descendant of every
   `item.*` node and against Biscuit's meshes, and reports `item.<name>`, `biscuit` or

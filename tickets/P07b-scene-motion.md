@@ -178,10 +178,12 @@ is named here).
    every light's intensity between the outgoing and incoming rig when `animations` is
    true; keep the cut when false.
 
-6. **`weather.ts`.** Behind `glass.window`, in a box the pane's width and height by
-   `userData.depth`: rain as up to 300 instanced thin quads falling at 4 units per
-   second with a slight slant, snow as up to 200 instanced discs falling at 0.6 units
-   per second with a sideways sine drift, both respawning at the top; none when clear;
+6. **`weather.ts`.** Behind each of `glass.window`, `glass.window.left` and
+   `glass.window.hearth`, in a box the pane's width and height by `userData.depth`,
+   oriented outside its wall: rain as up to 300 instanced thin quads in total falling
+   at 4 units per second with a slight slant, snow as up to 200 instanced discs in
+   total falling at 0.6 units per second with a sideways sine drift, both respawning
+   at the top; none when clear;
    the count switches on `state.weather`. Steam: six quads at `steam.anchor`, each
    rising 0.12 units over 2 s while scaling up and fading, staggered. All of it stops
    with the loop.
@@ -242,6 +244,13 @@ Expected: `(256, 2048) RGBA`; green with one new entry; one line; the subscribe 
 unsubscribe branches visible; clean; green.
 
 ## Hand-back notes
+
+P05 input update, 2026-09-25: the maintainer requested two additional windows.
+CONVENTIONS.md §5.2 now requires three separate pane meshes under `item.window`,
+each with `extras.depth: 1.5`. Extend weather to every pane using its transformed
+surface normal so particles stay outside the left, right and hearth walls. Share
+the existing total rain/snow budget across the windows. P05 supplies static panes;
+it adds no weather, phase lighting or runtime animation.
 
 Filled in by the agent that executes this ticket.
 

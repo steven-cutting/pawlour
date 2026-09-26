@@ -201,8 +201,8 @@ P04's; until P04 lands the component shows P03's single placeholder still,
    phase's tint; a `PointLight` at `light.fire` `(#ff9a3c)` of `0.6`, `1.6`, `3.0` with
    `distance 4`; a `PointLight` at `light.lamp` `(#ffd08a, 1.4, distance 3)` on when
    `state.lights.lamp`; one small `PointLight` per `light.strings.*` `(#ffe1a8, 0.25,
-   distance 1)` on when `state.lights.strings`. The window pane's emissive is the sky
-   per phase (`#e8f0f8`, `#e69a5a`, `#141a2c`). `camera.ts` creates one
+   distance 1)` on when `state.lights.strings`. All three window panes' emissive is
+   the sky per phase (`#e8f0f8`, `#e69a5a`, `#141a2c`). `camera.ts` creates one
    `PerspectiveCamera` and, for `state.camera`, copies the preset node's position and
    orientation (its −Z is the view) with `fov` from `userData.fov`; on resize it keeps
    the floor's full width in view in portrait by moving the camera back along its −Z,
@@ -292,6 +292,13 @@ Expected: the stub written; clean; one file, green; two URLs (`biscuit` and `cab
 carrying `/pawlour/`; nothing under `src/lib` changed; green.
 
 ## Hand-back notes
+
+P05 input update, 2026-09-25: the maintainer moved `item.shelf` to the left wall at
+(−2.30, 0, −0.40), facing +X, and added `glass.window.left` and
+`glass.window.hearth`. Use CONVENTIONS.md §5.2 and P05's revised Step 2 table when
+building the stub and validating the real cabin. All three panes are descendants
+of the same `item.window`, bind transparent `cabin.glass`, and receive the phase's
+sky colour. Camera presets, bowls, approaches and navigation have not moved.
 
 Filled in by the agent that executes this ticket.
 
