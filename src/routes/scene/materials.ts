@@ -145,7 +145,7 @@ export function disc(): Mesh<CircleGeometry, MeshBasicMaterial> {
 }
 
 export function fireStill(): Mesh<PlaneGeometry, ShaderMaterial> {
-  // A fixed middle flame; P07b replaces this quad's material with its flipbook.
+  // A fixed middle flame for the still; fire.ts draws the flipbook while motion is on.
   return new Mesh(
     new PlaneGeometry(0.38, 0.5),
     new ShaderMaterial({

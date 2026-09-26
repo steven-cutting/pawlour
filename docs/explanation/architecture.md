@@ -50,9 +50,10 @@ The director and other game rules are pure modules under `src/lib/domain/`, fed
 their inputs and randomness as arguments. `src/routes/scene/` draws the director's
 state with three.js. Its component prerenders an accessible still; after hydration
 it loads and validates the GLBs, then replaces the still after the first successful
-frame. Context loss restores the still without changing game state, and a named
-retry button attempts recovery. Page controls and animated playback are separate
-integration work.
+frame. Animated playback follows the director through the injected frame and
+visual random ports and reports arrivals back. Context loss restores the still
+without changing game state, and a named retry button attempts recovery. Page
+controls remain separate integration work.
 
 ## State
 

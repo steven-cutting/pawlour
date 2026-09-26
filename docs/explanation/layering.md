@@ -27,11 +27,23 @@ their values and call the callbacks it was handed. It may not construct a port, 
 for a browser global, or keep a fact the rules own as view state of its own.
 
 The three.js adapter is a route-level boundary, including `SceneCanvas.svelte`.
-It receives `SceneState`, asset URLs, the frame port and callbacks. Browser setup
+It receives `SceneState`, asset URLs (including the fire atlas), the frame port,
+a separate visual random port and callbacks, including `onArrived`. Browser setup
 runs inside `onMount`; the director owns every activity, phase and camera choice.
-Static drawing samples a fixed pose and never subscribes to frames. The optional
-motion layer receives the same injected port when playback is added. The scene's
-GPU resources and listeners are disposed when the component is destroyed.
+Static drawing samples a fixed pose and never subscribes to frames. Animated
+drawing has one frame subscription, clamps elapsed time to 50 ms, and updates
+clips, walking, procedural idle, fire, weather, steam and the light blend before
+drawing. Reapplying state or resizing preserves the live pose and walk position.
+Motion off, context loss, rendering failure and disposal stop the subscription;
+recovery starts it once. The scene's GPU resources and listeners are disposed
+when the component is destroyed.
+
+The page forwards `onArrived` as the director's `arrived` command. It passes the
+director's settled motion-off state to the still renderer, including a walk's
+destination. Visual random draws must not consume the director's stream: frame
+rate and weather density cannot change her next choice or caption. The `wipe`
+helper uses the platform's duration and easing tokens and resolves immediately
+when the duration is zero; it does not start another frame loop.
 
 ## Why the direction matters
 

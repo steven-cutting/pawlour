@@ -1,10 +1,12 @@
 import {
+  InstancedMesh,
   NoToneMapping,
   PerspectiveCamera,
   Quaternion,
   Scene,
   SRGBColorSpace,
   Texture,
+  TextureLoader,
   Vector3,
   WebGLRenderer
 } from 'three';
@@ -13,6 +15,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { SceneState } from '$lib/domain/director';
 import type { FramePort } from '$lib/ports/frame';
+import type { RandomPort } from '$lib/ports/random';
 import manifest from '$lib/assets/manifest.json';
 import { requireBiscuit } from './biscuit';
 import type { Biscuit, ClipTable } from './biscuit';
@@ -25,20 +28,17 @@ import type { Hit } from './hit';
 import { lighting } from './lighting';
 import { biscuitRamp, cabinRamp, disc, fireStill, paint, vignette } from './materials';
 import { renderOnce } from './still';
+import { createFrameLoop, createMotion } from './motion';
+import { createIdle } from './idle';
+import { createFire } from './fire';
+import { createWeather } from './weather';
 
 export interface SceneAssets {
   biscuit: string;
   cabin: string;
+  fire: string;
   clips: ClipTable;
   still(state: SceneState): string;
-}
-
-/** P07b owns playback and subscribes through the injected frame port. */
-export interface MotionLayer {
-  apply(state: SceneState): void;
-  start(frames: FramePort): void;
-  stop(): void;
-  dispose(): void;
 }
 
 export interface SceneOptions {
@@ -46,13 +46,14 @@ export interface SceneOptions {
   pixelRatio: number;
   size: Size;
   frames: FramePort;
+  random: RandomPort;
   assets: SceneAssets;
   onProgress(fraction: number): void;
   onReady(): void;
   onContextLost(): void;
   onRestored(): void;
   onError(error: unknown): void;
-  motion?: MotionLayer;
+  onArrived: () => void;
 }
 export interface SceneHandle {
   apply(state: SceneState, animations: boolean): void;
@@ -73,6 +74,8 @@ export function disposeObjects(
   const materials = new Set<Material>(retired);
   const textures = new Set<Texture>();
   const skeletons = new Set<Skeleton>();
+  const instances = new Set<InstancedMesh>();
+  const images = new Set<unknown>();
   for (const root of roots)
     root.traverse((node) => {
       if (!isMesh(node)) return;
@@ -80,6 +83,7 @@ export function disposeObjects(
       for (const material of Array.isArray(node.material) ? node.material : [node.material])
         materials.add(material);
       if ('skeleton' in node) skeletons.add(node.skeleton as Skeleton);
+      if (node instanceof InstancedMesh) instances.add(node as InstancedMesh);
     });
   for (const material of materials) {
     for (const value of Object.values(material) as unknown[])
@@ -89,12 +93,20 @@ export function disposeObjects(
   for (const texture of textures) {
     // ImageBitmap.close releases the decoded CPU image as well as the GPU map.
     const image: unknown = texture.source.data;
-    if (image && typeof image === 'object' && 'close' in image && typeof image.close === 'function')
+    if (
+      !images.has(image) &&
+      image &&
+      typeof image === 'object' &&
+      'close' in image &&
+      typeof image.close === 'function'
+    )
       (image as { close(): void }).close();
+    images.add(image);
     texture.dispose();
   }
   for (const geometry of geometries) geometry.dispose();
   for (const skeleton of skeletons) skeleton.dispose();
+  for (const mesh of instances) mesh.dispose();
 }
 
 export function createScene(
@@ -102,7 +114,7 @@ export function createScene(
   rendererFactory: (canvas: HTMLCanvasElement) => WebGLRenderer = (canvas) =>
     new WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: false })
 ): SceneHandle {
-  const { canvas, assets, frames, motion } = options;
+  const { canvas, assets, frames, random } = options;
   let size = options.size;
   let ratio = options.pixelRatio;
   let renderer: WebGLRenderer;
@@ -124,6 +136,13 @@ export function createScene(
   let biscuit: Biscuit | undefined;
   let lights: ReturnType<typeof lighting> | undefined;
   let contact: ReturnType<typeof disc> | undefined;
+  let stillFire: ReturnType<typeof fireStill> | undefined;
+  let motion: ReturnType<typeof createMotion> | undefined;
+  let idle: ReturnType<typeof createIdle> | undefined;
+  let fire: ReturnType<typeof createFire> | undefined;
+  let weather: ReturnType<typeof createWeather> | undefined;
+  let pendingTexture: Texture | undefined;
+  let live = false;
   let retired: Material[] = [];
   let state: SceneState | undefined;
   let animations = false;
@@ -138,7 +157,7 @@ export function createScene(
     if (disposed) return;
     failed = true;
     ready = false;
-    motion?.stop();
+    loop.stop();
     options.onError(error);
   };
   const draw = (): boolean => {
@@ -161,29 +180,78 @@ export function createScene(
       return false;
     }
   };
-  const update = (): void => {
-    if (!state || !cabin || !biscuit || !lights || !contact) return;
-    biscuit.apply(state, cabin);
+  const transforms = (): void => {
+    if (!biscuit || !contact) return;
     contact.position.copy(biscuit.root.position).y += 0.002;
-    lights.apply(state);
-    frameCamera(camera, cabin.cameras[state.camera], size);
     world.updateMatrixWorld(true);
   };
+  const update = (): void => {
+    if (!state || !cabin || !biscuit || !lights || !contact) return;
+    frameCamera(camera, cabin.cameras[state.camera], size);
+    idle?.clear();
+    if (animations) {
+      if (!live) {
+        biscuit.apply(state, cabin);
+        biscuit.stop();
+        live = true;
+      }
+      motion?.apply(state);
+      motion?.update(0);
+      idle?.clear();
+      idle?.update(state, 0);
+    } else {
+      if (live) motion?.reset();
+      live = false;
+      biscuit.apply(state, cabin);
+    }
+    if (fire) fire.root.visible = animations;
+    if (weather) {
+      weather.root.visible = animations;
+      weather.apply(state.weather);
+    }
+    if (stillFire) stillFire.visible = !animations;
+    lights.apply(state, animations);
+    if (animations) {
+      lights.update(0, fire?.update(0, camera));
+      weather?.update(0, camera);
+    }
+    transforms();
+  };
+  const canAnimate = (): boolean => ready && animations && !lost && !disposed;
+  const loop = createFrameLoop(
+    frames,
+    (dt) => {
+      if (!canAnimate() || !state) return;
+      idle?.clear();
+      motion?.update(dt);
+      // An arrival callback may synchronously apply a motion-off state.
+      if (!canAnimate()) return;
+      idle?.clear();
+      idle?.update(state, dt);
+      lights?.update(dt, fire?.update(dt, camera));
+      weather?.update(dt, camera);
+      transforms();
+      draw();
+    },
+    fail
+  );
   const apply = (next: SceneState, active: boolean): void => {
     state = next;
     animations = active;
     if (!ready || lost || disposed) return;
     update();
-    if (active && motion) {
-      motion.apply(next);
-      motion.start(frames);
-    } else {
-      motion?.stop();
-      draw();
-    }
+    // A running loop draws this state on its next frame; a draw here would double it.
+    if (canAnimate() && loop.running) return;
+    if (draw() && canAnimate()) loop.start();
+    else loop.stop();
   };
   const clear = (): void => {
     ready = false;
+    loop.stop();
+    idle?.clear();
+    motion?.dispose();
+    pendingTexture?.dispose();
+    pendingTexture = undefined;
     biscuit?.dispose();
     disposeObjects([world], retired);
     retired = [];
@@ -192,6 +260,12 @@ export function createScene(
     cabin = undefined;
     lights = undefined;
     contact = undefined;
+    stillFire = undefined;
+    motion = undefined;
+    idle = undefined;
+    fire = undefined;
+    weather = undefined;
+    live = false;
   };
   const load = async (): Promise<void> => {
     const current = ++generation;
@@ -213,32 +287,45 @@ export function createScene(
         );
     };
     options.onProgress(0);
-    const results = await Promise.allSettled(
-      [assets.biscuit, assets.cabin].map(async (url, index) => {
-        const gltf = await loader.loadAsync(url, (event) => {
-          progress(index, event.loaded);
-        });
-        progress(index, expected[index] ?? 0);
-        return gltf;
-      })
-    );
+    const fireTexture = new TextureLoader().loadAsync(assets.fire);
+    const [results, texture] = await Promise.all([
+      Promise.allSettled(
+        [assets.biscuit, assets.cabin].map(async (url, index) => {
+          const gltf = await loader.loadAsync(url, (event) => {
+            progress(index, event.loaded);
+          });
+          progress(index, expected[index] ?? 0);
+          return gltf;
+        })
+      ),
+      fireTexture.then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error })
+      )
+    ]);
     const roots = results.flatMap((result) =>
       result.status === 'fulfilled' ? [result.value.scene] : []
     );
     if (disposed || current !== generation) {
       disposeObjects(roots);
+      if ('value' in texture) texture.value.dispose();
       return;
     }
     const model = results[0];
     const room = results[1];
-    if (model?.status !== 'fulfilled' || room?.status !== 'fulfilled') {
+    if (model?.status !== 'fulfilled' || room?.status !== 'fulfilled' || !('value' in texture)) {
       disposeObjects(roots);
+      if ('value' in texture) texture.value.dispose();
       throw new Error('The scene assets could not be loaded', {
-        cause: results.find((result) => result.status === 'rejected')
+        cause:
+          results.find((result) => result.status === 'rejected') ??
+          ('error' in texture ? texture.error : undefined)
       });
     }
     // Own both roots before validation, so even a rejected contract is cleaned up.
     world.add(...roots);
+    // Own the texture before validating either GLB, including failure cleanup.
+    pendingTexture = texture.value;
     cabin = requireCabin(room.value.scene);
     retired.push(
       ...paint(model.value.scene, biscuitRamp(), true),
@@ -248,26 +335,35 @@ export function createScene(
     world.add(biscuit.root);
     lights = lighting(cabin);
     contact = disc();
-    const fire = fireStill();
-    fire.position.copy(cabin.fireAnchor.getWorldPosition(new Vector3())).y += 0.25;
-    fire.quaternion.copy(cabin.fireAnchor.getWorldQuaternion(new Quaternion()));
-    world.add(lights.root, contact, fire, vignette());
+    stillFire = fireStill();
+    stillFire.position.copy(cabin.fireAnchor.getWorldPosition(new Vector3())).y += 0.25;
+    stillFire.quaternion.copy(cabin.fireAnchor.getWorldQuaternion(new Quaternion()));
+    world.add(lights.root, contact, stillFire, vignette());
+    motion = createMotion({
+      biscuit,
+      clips: model.value.animations,
+      table: assets.clips,
+      cabin,
+      onArrived: options.onArrived
+    });
+    idle = createIdle(biscuit, cabin, random);
+    fire = createFire(cabin, texture.value, random);
+    world.add(fire.root);
+    pendingTexture = undefined;
+    weather = createWeather(cabin, random);
+    world.add(weather.root);
     ready = true;
     options.onProgress(1);
     update();
     if (!renderer.getContext().isContextLost()) {
-      draw();
-      if (animations && motion && state) {
-        motion.apply(state);
-        motion.start(frames);
-      }
+      if (draw() && canAnimate()) loop.start();
     }
   };
   const contextLost = (event: Event): void => {
     event.preventDefault();
     if (disposed || lost) return;
     lost = true;
-    motion?.stop();
+    loop.stop();
     options.onContextLost();
   };
   const contextRestored = (): void => {
@@ -282,11 +378,7 @@ export function createScene(
           material.needsUpdate = true;
     });
     update();
-    draw();
-    if (!lost && animations && motion && state) {
-      motion.apply(state);
-      motion.start(frames);
-    }
+    if (draw() && canAnimate()) loop.start();
   };
   canvas.addEventListener('webglcontextlost', contextLost);
   canvas.addEventListener('webglcontextrestored', contextRestored);
@@ -302,10 +394,19 @@ export function createScene(
       renderer.setPixelRatio(Math.min(ratio, 2));
       renderer.setSize(Math.max(1, size.width), Math.max(1, size.height), false);
       update();
-      draw();
+      if (draw() && canAnimate()) loop.start();
+      else loop.stop();
     },
     hit(x, y) {
-      return ready && !lost && cabin && biscuit ? hitAt(x, y, size, camera, cabin, biscuit) : null;
+      if (!ready || lost || !cabin || !biscuit) return null;
+      // Raycasting reads each skinned mesh's cached sphere. The renderer refreshes
+      // skeletons itself every frame, so both are brought up to date here, at tap
+      // rate, rather than over every vertex on every frame.
+      for (const mesh of biscuit.meshes) {
+        mesh.skeleton.update();
+        mesh.computeBoundingSphere();
+      }
+      return hitAt(x, y, size, camera, cabin, biscuit);
     },
     capture() {
       if (!ready || lost || disposed || !state || size.width <= 0 || size.height <= 0)
@@ -343,7 +444,6 @@ export function createScene(
       generation += 1;
       canvas.removeEventListener('webglcontextlost', contextLost);
       canvas.removeEventListener('webglcontextrestored', contextRestored);
-      motion?.dispose();
       clear();
       renderer.dispose();
     },
