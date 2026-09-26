@@ -97,6 +97,7 @@ none writes over the approved source. See [Blender provenance](../../blender/REA
 | `just check-cabin-self-test` | Exercise the room checker with deliberate contract violations. |
 | `just assets-build <name>` | Build `biscuit` or `cabin` through the offline, pinned gltf-transform pipeline; write the manifest and clip metadata. Budgets are 6,291,456 and 3,145,728 bytes respectively. |
 | `just assets-inspect <path>` | Measure a GLB's meshes, primitives, triangles, image payload and bytes. |
+| `just assets-placeholder <copied-preview> [output]` | Pad the approved standing preview to a 1170 × 2532 WebP placeholder; defaults to `stills/idle.morning.webp`. |
 | `just check-model-asset [path]` | Load Biscuit in three.js and verify its rig, baked clips, morph channels and bind height. |
 | `just assets-tools-help` | Show the pinned transform CLI's resize and join flags. |
 | `just check-assets` | Check manifest completeness, hashes, budgets and provenance, including checker self-tests. Part of `just check`. |

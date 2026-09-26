@@ -1,7 +1,7 @@
 ---
 id: P03
 title: "Asset pipeline: `build_assets.sh`, the clip table, budgets measured on the proof export"
-status: open
+status: done
 depends_on: [P02]
 parallel_with: [P01, P06, P09]
 branch: ticket/p03-asset-pipeline
@@ -219,20 +219,20 @@ is gitignored; `just check` fails if any of them lands anywhere else.
 
 ## Acceptance criteria
 
-- [ ] `scripts/build_assets.sh biscuit` runs from a clean `ai_tmp/` to a served file and
+- [x] `scripts/build_assets.sh biscuit` runs from a clean `ai_tmp/` to a served file and
       a clip table, and `scripts/build_assets.sh cabin` refuses a missing
       `blender/out/cabin-raw.glb` with exit 2.
-- [ ] `src/lib/assets/biscuit.glb` is under 6,291,456 bytes; `npx gltf-transform inspect`
+- [x] `src/lib/assets/biscuit.glb` is under 6,291,456 bytes; `npx gltf-transform inspect`
       shows `EXT_meshopt_compression` and `EXT_texture_webp` among the extensions, no
       image wider than 1024, no occlusion image wider than 512, and no `normalTexture`.
-- [ ] The skin (33 joints, in order), the five sweater morph targets and the `idle.stand`
+- [x] The skin (33 joints, in order), the five sweater morph targets and the `idle.stand`
       animation survive (Step 6's assertions pass on the served file).
-- [ ] `src/lib/assets/biscuit.clips.json` lists `idle.stand` with `seconds` 4 (120 frames
+- [x] `src/lib/assets/biscuit.clips.json` lists `idle.stand` with `seconds` 4 (120 frames
       at 30 fps; a small rounding is fine and is recorded), `loop` true, `stride` 0, and
       `height` within 0.01 of 3.113.
-- [ ] The before and after table in the hand-back notes has a row per stage with meshes,
+- [x] The before and after table in the hand-back notes has a row per stage with meshes,
       primitives, triangles, bytes and texture bytes, and a stated draw-call figure.
-- [ ] `just check-assets` and `just check` are green; `git status` shows nothing under
+- [x] `just check-assets` and `just check` are green; `git status` shows nothing under
       `ai_tmp/` tracked.
 
 ## Verification
@@ -257,17 +257,75 @@ check` green.
 
 ## Hand-back notes
 
-Filled in by the agent that executes this ticket.
+Measured on P02's canonical proof export on 2026-09-25, before P04 replaces it with
+the complete clip set. Every stage retains 86,828 triangles. Draw calls include the
+runtime's duplicate outline geometry (`primitives × 2`). The rebuild records the full
+machine-readable measurements in gitignored `ai_tmp/biscuit-pipeline.jsonl`.
 
-- The before and after table (Step 5), and the final triangles, primitives, draw calls,
-  bytes and texture bytes of the served file.
-- §11 claim 5: what `join` did to the skin, the morph targets and the animation, and
-  whether `--keepNamed` was needed for `biscuit`.
-- §11 claim 6 (first half): which quality and size steps were needed to reach the budget,
-  and whether `simplify` ran, with its error figure.
-- §11 claim 7: the draw-call figure and whether `palette` ran.
-- Any flag substitution against CONVENTIONS.md §4.3 (Step 2).
-- Whether `@gltf-transform/core` resolved as a direct import (Step 3).
+| Stage | Meshes | Primitives | Draw calls | File bytes | Texture bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Raw proof | 148 | 154 | 308 | 16,151,816 | 11,418,773 |
+| Prune | 148 | 154 | 308 | 15,824,716 | 11,191,407 |
+| Deduplicate | 148 | 154 | 308 | 15,685,148 | 11,191,407 |
+| Flatten | 148 | 154 | 308 | 15,685,148 | 11,191,407 |
+| CLI join | 148 | 154 | 308 | 15,685,148 | 11,191,407 |
+| Skin-aware join | 13 | 14 | 28 | 15,770,564 | 11,191,407 |
+| Strip normals | 13 | 14 | 28 | 10,263,172 | 6,404,761 |
+| Resize colour to 1024 | 13 | 14 | 28 | 7,019,444 | 3,161,040 |
+| Resize occlusion to 512 | 13 | 14 | 28 | 6,766,208 | 2,907,813 |
+| WebP quality 82 | 13 | 14 | 28 | 3,925,256 | 66,342 |
+| Meshopt medium | 13 | 14 | 28 | 1,212,704 | 66,342 |
+
+The raw export matches the 148 parts, 86,828 triangles, 27 materials and 27 images
+in the approved package. Its 154 primitives reflect six additional material slots,
+so meshes and draw calls were measured separately. Deduplication leaves 14 materials.
+No palette, simplification, quality reduction or smaller texture fallback was needed.
+
+The pinned CLI's `join` explicitly skips skinned nodes and morph targets; its output
+left all 154 primitives. `scripts/join_assets.mjs` therefore concatenates compatible
+primitives with the same skin, parent, bind transform, material and attribute layout,
+using the pinned library's `joinPrimitives`. Animated nodes and morph meshes stay
+separate. Original named nodes and their extras remain as leaves. The sweater's five
+named targets and baked weight channels survive unchanged; no `keepNamed` fallback
+is needed for Biscuit. Unit tests exercise preserved weights, morphs, animation targets
+and incompatible bind transforms.
+
+Meshopt's default per-mesh quantization clones a skin for every mesh. The pipeline
+uses its supported `--quantization-volume scene` option, so deduplication leaves one
+skin with the 33 joints in `rig.json` order. Quantization stores the scale and offset
+in inverse-bind matrices; the clip table recovers that transform from the stationary
+root's bind matrix. The proof's measured height is 3.11312993250124 model units.
+`idle.stand` lasts 3.9666666984558105 seconds (120 samples spanning 119 intervals at
+30 fps), loops and has stride zero.
+
+`resize` has no `--slots`: the occlusion pass uses `--pattern '*occlusion*'`, a glob
+matching every packed occlusion/roughness image. This also corrects the conventions'
+regular-expression-shaped pattern. The local CLI is called directly and cannot
+download a missing package. `@gltf-transform/core`, extensions and functions resolve
+from the pinned CLI dependency tree without a new dependency. Meshopt encoder and
+decoder dependencies are registered for every read/write helper.
+
+The cabin branch retains empty leaves, skips flattening, and calls the library's
+`join({ keepNamed: true, cleanup: false })` directly: the CLI wrapper implicitly
+flattens even with `keepNamed`, which would break item parents and anchor names.
+The branch preserves the hierarchy P05's checker consumes.
+
+`just check-model-asset` proves the ordered skin, five named morphs, live animation
+targets, weights, bounds, texture limits and byte/draw budgets. It also loads the GLB
+with the actual three.js `GLTFLoader` and plays every clip through `AnimationMixer`;
+embedded textures decode through an injected sharp loader, with no browser globals
+stubbed. Both the joined proof and the served proof pass.
+
+The P03 commit includes `stills/idle.morning.webp`, generated from the approved
+`standing-hero.png` preview by `just assets-placeholder`. The helper centres the preview
+on a 1170 × 2532 canvas matching its ground colour, encodes WebP at quality 80 and
+enforces the 262,144-byte budget. P04 replaces that placeholder with its rendered set.
+No source repository was modified and no network operation ran.
+
+`just check-assets` and the full `just check` passed on 2026-09-25: 36 unit tests,
+static checks, coverage, builds, browser stories, documentation, agents and specs.
+The three-entry manifest records the proof assets and placeholder with their budgets.
+No check changed the worktree and no `ai_tmp/` file is tracked.
 
 ## Open points
 

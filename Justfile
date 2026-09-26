@@ -155,6 +155,9 @@ assets-tools-help:
 assets-format *paths:
     node_modules/.bin/prettier --write "$@"
 
+assets-placeholder input output="src/lib/assets/stills/idle.morning.webp":
+    node scripts/placeholder_still.mjs "$1" "$2"
+
 # ------------------------------------------------------------------- model ---
 
 # blender/out/biscuit-clips.blend: the approved .blend plus every clip under
