@@ -30,4 +30,4 @@ def build(rig, start, *, ik_probe=False):
             paw_target(rig, "front", "L", frame, (0, 0, 0))
         paw_target(rig, "front", "L", start + 12, (0, 0, 0.05))
         paw_target(rig, "front", "L", start + 24, (0, 0, 0))
-    return finish(rig, NAME, start)
+    return finish(rig, start)

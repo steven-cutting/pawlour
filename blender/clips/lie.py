@@ -24,4 +24,4 @@ def build(rig, start):
     key_all(rig, start + FRAMES - 8, exclude=("neck", "head"))
     key_all(rig, start + FRAMES)
     plant_all(rig, start + FRAMES)
-    return finish(rig, NAME, start, footsteps=(first_points, footprints(), STEPS))
+    return finish(rig, start, footsteps=(first_points, footprints(), STEPS))

@@ -19,4 +19,4 @@ def build(rig, start):
     for side in ("L", "R"):
         key_bone(rig, f"ear.1.{side}", start + 10, rotation=(0, 0, 0))
         key_bone(rig, f"ear.1.{side}", start + 24, rotation=(-12, 0, 0))
-    return finish(rig, NAME, start)
+    return finish(rig, start)

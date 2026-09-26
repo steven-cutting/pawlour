@@ -58,7 +58,7 @@
       "name": "walk",
       "seconds": 0.9666666388511658,
       "loop": true,
-      "stride": 0.8
+      "stride": 1
     }
   ],
   "height": 3.11312993250124

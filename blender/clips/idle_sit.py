@@ -16,4 +16,4 @@ def build(rig, start):
     for bone, yaw in (("neck", 18), ("head", 7)):
         for frame, angle in ((40, 0), (55, yaw), (70, yaw), (85, 0)):
             key_bone(rig, bone, start + frame, rotation=(0, angle, 0))
-    return finish(rig, NAME, start)
+    return finish(rig, start)

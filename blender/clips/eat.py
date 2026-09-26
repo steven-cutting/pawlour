@@ -17,4 +17,4 @@ def build(rig, start):
         key_bone(rig, "head", start + frame, rotation=(-25, 0, 4 if index % 2 == 0 else -4))
     for frame, pitch in ((46, -45), (52, -25), (58, -45)):
         key_bone(rig, "neck", start + frame, rotation=(pitch, 0, 0))
-    return finish(rig, NAME, start)
+    return finish(rig, start)

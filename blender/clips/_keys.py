@@ -172,7 +172,7 @@ def strip(rig, action, name, start):
     return int(clip.frame_end) + 1
 
 
-def finish(rig, name, start, *, linear_paths=(), footsteps=None):
+def finish(rig, start, *, linear_paths=(), footsteps=None, paw_rotation=None):
     action = rig.animation_data.action
     ease(curves(action))
     for curve in curves(action):
@@ -181,8 +181,8 @@ def finish(rig, name, start, *, linear_paths=(), footsteps=None):
                 key.interpolation = "LINEAR"
     if footsteps is not None:
         step_paws(rig, action, *footsteps)
-    flat_paws(rig, action)
-    return strip(rig, action, name, start)
+    flat_paws(rig, action, paw_rotation)
+    return strip(rig, action, action.name, start)
 
 
 def step_paws(rig, action, first_points, last_points, intervals):
@@ -213,8 +213,8 @@ def step_paws(rig, action, first_points, last_points, intervals):
                 key.interpolation = "LINEAR"
 
 
-def flat_paws(rig, action):
-    """Bake world-level paws: native IK solves the ankle, not the sole angle."""
+def flat_paws(rig, action, airborne_rotation=None):
+    """Bake sole angles, optionally rotating lifted paws during their flight."""
     paws = [
         rig.pose.bones[f"{limb}.paw.{side}"]
         for limb, side in PAWS
@@ -235,10 +235,15 @@ def flat_paws(rig, action):
         for paw in paws:
             parent = evaluated.pose.bones[paw.parent.name]
             rest = paw.parent.bone.matrix_local.inverted() @ paw.bone.matrix_local
+            world_rotation = paw.bone.matrix_local.to_quaternion()
+            if airborne_rotation is not None:
+                world_rotation = (
+                    airborne_rotation(paw.name, (frame - first) / (last - first)) @ world_rotation
+                )
             rotation = (
                 rest.to_quaternion().inverted()
                 @ parent.matrix.to_quaternion().inverted()
-                @ paw.bone.matrix_local.to_quaternion()
+                @ world_rotation
             )
             if paw.name in previous:
                 rotation.make_compatible(previous[paw.name])

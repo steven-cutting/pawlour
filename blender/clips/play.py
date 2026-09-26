@@ -55,4 +55,4 @@ def build(rig, start):
     key_bone(rig, "tail.1", start + 86, rotation=(0, 0, 0))
     # Linear control travel preserves world-space clearance through the return;
     # separate Bezier handles in rotated local axes can dip beneath the floor.
-    return finish(rig, NAME, start, linear_paths={'pose.bones["CTRL.front.paw.L"].location'})
+    return finish(rig, start, linear_paths={'pose.bones["CTRL.front.paw.L"].location'})

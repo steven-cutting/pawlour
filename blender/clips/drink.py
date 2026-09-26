@@ -15,4 +15,4 @@ def build(rig, start):
             key_bone(rig, bone, start + frame, rotation=(pitch, 0, 0))
     for frame, nod in ((18, 6), (26, -6), (34, 6), (42, -6)):
         key_bone(rig, "head", start + frame, rotation=(-25 + nod, 0, 0))
-    return finish(rig, NAME, start)
+    return finish(rig, start)

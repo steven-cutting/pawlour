@@ -136,21 +136,24 @@ done without it. Pushing and the pull request are separately authorised.
    from frame 40 to 55, held to 70, back by 85. Nothing on the tail (the runtime sways it,
    §5.4).
 
-3. **`walk`** (30 frames, loop; `STRIDE = 0.8`, a module-level constant with a comment
+3. **`walk`** (30 frames, loop; `STRIDE = 1.0`, a module-level constant with a comment
    that it is model units of ground travel per cycle and that the runtime multiplies it
    by its scale). `preset('standing')`, `ik_on` for all four paws at frames 0 and 30
    (influence 1 across the strip and no key outside it, §4.1, so the action's range is
    the loop's and frames 0 and 30 match). A lateral-sequence walk: paw
    phase offsets `hind.L` 0, `front.L` 0.25, `hind.R` 0.5, `front.R` 0.75 of the cycle.
    Each paw target, over its cycle: stance for 65% of the cycle, moving on the ground
-   through `STRIDE × 0.65 = 0.52` units along model Y (forward is −Y, so the paw
+   through `STRIDE × 0.65 = 0.65` units along model Y (forward is −Y, so the paw
    travels backward under the body while she moves forward); swing for 35%, lifting
-   0.18 units at mid-swing and returning to the starting footprint. Keys every 3 author
-   frames plus exact landing/liftoff boundaries; linear target travel cancels runtime
-   movement over the actual 29-frame interval. `root` bobs on its local Y (world Z)
-   by ±0.03 about a −0.08 offset at twice the cycle frequency; `root`'s
+   0.10 units at mid-swing and returning along a quintic curve that matches stance
+   velocity at contact. Front target sweeps are centred 0.17 units toward +Y from
+   their rest positions, beneath the shoulders. Keys every quarter actual frame plus
+   exact landing/liftoff boundaries; linear target travel cancels runtime movement
+   over the actual 29-frame interval. Paws have a small toe rotation only in flight;
+   their complete soles remain level throughout stance. `root` bobs on its local Y
+   (world Z) by ±0.01 about a −0.045 offset at twice the cycle frequency; `root`'s
    local X and Z never move (authored in place, §4.1). `neck` steady; `tail.1` +10° up
-   and held. `spine` yaw ±3° in counter-phase with the hind paws.
+   and held. `spine` yaw ±2° in counter-phase with the hind paws.
 
 4. **`sit`** (30 frames, one-shot) and **`lie`** (36 frames, one-shot). `sit`:
    `preset('standing')` keyed at 0, `preset('sitting')` keyed at 30, `ease`; the head
@@ -225,13 +228,14 @@ done without it. Pushing and the pull request are separately authorised.
    maintainer the sheet path and wait. Record the date and the verdict per clip in the
    hand-back notes. A refused clip is reworked and re-sheeted; the earlier sheet's
    findings are kept in the notes. The walk's original 1.6-unit stride was shortened to
-   0.8 and stance lengthened to 65% during this review; the head remains level. Review
+   0.8, then revised to 1.0 with a higher stance and lower paw lift after the
+   maintainer's gait review; stance is 65% and the head remains level. Review
    planted whole soles under matching runtime travel, including the exported asset.
 
 10. **Export, build, stills.** `just model-export`; `just assets-build biscuit`; then the
     eighteen stills (`for a in idle sleep.bed sleep.chair drink eat play; do for p in
     morning evening night; do ...; done; done`); `just assets-manifest`; read the diff:
-    ten clips in `biscuit.clips.json` with `walk`'s `stride` 0.8, `biscuit.glb` under
+    ten clips in `biscuit.clips.json` with `walk`'s `stride` 1.0, `biscuit.glb` under
     6,291,456 bytes, eighteen new manifest entries with `source` `built:<today>`,
     `licence` `platform`, `budget` `262144`. `just check-assets` green.
 
@@ -315,7 +319,12 @@ the maintainer identified sliding feet and tilted front paws, naming `pet`, `wal
 The refreshed previews show a neutral ground grid; walk includes runtime travel
 with a following camera. No visual approval is recorded.
 
-The walk uses the ticket's shorter-stride fallback: `STRIDE = 0.8` model units,
+The next review on 2026-09-25 rejected the walk's overall motion as unnatural,
+especially the hind-leg bend. The maintainer requested a miniature-poodle walk
+and explicitly permitted hind-leg proportion changes if useful. The revised gait
+is ready for review; numerical contact checks alone do not establish visual acceptance.
+
+The first contact-corrected walk used the shorter-stride fallback: `STRIDE = 0.8` model units,
 65% stance, and a steady neck. The initial 1.6-unit cycle showed excessive reach
 and a triangular sweater deformation; its sheet remains at
 `ai_tmp/clips/walk-stride1.6.jpg` for comparison. Shortening the stride alone did
@@ -327,22 +336,36 @@ Walk target heights also compensate for their inherited root bob so the stance
 targets stay grounded. The final sheets have been checked for that deformation;
 this is agent review, not the maintainer's visual approval.
 
-The walk's stance excursion is `STRIDE × STANCE = 0.52`, correcting the original
+That revision's stance excursion was `STRIDE × STANCE = 0.52`, correcting the original
 step 3's full-stride excursion during stance: that wording would move planted paws
 1/0.65 times faster than the runtime speed in CONVENTIONS.md §4.3 and §5.1.
 Landing and liftoff have explicit keys. Linear target translation and matching
 root compensation preserve footprints between keys over the actual 29-frame
-interval. A 0.08-unit downward body offset keeps the native front-leg IK in
+interval. A 0.08-unit downward body offset kept the native front-leg IK in
 reach, while retaining its ±0.03 bob. The previous sheet is retained as
 `ai_tmp/clips/walk-before-stride-fix.jpg`. With runtime travel simulated at
 `0.8 / (29/30) = 0.827586207` model units/second, 101 native samples per paw
-measure at most 0.000368 whole-sole drift after the contact correction below.
+measured at most 0.000368 whole-sole drift after the contact correction below.
 `just model-check-clips` checks evaluated heel, toe and side markers on the sole,
 including simulated runtime translation, and permits at most 0.001 model units
 of drift or distance from the ground during each planted interval. The original
 full-stride stance is retained as an unsaved regression mutation in
 `ai_tmp/prove_walk_regression.py`. The walk animation preview is
 `ai_tmp/clips/walk-preview.webp` (30 frames over 967 milliseconds).
+
+The gait follow-up centres the front paw sweep beneath the shoulders, allowing
+a higher torso with only 0.045 units of downward offset and ±0.01 bob. Stride is
+now 1.0 and swing lift 0.10; a smooth return curve and mild toe rotation in flight
+replace the stiff return. Quarter-frame target samples retain exact contacts.
+The native hind knee's internal angle at the sampled swing peak opens from about
+65° to 82°, reducing the folded appearance. Local Biscuit side and rear photographs
+in D's `biscuit_pics/raw/full/miami/` informed the silhouette review; their elevated
+camera angles do not support precise bone-length measurements. Bone proportions,
+rest poses and weights remain unchanged. The moving side comparison is
+`ai_tmp/clips/walk-side-before-preview.webp` beside `walk-side-preview.webp` in
+the review gallery, alongside the updated three-quarter view and contact sheet.
+The revised walk's actual Paw geometry was checked at 401 times: maximum numerical
+floor penetration is 0.0000563 model units. Visual acceptance remains pending.
 
 The maintainer's foot-contact review exposed two separate native defects:
 optional IK pins the ankle but lets the sole inherit the lower-leg rotation,
@@ -358,7 +381,7 @@ Earlier sheets, previews and the derived blend are retained under
 `ai_tmp/clips/before-foot-contact/`.
 
 All ten clips pass the native whole-sole check. Maximum planted drift is 0.000831
-for `sit`, 0.000368 for `walk`, 0.000259 for `play`, 0.0000640 for `drink` and
+for `sit`, 0.000161 for the revised `walk`, 0.000259 for `play`, 0.0000640 for `drink` and
 `eat`, 0.0000279 for `idle.stand`, 0.0000197 for `lie`, below 0.0000003 for the
 resting loops, and zero for `pet`. `ai_tmp/prove_sole_regression.py` disables only
 paw counter-rotation in memory: the unchanged pinned ankle still appears correct,
@@ -392,11 +415,11 @@ for all ten clips, plus whole-motion floor clearance, through Three.js. Maximum
 served sole drift is 0.000986281 model units, below the unchanged 0.003 limit.
 The authored blend remains at 30 fps and every clip duration stays unchanged.
 
-The served `biscuit.glb` is 2,524,748 bytes with 86,828 triangles, 14 primitives
+The served `biscuit.glb` is 2,525,000 bytes with 86,828 triangles, 14 primitives
 and an estimated 28 draw calls. The asset checker loads it through real Three.js
 playback and verifies the exact clip set, durations, root channels, 33-joint skin
 and five sweater morphs. The table reports bind height `3.11312993250124` and
-walk stride `0.8`.
+walk stride `1.0`.
 
 The still renderer uses the six specified activity frames, three phase world
 colours and absolute key-light energies 1.45, 0.9 and 0.5. It preserves the native

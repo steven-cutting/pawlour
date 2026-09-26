@@ -15,4 +15,4 @@ def build(rig, start):
         key_bone(rig, "head", start + frame, rotation=(-15, 0, 0))
     for frame, angle in ((60, 0), (90, 6), (120, 0)):
         key_bone(rig, "ear.1.L", start + frame, rotation=(angle, 0, 0))
-    return finish(rig, NAME, start)
+    return finish(rig, start)
