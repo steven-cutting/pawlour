@@ -38,6 +38,8 @@ rather than in a shell history.
 | `just dev` | Vite development server with hot module replacement. |
 | `just preview` | Serve the built output in `build/`. Build first, and set the same `BASE_PATH` — see [Configuration](configuration.md). |
 | `just storybook` | The component workshop on port 6006, with hot module replacement. |
+| `just scene-stub` | Write a disposable cabin GLB with the scene's required node contract to `ai_tmp/stub-cabin/cabin.glb`. |
+| `just scene-review <script>` | Run a local Node scene diagnostic or Chromium review script. Disposable scripts and evidence belong in `ai_tmp/`; this does not start a server or publish anything. |
 
 ## Format and repair
 

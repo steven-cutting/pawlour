@@ -46,10 +46,13 @@ routes/           assembles the page, and is the only place a port is built
 The direction is one way and is described in
 [Layering and dependency direction](layering.md).
 
-There is no rules layer yet: the seed tree is a route, a lockup component and three
-ports. When this game has rules, they belong in pure modules under `src/lib/` between the
-components and the ports, fed their clock and randomness as arguments rather than
-imports, so that the whole of the behaviour is testable without a browser.
+The director and other game rules are pure modules under `src/lib/domain/`, fed
+their inputs and randomness as arguments. `src/routes/scene/` draws the director's
+state with three.js. Its component prerenders an accessible still; after hydration
+it loads and validates the GLBs, then replaces the still after the first successful
+frame. Context loss restores the still without changing game state, and a named
+retry button attempts recovery. Page controls and animated playback are separate
+integration work.
 
 ## State
 
@@ -65,10 +68,10 @@ may already have written, so nothing found there is believed without being check
 
 ## Side effects
 
-Five things reach outside the pure core: storage, randomness, the clock, the device's
+The pure core receives storage, randomness, the clock, frames, the device's
 colour-scheme and reduced-motion preferences, and the device's keyboard. Each sits
 behind a port with a real adapter and an in-memory fake, so the entire application
-above them is testable without a browser. The first three are in `src/lib/ports/`; the
+above them is testable without a browser. The first four are in `src/lib/ports/`; the
 last two are the platform's and arrive from `@steven-cutting/biscuit-games`. A side
 effect this game adds gets a port there in the same shape. The reasoning is in
 [Decision 0002](../decisions/0002-ports-and-fakes.md).

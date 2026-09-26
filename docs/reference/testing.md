@@ -111,7 +111,16 @@ should be deleted rather than covered; see
 | `platformSpecs.test.ts` | The six figures `src/lib/config.ts` mirrors, held equal to the modules `@steven-cutting/biscuit-games` ships and to any module under `docs/specs/` that states them; and every clause `tests/restated.ts` lists, held to the platform's text word for word. |
 | `lockup.test.ts` | That the lockup names this game after the platform, with the mark silent. This game's file. |
 | `route.test.ts` | The page: the heading the platform header draws for this game, and a main landmark to put the game in. This game's file. |
+| `scene-canvas.test.ts` | The scene's captioned still without WebGL, explicit `webgl: false`, state changes, and capture without a drawable frame. No browser global is stubbed. |
+| `scene-assets.test.ts` | Real GLB loading, cabin and rig contracts, generated and broken stubs, quantized bind height, shared outline deformation, fixed poses, camera horizons and portrait framing, hit tests, gestures, still selection and resource disposal. Embedded images are decoded through a local GLTFLoader plugin. |
 | `stories/` | Each component rendered in every state its surface names, in Chromium with axe over every one, and the figures only a layout engine can produce: the seed story frames the header at the narrowest supported width and measures every control there. |
+
+The GPU adapter stays in `src/routes/scene/`, outside the unchanged `src/lib/**`
+coverage boundary. Its real WebGL checks use a disposable review route and a local
+Chromium script, run with `just scene-review <script>`. The renderer factory permits
+counting draws without replacing a global. The ticket records capture pixels,
+context loss and recovery, pointer hits, keyboard retry, draw calls and the
+maintainer's visual review. Disposable probes and screenshots stay in `ai_tmp/`.
 
 ## Related pages
 

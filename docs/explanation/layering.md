@@ -13,6 +13,7 @@ Three layers, and imports only ever run downwards.
 | Layer | May import | Must not |
 | --- | --- | --- |
 | `src/routes/` | components, ports, brand, config, the platform package | be imported by anything below it |
+| `src/routes/scene/` | the director's state and types, injected ports, three.js | decide game behaviour or subscribe to frames while motion is off |
 | `src/lib/components/` | components, brand, config, platform components and types | import a port adapter or reach for a browser global |
 | `src/lib/ports/` | config | import a component or a route |
 | `@steven-cutting/biscuit-games` | nothing here | be copied back into `src/` |
@@ -21,11 +22,16 @@ Three layers, and imports only ever run downwards.
 package is below every layer: it is a dependency, so anything may name it and it names
 nothing here.
 
-There is no rules layer yet. When this game has rules, they go in pure modules under
-`src/lib/` between the components and the ports, and the components row already says what
-a component may do with them: name a type, render a value, and call the callback it was
-handed. A component may not construct a port, reach for a browser global, or keep a fact
-the rules own as view state of its own.
+The pure rules live under `src/lib/domain/`. A component may name their types, render
+their values and call the callbacks it was handed. It may not construct a port, reach
+for a browser global, or keep a fact the rules own as view state of its own.
+
+The three.js adapter is a route-level boundary, including `SceneCanvas.svelte`.
+It receives `SceneState`, asset URLs, the frame port and callbacks. Browser setup
+runs inside `onMount`; the director owns every activity, phase and camera choice.
+Static drawing samples a fixed pose and never subscribes to frames. The optional
+motion layer receives the same injected port when playback is added. The scene's
+GPU resources and listeners are disposed when the component is destroyed.
 
 ## Why the direction matters
 
@@ -48,14 +54,14 @@ file:
    read.
 3. An in-memory fake with the same interface.
 
-There are five, and three of them are here: storage, randomness and the clock. The
+The game supplies storage, randomness, the clock and frames. The
 device's preferences and the device's keyboard are the platform's, taken from
 `@steven-cutting/biscuit-games` with the fakes it ships, because what a surface reads
 from a device is not one game's question.
 
 Both of those take their platform object as an argument for the usual reason — jsdom
 supplies a `window` without `matchMedia`, so the adapter has to answer for its absence
-itself rather than being stubbed around — and a game's route is where all five are
+itself rather than being stubbed around — and a game's route is where the ports are
 constructed, because that is where a window exists.
 
 The rule that follows: **tests inject fakes, they never stub globals.** A stubbed global

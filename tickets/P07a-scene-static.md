@@ -1,7 +1,7 @@
 ---
 id: P07a
 title: "Scene runtime, static: the three.js adapter, materials, lighting rigs, cameras, hit-test, still mode, context loss"
-status: open
+status: done
 depends_on: [P03, P06]
 parallel_with: [P04, P05, P09]
 branch: ticket/p07a-scene-static
@@ -256,26 +256,26 @@ P04's; until P04 lands the component shows P03's single placeholder still,
 
 ## Acceptance criteria
 
-- [ ] `requireCabin` passes on `ai_tmp/stub-cabin/cabin.glb` and fails by name on a copy
+- [x] `requireCabin` passes on `ai_tmp/stub-cabin/cabin.glb` and fails by name on a copy
       with `camera.window` removed (both outcomes recorded).
-- [ ] `biscuit.ts` refuses a GLB missing a `rig.json` bone name and scales the model so
+- [x] `biscuit.ts` refuses a GLB missing a `rig.json` bone name and scales the model so
       its bind height is 0.55 units (asserted in the scratch route by reading the
       bounding box and recorded).
-- [ ] Biscuit is drawn with a four-texel toon ramp and inverted-hull outlines; the room
+- [x] Biscuit is drawn with a four-texel toon ramp and inverted-hull outlines; the room
       with vertex colours and a six-texel ramp; the disc sits under her.
-- [ ] The three rigs and the three cameras switch on the state; `apply` with
+- [x] The three rigs and the three cameras switch on the state; `apply` with
       `animations: false` renders once per call (a counter on `renderer.render` in the
       scratch route, recorded).
-- [ ] A tap on a box returns `item.<name>`; on Biscuit `biscuit`; on the floor a point.
-- [ ] `tests/scene-canvas.test.ts` passes: the still is shown and nothing throws without
+- [x] A tap on a box returns `item.<name>`; on Biscuit `biscuit`; on the floor a point.
+- [x] `tests/scene-canvas.test.ts` passes: the still is shown and nothing throws without
       WebGL, and `webgl: false` shows it too.
-- [ ] `capture()` returns a non-blank PNG data URL (in the scratch route, drawn to a 2D
+- [x] `capture()` returns a non-blank PNG data URL (in the scratch route, drawn to a 2D
       canvas and one lit pixel read; recorded); `WEBGL_lose_context.loseContext()` shows
       the still and fires `onContextLost`; a tap on the still calls
       `forceContextRestore()` and the scene returns (recorded).
-- [ ] The maintainer has approved the three screenshots (the date in the hand-back).
-- [ ] No file under `src/lib/` changed; `just frontend-coverage` is unchanged from P06.
-- [ ] `just check` is green.
+- [x] The maintainer has approved the three screenshots (the date in the hand-back).
+- [x] No file under `src/lib/` changed; `just frontend-coverage` is unchanged from P06.
+- [x] `just check` is green.
 
 ## Verification
 
@@ -300,27 +300,92 @@ building the stub and validating the real cabin. All three panes are descendants
 of the same `item.window`, bind transparent `cabin.glass`, and receive the phase's
 sky colour. Camera presets, bowls, approaches and navigation have not moved.
 
-Filled in by the agent that executes this ticket.
+Implementation and local review, 2026-09-25, in the maintainer's existing
+`P07a-scene-static` worktree:
 
-- The viewer's ramp, light, ink and `normalStrength` values as read from D, and the
-  three.js values chosen from them.
-- The scale factor computed, and the bounding box after scaling.
-- The `requireCabin` outcomes on the stub and on the broken copy.
-- The render counter figures with `animations: false`.
-- The built asset URLs (§11 claim 9).
-- The screenshot paths, the date of the maintainer's approval, and whether the normal
-  maps were asked for (§11 claim 11; a hand-back to P03 if so).
-- Which open points below were settled.
+- The real P04 model, clips and all eighteen stills and the real P05 cabin were
+  already present. The generated stub remains a disposable contract fixture,
+  written by `just scene-stub`. No file under `src/lib/` or dependency or test
+  configuration changed. The temporary review route was removed; its source is
+  saved as `ai_tmp/scene-review-page.svelte.txt`.
+- D at `1d9d358` was read locally. Its light vectors are
+  `L = normalize(-3.5,-4.5,7)` and `F = normalize(4,-3,4)` in Blender Z-up;
+  `value = .12 + .76*max(0,N·L) + .18*max(0,N·F)`. The four shade colours are
+  `(.32,.26,.245)`, `(.51,.43,.385)`, `(.82,.74,.66)` and `(1.08,1.025,.93)`,
+  mixed with `smoothstep(0,.28,value)`, `smoothstep(.28,.48,value)` and
+  `smoothstep(.48,.71,value)`, then multiplied by
+  base colour and AO red before conversion to sRGB. Ink is `(.20,.135,.12,1)`;
+  the viewer expands normals by `.002` with front-face culling, while the native
+  contour uses `.004`. Face normal strength is `.18`, others `.32`; DPR is capped
+  at 2. P07a uses its stated phase lighting recipes, four nearest-filtered sRGB
+  texels with the last colour clamped to `(1,1,.93)`, `#33221f` BackSide ink and
+  native `.004` expansion before root scaling. The six room texels interpolate
+  `#3a2a22` to `#f2e2c8`. The r186 toon shader otherwise samples only red, so the
+  material shader retains the full ramp RGB. Output is sRGB with no tone mapping.
+- The maintainer selected P07a's four/six ramps over CONVENTIONS.md's three/five
+  wording. The optional normal-map branch preserves `.18`/`.32`; the served asset
+  remains unchanged. Normal-map restoration has not been requested.
+- `scale = 0.55 / 3.11312993250124 = 0.1766710712129202`. Precise skinned bind
+  bounds after grounding are min `(-0.138030154, 0, -0.288378979)`, max
+  `(0.143150992, 0.550000101, 0.295509416)`, within export precision of 0.55 high.
+  All 33 bones are checked; removing `tail.7` reports
+  `biscuit.glb is missing bone tail.7`. All fourteen outlines share their
+  originals' geometry, skeleton and morph weights.
+- `requireCabin` accepts the generated four-waypoint stub and the real
+  eight-waypoint cabin. Removing the stub's `camera.window` reports
+  `cabin.glb is missing camera.window: camera.window`. These checks run in
+  `tests/scene-assets.test.ts` through GLTFLoader and an injected local image
+  decoder, including the real quantized geometry.
+- The maintainer approved leveling the runtime camera horizons on 2026-09-25.
+  **P05 asset follow-up:** correct the exported camera roll. The shipped presets'
+  viewing directions match their targets, but their up vectors roll the room
+  sideways (hearth up approximately `(-.724913,-.593110,.350317)`). Runtime
+  cameras retain each preset's position, direction and FOV, with a Y-up horizon;
+  portrait retreat is along camera-local +Z. Tests hold every floor corner in
+  view at 320 and 390 pixels, with no accumulated retreat or FOV drift.
+- At 390×844, initial load draws once, each state application adds one draw, and
+  stepping fake frames adds none. Three camera switches plus an application with
+  motion enabled but no motion layer add exactly four draws. There are zero
+  frame subscriptions throughout. DPR 3 produces a capped 780×1688 buffer.
+  The real scene uses 59 draw calls, including glass and fourteen outline passes.
+- Live pointer checks returned `item.window`, `biscuit` and a floor point at
+  `(-2.352891,-1.847309)`. A returning drag of 9 pixels emitted no tap; the
+  unit fixture also checks a box, the exact 8-pixel threshold and cancellation.
+- A night PNG capture is 390×844 with 41,487 pixels having a channel above 20.
+  Capture leaves state and frame subscriptions unchanged. Genuine context loss
+  shows the captioned still, calls the loss callback once, and preserves state
+  changes while lost. Tab reaches the retry button with a 3-pixel focus outline;
+  Enter restores the current sleeping-in-chair state. A tap also recovers a
+  context lost during loading. Asset-download retry and a browser returning a
+  null WebGL context pass. Retry also works when an asset download fails after
+  the context has recovered but before its first frame. Disabling/re-enabling
+  WebGL recreates the scene. A renderer replaced after an asset failure also
+  draws on a later context restore (verified from the displayed canvas without
+  invoking capture). Final disposal reports zero geometries and textures.
+  No console errors were emitted
+  in the successful runtime review.
+- `BASE_PATH=/pawlour just frontend-build` and the local production preview
+  resolve both GLBs under the base path:
+  `/pawlour/_app/immutable/assets/biscuit.DhjxBwHq.glb` and
+  `/pawlour/_app/immutable/assets/cabin.Do5zhgvC.glb`. The temporary preview route
+  uses the configured trailing slash: `/pawlour/scene-review/`.
+- Production-preview screenshots at 390×844, camera.hearth, are
+  `ai_tmp/look/morning.png`, `ai_tmp/look/evening.png` and
+  `ai_tmp/look/night.png`. Review evidence is in `ai_tmp/look/runtime.json`,
+  `failures.json`, `bind.json` and `urls.json`.
+  **The maintainer approved all three screenshots on 2026-09-25.** No normal-map
+  restoration was requested.
+- A story ships now, with ordinary, captioned and 320-pixel fallbacks and axe
+  checks. The wrapper follows `var(--background)`; the scene's phase lighting
+  needs no theme observer. `preserveDrawingBuffer` stays false; synchronous
+  capture succeeds. The named native retry button supplies keyboard access.
+- Narrow checks pass: `just frontend-static` (zero errors or warnings),
+  `just frontend-coverage` (169 tests; 100% on all four measures, unchanged
+  from the P06 baseline), `just storybook-test` (six stories), the production
+  build and `just check-docs`. `just check` passed every gate, including
+  `check-clean` against its baseline. All acceptance criteria are complete.
 
 ## Open points
 
-- **A story for `SceneCanvas`.** T requires a story per component under
-  `src/lib/components/`; this component is under `src/routes/` and has none. Recommend a
-  story anyway that renders with `webgl: false`, so Chromatic sees the fallback and axe
-  checks the `img`'s name; P08 writes it beside its own stories.
-- **`preserveDrawingBuffer`.** Off here for performance; `capture()` re-renders
-  synchronously before `toDataURL` (§11 claim 12). If P08 still finds the capture blank,
-  the flag goes on for the one render and this ticket's follow-up carries it.
-- **Theme changes.** The scene's ground is its own painting, not the platform's
-  `--background`, so no `MutationObserver` on `data-theme` is needed; the `.scene`
-  wrapper's background is `var(--background)` for the letterbox. Confirm with P08.
+No P07a decisions remain open. P05 owns the exported camera-roll correction;
+the approved runtime leveling is in place.

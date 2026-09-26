@@ -219,6 +219,14 @@ check-cabin path="src/lib/assets/cabin.glb":
 check-cabin-self-test:
     uv run --frozen python scripts/check_cabin.py --self-test
 
+# The small P07a contract fixture. Never writes to the served asset directory.
+scene-stub:
+    node scripts/stub_cabin.mjs
+
+# Run a local scene review script; keep disposable browser probes in ai_tmp/.
+scene-review script:
+    node "$1"
+
 # ----------------------------------------------------------------- develop ---
 
 # The preview server on every interface, for a phone on the same network.
