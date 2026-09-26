@@ -1,5 +1,22 @@
 {"schema_version": 1, "assets": [
-  {"path": "src/lib/assets/biscuit.clips.json", "bytes": 166, "sha256": "6fa49ff6b9b78b7e3e38517e1c59ac89964f4f8298a5355dd2b1fd52991b0001", "source": "built:2026-09-25", "licence": "platform", "budget": 0},
-  {"path": "src/lib/assets/biscuit.glb", "bytes": 1212704, "sha256": "038fd5b3f793d1f88ac206143bd32ec47475c811c552347d1a6a3a5949dfde35", "source": "built:2026-09-25", "licence": "platform", "budget": 6291456},
-  {"path": "src/lib/assets/stills/idle.morning.webp", "bytes": 30718, "sha256": "20203b8d5e27f11de5c5f48bde11b3eb952bce62ae87c38094368f72f194794a", "source": "biscuit_pics@1d9d358:models/biscuit/previews/standing-hero.png", "licence": "platform", "budget": 262144}
+  {"path": "src/lib/assets/biscuit.clips.json", "bytes": 1163, "sha256": "e76eff715b6772690bdf5d9ddf128d8b0cd37591e39fcc024a805bcf2733be08", "source": "built:2026-09-25", "licence": "platform", "budget": 0},
+  {"path": "src/lib/assets/biscuit.glb", "bytes": 2524748, "sha256": "5c66e83435106bd402a8b16dee3f92178576e86725d7a5a092ae8844f0a8c809", "source": "built:2026-09-25", "licence": "platform", "budget": 6291456},
+  {"path": "src/lib/assets/stills/drink.evening.webp", "bytes": 13912, "sha256": "310057cac2f8ec404f794aeb7bbd83647f99cf3ee544b238def46bed85d5223d", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/drink.morning.webp", "bytes": 16892, "sha256": "a96b6c78eb39e9c767926e2eb33ef6fd0f92423c17d157f0c6bd4e63b8cdf90a", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/drink.night.webp", "bytes": 12942, "sha256": "d9df494849111184c137a3eb72403ed51c3bebd20888605ea6c81b248e7e29d5", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/eat.evening.webp", "bytes": 13924, "sha256": "84c5fc15c06c51f475b0653a44156f857e53e5ebea153ec3bcc11c6de7ad6119", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/eat.morning.webp", "bytes": 16882, "sha256": "e7272023f8662219b47b4b10d4dbf51d40d05a91317e52f34cad086fb5c030d7", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/eat.night.webp", "bytes": 12944, "sha256": "3905d92512345770af881423f9e8d36b0eb9676ec796539049502adfdf849c63", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/idle.evening.webp", "bytes": 14268, "sha256": "128f48714f6b24b89ac5fafa204df4156cc39788028e1f56573b071cc0b2f999", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/idle.morning.webp", "bytes": 17106, "sha256": "60d40947af5e6c3631c8c5c6f44c7394671b5bfe27f0936cba2f6f3a3c54c655", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/idle.night.webp", "bytes": 13262, "sha256": "2fbf9e2d46b6429ef59aed3fc1843bfb4d3941a46cd57442081403d9ecac79a8", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/play.evening.webp", "bytes": 13920, "sha256": "0574842313826ef2a6d78b06471fef9742d447688f29c3e7bdf7490c6ccb32ba", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/play.morning.webp", "bytes": 16716, "sha256": "ab615dfde43fa3188b22a48513cb86553adc6c9aa5d59a3048720783d6e78d87", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/play.night.webp", "bytes": 12960, "sha256": "97fb745a838172f2bae5aa190d8ebdd164fb2e866bb4850afd2e9627fb26557d", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/sleep.bed.evening.webp", "bytes": 12888, "sha256": "dfc9fa825c906799e4a553e1ae9068f0fdd226ac15b2bf623fe2eec26aad2ce3", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/sleep.bed.morning.webp", "bytes": 15646, "sha256": "f33a777026f8be35591bbebe56e878c4857afbf32b2c8dbd12bdebdf9a5ae858", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/sleep.bed.night.webp", "bytes": 11876, "sha256": "2670cc2854139ae87ab3b8fcc2d8d8ecf44beb615c12f4710b44b0056d329054", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/sleep.chair.evening.webp", "bytes": 12888, "sha256": "dfc9fa825c906799e4a553e1ae9068f0fdd226ac15b2bf623fe2eec26aad2ce3", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/sleep.chair.morning.webp", "bytes": 15646, "sha256": "f33a777026f8be35591bbebe56e878c4857afbf32b2c8dbd12bdebdf9a5ae858", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
+  {"path": "src/lib/assets/stills/sleep.chair.night.webp", "bytes": 11876, "sha256": "2670cc2854139ae87ab3b8fcc2d8d8ecf44beb615c12f4710b44b0056d329054", "source": "built:2026-09-25", "licence": "platform", "budget": 262144}
 ]}

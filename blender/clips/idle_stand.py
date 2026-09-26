@@ -9,10 +9,13 @@ FRAMES = 120
 
 def build(rig, start, *, ik_probe=False):
     begin(rig, NAME, "standing", start, FRAMES)
-    endpoints(rig, start, FRAMES)
-    # Pelvis roll reads as a small transfer of weight, without moving root.
-    for frame, roll in ((30, 2), (90, -2)):
-        key_bone(rig, "pelvis", start + frame, rotation=(0, 0, roll))
+    endpoints(rig, start, FRAMES, all_ik=not ik_probe)
+    # Roll around the body's long axis; IK holds the four supporting paws.
+    for frame, roll in ((30, 1.5), (90, -1.5)):
+        key_bone(rig, "pelvis", start + frame, rotation=(0, roll, 0))
+        if not ik_probe:
+            # Relax the straight forelegs enough to reach through the weight shift.
+            key_bone(rig, "pelvis", start + frame, location=(0, 0, -0.012))
     for bone in ("neck", "head"):
         key_bone(rig, bone, start + 60, rotation=(0, 12, 0))
     for side in ("L", "R"):

@@ -1,10 +1,64 @@
 {
   "clips": [
     {
+      "name": "drink",
+      "seconds": 1.9666666984558105,
+      "loop": true,
+      "stride": 0
+    },
+    {
+      "name": "eat",
+      "seconds": 1.9666666984558105,
+      "loop": true,
+      "stride": 0
+    },
+    {
+      "name": "idle.sit",
+      "seconds": 3.9666666984558105,
+      "loop": true,
+      "stride": 0
+    },
+    {
       "name": "idle.stand",
       "seconds": 3.9666666984558105,
       "loop": true,
       "stride": 0
+    },
+    {
+      "name": "lie",
+      "seconds": 1.1666666269302368,
+      "loop": false,
+      "stride": 0
+    },
+    {
+      "name": "pet",
+      "seconds": 1.9666666984558105,
+      "loop": false,
+      "stride": 0
+    },
+    {
+      "name": "play",
+      "seconds": 2.9666666984558105,
+      "loop": true,
+      "stride": 0
+    },
+    {
+      "name": "sit",
+      "seconds": 0.9666666388511658,
+      "loop": false,
+      "stride": 0
+    },
+    {
+      "name": "sleep",
+      "seconds": 5.9666666984558105,
+      "loop": true,
+      "stride": 0
+    },
+    {
+      "name": "walk",
+      "seconds": 0.9666666388511658,
+      "loop": true,
+      "stride": 0.8
     }
   ],
   "height": 3.11312993250124

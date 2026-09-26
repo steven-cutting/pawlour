@@ -1,7 +1,7 @@
 ---
 id: P04
 title: "Clips, the core set: nine more scripted clips, contact sheets, the maintainer's approval, the stills"
-status: open
+status: in_progress
 depends_on: [P03]
 parallel_with: [P01, P05, P06, P07a, P08, P09]
 branch: ticket/p04-clips
@@ -86,6 +86,7 @@ done without it. Pushing and the pull request are separately authorised.
 
 | Path | Class | Source | Change |
 | --- | --- | --- | --- |
+| `blender/clips/idle_stand.py` | repo | P02 follow-up | planted paws during the weight shift |
 | `blender/clips/idle_sit.py` | repo | Step 2 | new |
 | `blender/clips/walk.py` | repo | Step 3 | new; exports `STRIDE` |
 | `blender/clips/sit.py` | repo | Step 4 | new |
@@ -97,6 +98,7 @@ done without it. Pushing and the pull request are separately authorised.
 | `blender/clips/pet.py` | repo | Step 7 | new |
 | `blender/clips/_keys.py` | repo | Step 1 | new; the shared helpers |
 | `scripts/contact_sheet.py` | repo | Step 8 | new |
+| `scripts/check_model_asset.mjs` | repo | contact follow-up | served whole-sole contact regression |
 | `src/lib/assets/biscuit.glb` | gen | `just assets-build biscuit` | replaced |
 | `src/lib/assets/biscuit.clips.json` | gen | `just assets-build biscuit` | replaced; ten entries |
 | `src/lib/assets/stills/<activity>.<phase>.webp` (18) | gen | Step 10 | new |
@@ -120,27 +122,33 @@ done without it. Pushing and the pull request are separately authorised.
    location as an offset from its rest position; `ease(fcurves)` setting every keyframe's
    interpolation to `BEZIER` with `AUTO_CLAMPED` handles; `strip(rig, action, name,
    start)` pushing the action onto a new NLA track named `name` and returning the frame
-   after the strip. The module is imported by name from `blender/clips/`, so
+   after the strip. `finish` keeps torso easing but bakes paw counter-rotation from the
+   evaluated lower leg so the complete sole stays level. Planted controls use the
+   grounded footprints shared by adjacent clips; transitions lift repositioning feet.
+   The module is imported by name from `blender/clips/`, so
    `build_clips.py`'s discovery must skip files starting with `_`; if P02's discovery does
    not, hand that back and name the scripts explicitly meanwhile.
 
-2. **`idle.sit`** (120 frames, loop). `preset('sitting')`, `key_all` and `ik_off` at 0 and
-   120 (the loop rule, §4.1). Ears settle: `ear.2.L` and `ear.2.R` ±5° about their local X
+2. **`idle.sit`** (120 frames, loop). `preset('sitting')`, `key_all` and grounded IK on
+   all four paws at 0 and 120 (the loop rule, §4.1). Ears settle: `ear.2.L` and
+   `ear.2.R` ±5° about their local X
    at frames 20 and 60, back at 100. One look aside: `neck` yaw +18° and `head` yaw +7°
    from frame 40 to 55, held to 70, back by 85. Nothing on the tail (the runtime sways it,
    §5.4).
 
-3. **`walk`** (30 frames, loop; `STRIDE = 1.6`, a module-level constant with a comment
+3. **`walk`** (30 frames, loop; `STRIDE = 0.8`, a module-level constant with a comment
    that it is model units of ground travel per cycle and that the runtime multiplies it
    by its scale). `preset('standing')`, `ik_on` for all four paws at frames 0 and 30
    (influence 1 across the strip and no key outside it, §4.1, so the action's range is
    the loop's and frames 0 and 30 match). A lateral-sequence walk: paw
    phase offsets `hind.L` 0, `front.L` 0.25, `hind.R` 0.5, `front.R` 0.75 of the cycle.
-   Each paw target, over its cycle: stance for 60% of the cycle, moving on the ground from
-   `−STRIDE/2` to `+STRIDE/2` along local Y (forward is −Y, so the paw travels backward
-   under the body while she moves forward); swing for 40%, lifting 0.18 units at
-   mid-swing and returning to `−STRIDE/2`. Keys every 3 frames on the targets, eased.
-   `root` bobs on its local Y (world Z) by ±0.03 at twice the cycle frequency; `root`'s
+   Each paw target, over its cycle: stance for 65% of the cycle, moving on the ground
+   through `STRIDE × 0.65 = 0.52` units along model Y (forward is −Y, so the paw
+   travels backward under the body while she moves forward); swing for 35%, lifting
+   0.18 units at mid-swing and returning to the starting footprint. Keys every 3 author
+   frames plus exact landing/liftoff boundaries; linear target travel cancels runtime
+   movement over the actual 29-frame interval. `root` bobs on its local Y (world Z)
+   by ±0.03 about a −0.08 offset at twice the cycle frequency; `root`'s
    local X and Z never move (authored in place, §4.1). `neck` steady; `tail.1` +10° up
    and held. `spine` yaw ±3° in counter-phase with the hind paws.
 
@@ -149,10 +157,14 @@ done without it. Pushing and the pull request are separately authorised.
    keys delayed 4 frames so it settles last. `lie`: `preset('sitting')` at 0,
    `preset('lying')` at 36, `neck` and `head` keys delayed 8 frames ("head coming down
    last", §4.1). Both are played in reverse by the runtime for standing up (§5.4), so
-   nothing in them depends on direction. `ik_off` on the first and last frame of each.
+   nothing in them depends on direction. Grounded IK on all four paws at each endpoint
+   preserves the reference torso poses while correcting sole penetration. Reposition
+   the paws with 0.13-unit lifted steps; the same corrected sitting contacts are used by
+   `sit`, `idle.sit` and `lie`, and lying contacts by `lie` and `sleep`.
 
-5. **`sleep`** (180 frames, loop). `preset('lying')` and `ik_off` at 0 and 180. The head
-   tucked: `neck` yaw −55° and pitch −20°, `head` pitch −15°, keyed at 0 and 180 (held,
+5. **`sleep`** (180 frames, loop). `preset('lying')` and grounded IK on all four paws
+   at 0 and 180. The head tucked: `neck` yaw −55° and pitch −20°, `head` pitch −15°,
+   keyed at 0 and 180 (held,
    part of the pose), so the face turns down toward her left flank and away from any
    camera (`PRD.md`, "Her face"). A slow breath is the runtime's (§5.4); the clip adds
    only one settling: `ear.1.L` +6° from 60 to 120 and back.
@@ -167,17 +179,23 @@ done without it. Pushing and the pull request are separately authorised.
    58.
 
 7. **`play`** (90 frames, loop) and **`pet`** (60 frames, one-shot). `play`:
-   `preset('standing')`, `ik_on` front paws at 0 and 90, hind `ik_off` at 0 and 90; a
-   shake, `neck` yaw ±20° at 6 Hz from frame 6 to 30 with `head` following at ±10°; a
-   drop, `neck` pitch −35° from 34 to 44, held to 50, back by 58; a paw,
-   `paw_target('front','L',...)` lifting 0.25 and forward 0.3 from 62 to 70, down at 78;
-   back to the preset by 90. `pet`: `preset('standing')`, `key_all` and `ik_off` at 0 and
-   60, so every bone the lean does not move is a constant channel (§4.1 makes the clip
+   `preset('standing')`, grounded IK on all four paws at 0 and 90; a shake, `neck` yaw
+   ±32° at 6 Hz from frame 5 to 33 with `head` following at ±16° and `spine` countering
+   at ±5°. A 0.03-unit pelvis crouch keeps the forelegs in reach during the shake. A
+   bow at 43–50 pitches `spine` +13°, `chest` +10°, `neck` −42° and `head` −18°;
+   a left paw reach lifts 0.4 and reaches forward 0.55, followed by a second smaller
+   tap and a lifted return at 81. The paw returns by 84 and the torso by 86;
+   endpoints match. Ear and tail
+   follow-through accompany the three phases. `pet`: `preset('standing')`, `key_all`
+   and `ik_off` at 0 and 60, so every bone the lean does not move is a constant channel
+   (§4.1 makes the clip
    additive: `makeClipAdditive` turns a constant channel into an identity delta, and the
    runtime plays the lean over whatever clip is running, standing or sitting; an unkeyed
-   bone would instead export whatever pose the armature held); a lean, `pelvis` roll +5°
-   and `spine` roll +3° from 8 to 20, `tail.1` +25° up over the same frames, `ear.1.L`
-   and `ear.1.R` −12° back from 10 to 24; settle: everything back by 60, ears last.
+   bone would instead export whatever pose the armature held). A nuzzle turns `neck`
+   by local Euler `(0, −12, −6)` degrees and `head` by `(0, −6, 8)` from 8 to 20;
+   `tail.1` rises +25° over the same frames. These return by 48. `ear.1.L` and `ear.1.R`
+   turn −12° back from 10 to 24, settling by 60. Pelvis, spine and all leg channels
+   remain constant so additive playback over standing or sitting cannot drag the paws.
 
 8. **Write `scripts/contact_sheet.py`.** Two modes. `contact_sheet.py <clip>` runs
    Blender (`"${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background
@@ -206,14 +224,14 @@ done without it. Pushing and the pull request are separately authorised.
    each clip `uv run --frozen python scripts/contact_sheet.py <clip>`, then show the
    maintainer the sheet path and wait. Record the date and the verdict per clip in the
    hand-back notes. A refused clip is reworked and re-sheeted; the earlier sheet's
-   findings are kept in the notes. The walk is the one most likely to be refused (§12):
-   if it reads as sliding or as a trot, halve `STRIDE`, lengthen the stance to 65%, and
-   keep the head level before anything else.
+   findings are kept in the notes. The walk's original 1.6-unit stride was shortened to
+   0.8 and stance lengthened to 65% during this review; the head remains level. Review
+   planted whole soles under matching runtime travel, including the exported asset.
 
 10. **Export, build, stills.** `just model-export`; `just assets-build biscuit`; then the
     eighteen stills (`for a in idle sleep.bed sleep.chair drink eat play; do for p in
     morning evening night; do ...; done; done`); `just assets-manifest`; read the diff:
-    ten clips in `biscuit.clips.json` with `walk`'s `stride` 1.6, `biscuit.glb` under
+    ten clips in `biscuit.clips.json` with `walk`'s `stride` 0.8, `biscuit.glb` under
     6,291,456 bytes, eighteen new manifest entries with `source` `built:<today>`,
     `licence` `platform`, `budget` `262144`. `just check-assets` green.
 
@@ -231,17 +249,17 @@ done without it. Pushing and the pull request are separately authorised.
 
 ## Acceptance criteria
 
-- [ ] Ten scripts under `blender/clips/` (P02's plus nine), each with `NAME`, `build`,
+- [x] Ten scripts under `blender/clips/` (P02's plus nine), each with `NAME`, `build`,
       and, for `walk.py`, `STRIDE`; `just model-clips` runs them all without error.
-- [ ] Every loop clip's first and last frames are identical on every deform bone
+- [x] Every loop clip's first and last frames are identical on every deform bone
       (asserted by a small check in `contact_sheet.py` that prints the maximum
       difference; expected 0).
-- [ ] No clip keys `root`'s local X or Z; `walk` keys `root`'s local Y only.
+- [x] No clip keys `root`'s local X or Z; `walk` keys `root`'s local Y only.
 - [ ] One approved contact sheet per clip, recorded with a date in the hand-back notes.
-- [ ] `biscuit.clips.json` lists ten clips with the §4.1 durations and `walk`'s
+- [x] `biscuit.clips.json` lists ten clips with the §4.1 durations and `walk`'s
       `stride`; `biscuit.glb` is under 6,291,456 bytes.
-- [ ] Eighteen stills exist, each under 262,144 bytes, and `just check-assets` is green.
-- [ ] `just check` is green.
+- [x] Eighteen stills exist, each under 262,144 bytes, and `just check-assets` is green.
+- [x] `just check` is green.
 
 ## Verification
 
@@ -263,16 +281,135 @@ green.
 
 ## Hand-back notes
 
-Filled in by the agent that executes this ticket.
+The ten scripts and their final contact sheets were built on 2026-09-25 with
+Blender 5.2.1 LTS. Maintainer approval is still pending for every sheet; no approval
+date or verdict is inferred from implementation or automated checks.
 
-- Per clip: the sheet path, the date the maintainer approved it, and what was reworked.
-- `STRIDE`'s final value and why, if it moved from 1.6.
-- Whether `sit` or `lie` moved from 30 and 36 frames: P06's `TRANSITION` in `timing.ts`
-  restates those lengths in seconds and follows them, so a change here is a hand-back.
-- The durations and morph-channel presence from Step 11.
-- The final bytes of `biscuit.glb` and of the largest still, and any quality step taken.
-- Whether `build_clips.py` skipped `_keys.py` on its own (Step 1).
-- Which open points below were settled.
+| Clip | Review sheet under `ai_tmp/clips/` | Samples | Export seconds | Approval |
+| --- | --- | --- | --- | --- |
+| `idle.stand` | `idle.stand.jpg` | 120 | 3.966667 | Pending |
+| `idle.sit` | `idle.sit.jpg` | 120 | 3.966667 | Pending |
+| `walk` | `walk.jpg` | 30 | 0.966667 | Pending |
+| `sit` | `sit.jpg` | 30 | 0.966667 | Pending |
+| `lie` | `lie.jpg` | 36 | 1.166667 | Pending |
+| `sleep` | `sleep.jpg` | 180 | 5.966667 | Pending |
+| `drink` | `drink.jpg` | 60 | 1.966667 | Pending |
+| `eat` | `eat.jpg` | 60 | 1.966667 | Pending |
+| `play` | `play.jpg` | 90 | 2.966667 | Pending |
+| `pet` | `pet.jpg` | 60 | 1.966667 | Pending |
+
+On 2026-09-25 the maintainer requested more activity in `play`: "biscuit play
+could have more going on". Its first sheet is retained as
+`ai_tmp/clips/play-before-review.jpg`. The revised 90-sample loop adds a stronger
+head shake with spine counter-motion, ear and tail follow-through, a deeper
+play bow, and a high forward paw reach followed by a second tap. Root translation
+stays in place and the evaluated loop endpoints match within floating-point
+precision. The revised sheet is `ai_tmp/clips/play.jpg`; visual approval remains pending. The served
+asset and three play stills are rebuilt from this revision before hand-back.
+
+At the maintainer's request, all ten clips also have looping animated WebP
+previews at `ai_tmp/clips/<name>-preview.webp`, displayed together in
+`ai_tmp/asset-review.html`. One-shot clips repeat only for review. On 2026-09-25
+the maintainer identified sliding feet and tilted front paws, naming `pet`, `walk`,
+`eat`, `drink` and `idle.stand`, then requested fixes and a check of every clip.
+The refreshed previews show a neutral ground grid; walk includes runtime travel
+with a following camera. No visual approval is recorded.
+
+The walk uses the ticket's shorter-stride fallback: `STRIDE = 0.8` model units,
+65% stance, and a steady neck. The initial 1.6-unit cycle showed excessive reach
+and a triangular sweater deformation; its sheet remains at
+`ai_tmp/clips/walk-stride1.6.jpg` for comparison. Shortening the stride alone did
+not fix the deformation. The native optional IK poles caused axial shoulder
+twist; keying the existing bend controls laterally restored the limb bend plane.
+The same correction applies to the planted front paws in `drink`, `eat` and
+`play`. No source bone, constraint, mesh, shape key or skin weight was edited.
+Walk target heights also compensate for their inherited root bob so the stance
+targets stay grounded. The final sheets have been checked for that deformation;
+this is agent review, not the maintainer's visual approval.
+
+The walk's stance excursion is `STRIDE × STANCE = 0.52`, correcting the original
+step 3's full-stride excursion during stance: that wording would move planted paws
+1/0.65 times faster than the runtime speed in CONVENTIONS.md §4.3 and §5.1.
+Landing and liftoff have explicit keys. Linear target translation and matching
+root compensation preserve footprints between keys over the actual 29-frame
+interval. A 0.08-unit downward body offset keeps the native front-leg IK in
+reach, while retaining its ±0.03 bob. The previous sheet is retained as
+`ai_tmp/clips/walk-before-stride-fix.jpg`. With runtime travel simulated at
+`0.8 / (29/30) = 0.827586207` model units/second, 101 native samples per paw
+measure at most 0.000368 whole-sole drift after the contact correction below.
+`just model-check-clips` checks evaluated heel, toe and side markers on the sole,
+including simulated runtime translation, and permits at most 0.001 model units
+of drift or distance from the ground during each planted interval. The original
+full-stride stance is retained as an unsaved regression mutation in
+`ai_tmp/prove_walk_regression.py`. The walk animation preview is
+`ai_tmp/clips/walk-preview.webp` (30 frames over 967 milliseconds).
+
+The maintainer's foot-contact review exposed two separate native defects:
+optional IK pins the ankle but lets the sole inherit the lower-leg rotation,
+and FK body motion drags unpinned paws. The shared helper now bakes level paw
+rotations at quarter-frame intervals and control-key boundaries. `idle.stand`
+uses planted IK and a 0.012-unit pelvis relaxation during its ±1.5° weight shift;
+`play` uses a 0.03-unit relaxation during its shake. `pet` moves only neck, head,
+tail and ears, preserving identity additive leg channels. Sitting and lying
+retain their source torso poses with clip-level grounded limb corrections and
+staggered lifted steps, replacing the original dragging interpolation. Copied
+pose JSON, native model, bones, constraints, meshes and weights remain unchanged.
+Earlier sheets, previews and the derived blend are retained under
+`ai_tmp/clips/before-foot-contact/`.
+
+All ten clips pass the native whole-sole check. Maximum planted drift is 0.000831
+for `sit`, 0.000368 for `walk`, 0.000259 for `play`, 0.0000640 for `drink` and
+`eat`, 0.0000279 for `idle.stand`, 0.0000197 for `lie`, below 0.0000003 for the
+resting loops, and zero for `pet`. `ai_tmp/prove_sole_regression.py` disables only
+paw counter-rotation in memory: the unchanged pinned ankle still appears correct,
+but the whole-sole check rejects 0.09284 units of drift and ground error. It never
+saves the mutation. The served-asset check independently evaluates sole markers
+through real Three.js playback after export and compression.
+
+The native verifier also checks floor clearance across each entire clip, including
+lifted paws. Linear control travel and a lifted return prevent `play`'s local-axis
+Bezier interpolation from dipping below the floor after the second tap. An actual
+evaluated Paw-mesh audit at 101 times per clip (`ai_tmp/check_all_paw_clearance.py`)
+finds at most 0.000165 model units of numerical penetration across all ten clips.
+
+`just model-sheets` also runs native verification. All seven loops have maximum
+evaluated deform-matrix endpoint difference below `0.00000036`. The verifier checks
+every paw's explicit IK influence at both endpoints, rejects keys outside strips
+and root X/Z translation channels, and requires `pet` channels outside its five
+lean bones to remain constant. P02's discovery already skips `_keys.py`.
+`just python-check blender/clips scripts/contact_sheet.py` passes.
+
+Durations use P02's N-sample convention: frame zero through N−1 at 30 fps, so each
+GLB duration is one frame shorter than the table's rounded seconds. `sit` remains
+30 samples and `lie` remains 36; no P06 transition-length change is needed. The
+raw export has exactly the ten names above, one skin with 33 ordered deform
+joints, and morph-weight channels in every clip. Driven correctives are active
+in `sit`, `lie`, `walk`, `drink`, `eat` and `play`, as required.
+
+P02's export follow-up preserves fractional contact frames through temporary
+600 Hz sampling. The final compressed asset passes the same planted-span checks
+for all ten clips, plus whole-motion floor clearance, through Three.js. Maximum
+served sole drift is 0.000986281 model units, below the unchanged 0.003 limit.
+The authored blend remains at 30 fps and every clip duration stays unchanged.
+
+The served `biscuit.glb` is 2,524,748 bytes with 86,828 triangles, 14 primitives
+and an estimated 28 draw calls. The asset checker loads it through real Three.js
+playback and verifies the exact clip set, durations, root channels, 33-joint skin
+and five sweater morphs. The table reports bind height `3.11312993250124` and
+walk stride `0.8`.
+
+The still renderer uses the six specified activity frames, three phase world
+colours and absolute key-light energies 1.45, 0.9 and 0.5. It preserves the native
+fill light. All eighteen final stills were regenerated after the IK correction
+at 1170 × 2532, WebP quality 80; no quality reduction was needed. The largest is
+`idle.morning.webp`, 17,106 bytes, below the 262,144-byte budget. Manifest
+verification passes for the twenty character files and P05's cabin. The final
+`just check` passed on 2026-09-25: 37 unit tests, three Storybook tests and every
+other gate passed; the checks left the worktree unchanged.
+
+The ticket was kept together rather than split. The stills use the specified
+neutral ground; runtime capture and a possible sweater-off variant remain the
+maintainer decisions described below. No v1.1 clip files were added.
 
 ## Open points
 

@@ -553,8 +553,12 @@ Rules every clip obeys:
   on `standing.json`, `idle.sit` on `sitting.json`, `sleep` on `lying.json`. Transitions
   (`sit`: standing → sitting; `lie`: sitting → lying) are played forward and, by the
   runtime, in reverse. `pose_io.apply` (imported from `blender/src/pose_io.py`) sets a
-  preset; interpolation between presets is keyframed on the deform bones with Bezier
-  handles and ease.
+  preset. The maintainer's 2026-09-25 foot-contact review permits clip-level limb
+  corrections to those reference poses so the soles rest on the ground. Adjacent
+  clips share the same corrected resting contacts; the copied poses stay unchanged.
+  Moving between footprints uses a lifted step, while planted paws retain their
+  position and orientation. Torso interpolation is keyframed on the deform bones
+  with Bezier handles and ease.
 - **IK is allowed and is baked.** A clip may enable a paw's `IK influence`, move its
   `CTRL.*.paw.*` target and keyframe the target; the exporter's sampling bakes the result
   into the deform bones. Every clip keys every paw's `IK influence` on its own first and
@@ -564,11 +568,14 @@ Rules every clip obeys:
   the loop).
 - **Loops loop.** `idle.stand`, `idle.sit`, `walk`, `sleep`, `drink`, `eat`, `play`
   have identical first and last frames. `sit`, `lie` and `pet` are one-shot.
-- **`pet` is additive.** It is authored on `standing.json`, moves only `pelvis`, `spine`,
+- **`pet` is additive.** It is authored on `standing.json`, moves only `neck`, `head`,
   `tail.1`, `ear.1.L` and `ear.1.R`, and keys every other bone constant at the preset, so
   the runtime can turn it into an additive clip (a constant channel becomes an identity
   delta) and play it over whatever clip is running (§5.4, §11 claim 15); it is never
-  crossfaded to as a pose of its own.
+  crossfaded to as a pose of its own. The lean stays above the leg attachments:
+  the maintainer's 2026-09-25 review found that the original pelvis/spine lean
+  dragged the planted feet. Stance-specific leg corrections would not remain
+  valid when the same additive clip plays over sitting.
 - **The correctives take care of themselves**: the drivers stay on the shape keys and
   the exporter bakes them (§1 fact 4). No clip keyframes a shape key.
 - **Every clip has a contact sheet**: `scripts/contact_sheet.py <name>` renders twelve

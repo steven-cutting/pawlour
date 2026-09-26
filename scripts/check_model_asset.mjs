@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
-import { AnimationMixer, DataTexture } from 'three';
+import { AnimationMixer, DataTexture, Matrix4, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import sharp from 'sharp';
 import { assetIO } from './asset_io.mjs';
-import { makeClipTable } from './clip_table.mjs';
+import { makeClipTable, readStride } from './clip_table.mjs';
 
 const input = process.argv[2] ?? 'src/lib/assets/biscuit.glb';
 const io = await assetIO();
@@ -59,7 +59,7 @@ const expectedClips = [
 ];
 if (names.length !== 1) assert.deepEqual([...names].sort(), expectedClips);
 const loops = new Set(['idle.stand', 'idle.sit', 'walk', 'sleep', 'drink', 'eat', 'play']);
-const additiveBones = new Set(['pelvis', 'spine', 'tail.1', 'ear.1.L', 'ear.1.R']);
+const additiveBones = new Set(['neck', 'head', 'tail.1', 'ear.1.L', 'ear.1.R']);
 for (const animation of root.listAnimations()) {
   assert(animation.listChannels().length > 0);
   assert(
@@ -110,7 +110,13 @@ for (const animation of root.listAnimations()) {
     }
   }
 }
-const table = makeClipTable(document);
+const strides = new Map();
+if (names.includes('walk')) {
+  const stride = readStride(await readFile('blender/clips/walk.py', 'utf8'));
+  assert(stride > 0, 'walk needs a positive authored stride');
+  strides.set('walk', stride);
+}
+const table = makeClipTable(document, strides);
 const expectedSeconds = {
   drink: 2,
   eat: 2,
@@ -132,6 +138,11 @@ for (const clip of table.clips) {
 assert(Math.abs(table.height - 3.113) < 0.01, `bind height ${table.height} differs from 3.113`);
 const served = input === 'src/lib/assets/biscuit.glb';
 if (served) {
+  assert.deepEqual(
+    JSON.parse(await readFile('src/lib/assets/biscuit.clips.json', 'utf8')),
+    table,
+    'served clip table differs from the model or authored stride'
+  );
   assert((await stat(input)).size <= 6291456, 'model byte budget exceeded');
   assert(primitives * 2 <= 60, `model needs ${primitives * 2} draw calls including outlines`);
   const extensions = root.listExtensionsUsed().map((extension) => extension.extensionName);
@@ -176,8 +187,11 @@ const gltf = await loader.parseAsync(
 assert.deepEqual(gltf.animations.map((animation) => animation.name).sort(), names.sort());
 let skinned = 0;
 let threeMorphs = 0;
+/** @type {import('three').Skeleton | undefined} */
+let pawSkeleton;
 gltf.scene.traverse((node) => {
   if (!node.isSkinnedMesh) return;
+  pawSkeleton ??= node.skeleton;
   skinned += 1;
   assert.equal(node.skeleton.bones.length, 33);
   assert(node.geometry.getAttribute('skinIndex'));
@@ -220,6 +234,129 @@ for (const clip of gltf.animations) {
   }
   action.stop();
 }
+assert(pawSkeleton, 'missing skeleton for foot-contact verification');
+const paws = [
+  { name: 'hind.paw.L', phase: 0 },
+  { name: 'front.paw.L', phase: 0.25 },
+  { name: 'hind.paw.R', phase: 0.5 },
+  { name: 'front.paw.R', phase: 0.75 }
+].map(({ name, phase }) => {
+  const index = expectedJoints.indexOf(name);
+  const source = rig.bones[index];
+  const inverseBind = new Matrix4().fromArray(source.inverseBind);
+  return {
+    name,
+    phase,
+    bone: pawSkeleton.bones[index],
+    // Native Blender rest-space sole markers, converted into paw-local space.
+    // The exported bone matrix supplies the Blender-to-glTF axis conversion.
+    markers: [
+      [0, 0.05],
+      [0, -0.25],
+      [0.13, -0.1],
+      [-0.13, -0.1]
+    ].map(([x, y]) =>
+      new Vector3(source.head[0] + x, source.head[1] + y, 0).applyMatrix4(inverseBind)
+    )
+  };
+});
+const stationary = new Set(['idle.stand', 'idle.sit', 'sleep', 'pet', 'drink', 'eat', 'play']);
+const steps = {
+  sit: [
+    [0.4, 0.65],
+    [0.15, 0.4],
+    [0.55, 0.8],
+    [0.3, 0.55]
+  ],
+  lie: [
+    [0.4, 0.65],
+    [0.1, 0.55],
+    [0.55, 0.8],
+    [0.3, 0.75]
+  ]
+};
+let maximumSoleDrift = 0;
+const contactFindings = [];
+for (const clip of gltf.animations) {
+  if (clip.name !== 'walk' && !stationary.has(clip.name) && !(clip.name in steps)) continue;
+  const action = mixer.clipAction(clip).play();
+  const stride = table.clips.find((entry) => entry.name === clip.name)?.stride ?? 0;
+  for (const [pawIndex, paw] of paws.entries()) {
+    let spans = [[0, 1]];
+    if (clip.name === 'walk') spans = [[paw.phase, paw.phase + 0.65]];
+    else if (clip.name === 'play' && paw.name === 'front.paw.L') {
+      spans = [
+        [0, 55 / 90],
+        [84 / 90, 1]
+      ];
+    } else if (clip.name in steps) {
+      const [takeoff, landing] = steps[clip.name][pawIndex];
+      spans = [
+        [0, takeoff],
+        [landing, 1]
+      ];
+    }
+    for (const [first, last] of spans) {
+      const low = paw.markers.map(() => new Vector3(Infinity, Infinity, Infinity));
+      const high = paw.markers.map(() => new Vector3(-Infinity, -Infinity, -Infinity));
+      let groundError = 0;
+      let minimumNormalY = 1;
+      const samples = Math.max(60, Math.ceil(clip.duration * 60));
+      for (let sample = 0; sample <= samples; sample += 1) {
+        const cycle = first + ((last - first) * sample) / samples;
+        // A transition's endpoint must not wrap to its first pose. Stay just
+        // inside the last instant while retaining the mixer's normal loop mode.
+        const progress = clip.name === 'walk' ? cycle % 1 : Math.min(cycle, 1 - 1e-9);
+        mixer.setTime(progress * clip.duration);
+        gltf.scene.updateMatrixWorld(true);
+        const points = paw.markers.map((marker, index) => {
+          const point = marker.clone().applyMatrix4(paw.bone.matrixWorld);
+          // Forward is +Z in glTF; the runtime translates by stride per cycle.
+          point.z += stride * cycle;
+          groundError = Math.max(groundError, Math.abs(point.y));
+          low[index].min(point);
+          high[index].max(point);
+          return point;
+        });
+        const normal = points[2]
+          .clone()
+          .sub(points[3])
+          .cross(points[0].clone().sub(points[1]))
+          .normalize();
+        minimumNormalY = Math.min(minimumNormalY, normal.y);
+      }
+      const drift = Math.max(...high.flatMap((point, index) => point.sub(low[index]).toArray()));
+      // Under 0.6 mm at game scale, allowing baked sampling and compression
+      // while rejecting the previous 0.07–0.13-unit sole motion.
+      if (drift >= 0.003 || groundError >= 0.003 || minimumNormalY < Math.cos(Math.PI / 180)) {
+        contactFindings.push(
+          `${clip.name}: ${paw.name} sole drift ${drift}, ground error ${groundError}, tilt ${(Math.acos(minimumNormalY) * 180) / Math.PI} degrees`
+        );
+      }
+      maximumSoleDrift = Math.max(maximumSoleDrift, drift);
+    }
+    // Include airborne intervals: a lifted paw may move, but its return must
+    // not interpolate through the floor between the planted spans above.
+    let minimumSoleY = Infinity;
+    const samples = Math.max(100, Math.ceil(clip.duration * 60));
+    for (let sample = 0; sample <= samples; sample += 1) {
+      mixer.setTime(Math.min(sample / samples, 1 - 1e-9) * clip.duration);
+      gltf.scene.updateMatrixWorld(true);
+      minimumSoleY = Math.min(
+        minimumSoleY,
+        ...paw.markers.map((marker) => marker.clone().applyMatrix4(paw.bone.matrixWorld).y)
+      );
+    }
+    if (minimumSoleY < -0.003) {
+      contactFindings.push(
+        `${clip.name}: ${paw.name} sole penetrates the floor at ${minimumSoleY}`
+      );
+    }
+  }
+  action.stop();
+}
+console.log(`check-model-asset: maximum planted-sole drift ${maximumSoleDrift} model units`);
+assert.deepEqual(contactFindings, [], 'exported planted-paw contact changed');
 mixer.uncacheRoot(gltf.scene);
 gltf.scene.traverse((node) => {
   node.geometry?.dispose();
