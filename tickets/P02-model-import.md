@@ -1,7 +1,7 @@
 ---
 id: P02
 title: "Model import and the animated exporter: D's `.blend` and scripts, `export_animated_glb.py`, the proof clip"
-status: in_progress
+status: done
 depends_on: [P00]
 parallel_with: [P01, P06, P09]
 branch: ticket/p02-model-import
@@ -251,7 +251,7 @@ Nothing under `blender/out/` is committed; `.gitignore` (P00) excludes it.
 - [x] The IK variant of Step 7 showed motion on `front.lower.L` with no `CTRL` node
       (§11 claim 3 recorded), and the morph-channel assertion's outcome is recorded (§11
       claim 4).
-- [ ] The contact sheet was approved by the maintainer, with the date in the hand-back.
+- [x] The contact sheet was approved by the maintainer, with the date in the hand-back.
 - [x] `just check` is green with every D file present.
 
 ## Verification
@@ -274,8 +274,10 @@ and exit 0; two files under `blender/out/`; nothing (ignored); green.
 
 ## Hand-back notes
 
-Implemented locally on 2026-09-25. Visual acceptance remains pending; code is
-committed separately from P03, P04 and P05.
+Implemented locally on 2026-09-25. The maintainer approved the final `idle.stand`
+proof on the same date with "I approve", in response to the review request for
+all ten animations including P02's proof. Code and acceptance are committed
+separately from P03, P04 and P05.
 
 - All 22 copied files match the source hashes. The complete file list, sixteen
   source filenames and SHA-256 table are in `blender/README.md` and
@@ -301,10 +303,11 @@ committed separately from P03, P04 and P05.
   `IK baked into front.lower.L: baseline span 0.00000000, probe span 0.26967822;
   no CTRL nodes`. The normal proof was restored after this temporary variant.
 - The contact sheet is `ai_tmp/clips/idle.stand.jpg`, rendered with P04's
-  `scripts/contact_sheet.py`. Maintainer approval is pending, not inferred.
+  `scripts/contact_sheet.py`. The maintainer approved it on 2026-09-25 after
+  reviewing the final moving previews and sheets in `ai_tmp/asset-review.html`.
 - Targeted Python checks and the source provenance check pass. The aggregate
   `just check` passed on 2026-09-25 with all copied files present, before P03's
-  commit. Visual approval remains the only outstanding acceptance criterion.
+  commit. Every acceptance criterion is now satisfied.
 
 Corrections to assumptions discovered in implementation:
 
@@ -356,12 +359,14 @@ The existing whole-sole regression retains its 0.003-model-unit limit.
 
 `just model-export` and the verification-only diagnostic pass with all ten clips;
 the walk contains 581 samples over the unchanged 0.966667 s interval. The raw
-GLB is 19,161,548 bytes, including the additional baked animation samples.
+GLB after P04's approved gait revision is 19,161,688 bytes, including the
+additional baked animation samples.
 `just check-model-asset blender/out/biscuit-raw.glb` passes the expanded checks
 for all ten clips with maximum planted-sole drift 0.000986281 model units after
 the final play-paw return correction.
 The final compressed model also passes all ten contact checks at that drift,
-including whole-motion floor clearance, with a served size of 2,524,748 bytes
+including whole-motion floor clearance, with a served size of 2,525,000 bytes
 against the 6,291,456-byte budget.
 The final `just check` passed again on 2026-09-25 after this correction, with no
-worktree changes from the checks. Visual approval of `idle.stand` remains pending.
+worktree changes from the checks. The maintainer approved `idle.stand` on the
+same date, completing visual acceptance.
