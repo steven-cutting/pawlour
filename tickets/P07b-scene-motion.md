@@ -1,7 +1,7 @@
 ---
 id: P07b
 title: "Scene runtime, motion: the mixer, walking, procedural idle, fire, weather, the wipe"
-status: open
+status: done
 depends_on: [P07a, P05, P04]
 parallel_with: [P08, P09]
 branch: ticket/p07b-scene-motion
@@ -235,7 +235,7 @@ is named here).
 - [x] The rig blend takes 600 ms with animations on and is a cut with them off.
 - [x] With `animations` false, no frame is requested (the fake frame port in the scratch
       route records zero `each` calls) and P07a's render-once path runs.
-- [ ] The maintainer has approved the recording (the date in the hand-back).
+- [x] The maintainer has approved the recording (the date in the hand-back).
 - [x] `just check` is green.
 
 ## Verification
@@ -275,15 +275,16 @@ Implementation evidence, 2026-09-26:
   `walk-food.webm` complete the five destination counters. Every walk reports one
   arrival; the bed recording ends in sleep and the toy recording in play.
   `recordings.json` and `arrivals.json` hold the observed states and counters.
-- Maintainer visual approval is pending: the ticket remains open until the walk
-  and cel fire pass Step 8. The final facing now turns at 180°/s before arrival
+- The maintainer approved the walk and cel fire recordings on 2026-09-26,
+  satisfying Step 8. The final facing now turns at 180°/s before arrival
   instead of snapping into the destination pose. No stride or clip was changed.
 - §11 claim 15: the real mixer test proves that `drink` advances continuously
   underneath additive `pet`, with no sit action, and resumes without resetting.
   The recording shows the interaction for the maintainer to judge the lean.
 - Measured walking speed is `0.18276318243234008` scene units/s, from the exported
   stride and seconds multiplied by the model scale. The walk action stays at
-  time scale 1 during fades. Foot sliding remains a visual approval question.
+  time scale 1 during fades. The maintainer accepted the walk at its natural rate;
+  no stride or clip hand-back to P04 was needed.
 - `runtime.json` records zero frame subscriptions in initial still mode, preserved
   position on resize, animation starting when a zero-size canvas becomes visible,
   one subscription after actual WebGL context recovery, and zero geometries/textures
