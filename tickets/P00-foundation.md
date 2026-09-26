@@ -1,7 +1,7 @@
 ---
 id: P00
 title: "Foundation: render from the template at v2.1.0, dependencies, large-file policy, the asset checker, recipes, stubs for every path"
-status: open
+status: done
 depends_on: []
 parallel_with: []
 branch: ticket/p00-foundation
@@ -258,22 +258,22 @@ adds files, it never renames or reclassifies one.
 
 ## Acceptance criteria
 
-- [ ] `.copier-answers.yml` records `_commit: v2.1.0` and the four answers; no
+- [x] `.copier-answers.yml` records `_commit: v2.1.0` and the four answers; no
       `--trust` was passed.
-- [ ] `package.json` pins `three`, `@types/three`, `@gltf-transform/cli` and `sharp`
+- [x] `package.json` pins `three`, `@types/three`, `@gltf-transform/cli` and `sharp`
       exactly, and `just lock-check` is green.
-- [ ] `pyproject.toml`'s `recipes` ends in `"check-assets"`, and `just check` runs it
+- [x] `pyproject.toml`'s `recipes` ends in `"check-assets"`, and `just check` runs it
       after `analyse-specs` and before `check-clean`.
-- [ ] `git check-attr filter blender/model/biscuit-poseable.blend` prints `filter: lfs`.
-- [ ] A 1 MB file under `src/lib/assets/` passes `just lint` and the same file at the
+- [x] `git check-attr filter blender/model/biscuit-poseable.blend` prints `filter: lfs`.
+- [x] A 1 MB file under `src/lib/assets/` passes `just lint` and the same file at the
       root is refused by `check-added-large-files` (§11 claim 1 recorded).
-- [ ] `just check-assets` passes on the empty manifest and its output shows the
+- [x] `just check-assets` passes on the empty manifest and its output shows the
       self-test ran.
-- [ ] `git rev-parse --git-path hooks` names a `pre-commit` shim and `just lint` runs
+- [x] `git rev-parse --git-path hooks` names a `pre-commit` shim and `just lint` runs
       through it (§11 claim 14 recorded).
-- [ ] No file under `docs/`, `src/`, `tests/` or `stories/` differs from T's render
+- [x] No file under `docs/`, `src/`, `tests/` or `stories/` differs from T's render
       except the three seeds left as rendered and the appended files listed above.
-- [ ] `just check` is green, twice in a row.
+- [x] `just check` is green, twice in a row.
 
 ## Verification
 
@@ -304,6 +304,174 @@ Filled in by the agent that executes this ticket.
 - Which template files were appended to, each with the line count before and after.
 - Anything a lane will need that this ticket could not give it, as a numbered list for
   P11.
+
+### Executed 2026-09-25
+
+Executed in the worktree `/Users/scutting/.supacode/repos/pawlour/P00-foundation` on the
+branch `P00-foundation` (the maintainer created both; see item 3 below). Commits:
+`788eed4` removes the stub README, `f59717e` is the render plus `just initialize`'s
+lockfiles with nothing edited by hand, `2e26b36` is everything this ticket appends, and
+the commit that carries this file is the last one.
+
+**Versions (read with `npm view` and PyPI on 2026-09-25).** `three` 0.186.1,
+`@types/three` 0.186.0, `@gltf-transform/cli` 4.5.0, `sharp` 0.35.4, `pillow` 12.3.0.
+`@types/three` matches `three`'s minor (0.186); its latest is 0.186.0, one patch behind
+`three`, which is the case §2.1 allows. `npm ls` shows the CLI already pulls `sharp`
+0.35.4 (deduped), so the explicit pin is the visible copy §2.1 asks for. Lockfile diffs
+read: `uv.lock` gains `pillow` 12.3.0 only; `package-lock.json` adds 188 entries (three,
+`@types/three`, the CLI and its tree, `sharp` and its `@img/*` platform packages), changes
+no existing version, and drops the top-level `yaml` 2.9.1, which only `vite` named, as an
+optional peer. `node -e "import('sharp')"` loads libvips 8.18.6 and
+`npx gltf-transform --version` prints 4.5.0.
+
+**Render and first check (§11 claim 2).** The render was clean: every path of
+`template/` at `v2.1.0` exists, nothing was skipped, `.copier-answers.yml` reads
+`_commit: v2.1.0`, `_src_path: gh:steven-cutting/biscuit_games_template` and the four
+answers, rendered non-interactively with `--defaults --data ...` and no `--trust`.
+`just initialize` exited 0 and printed "Secondary worktree: skipping install-hooks." The
+first `just check` was **not** green, and the fault was neither T's nor the machine's:
+`lock-check` passed, then `lint` failed on markdownlint alone, with seven findings in
+`tickets/` (MD029 on `CONVENTIONS.md` lines 122 to 141, the §1 decisions numbered 16 to
+21; MD004 on `P06-director-and-ports.md` line 217, a wrapped line starting with
+`+ TRANSITION.sit`). The rest were run one at a time on the unedited render and every
+one exited 0: `frontend-static`, `frontend-coverage`, `frontend-build`, `storybook-build`,
+`storybook-test`, `check-agents`, `check-specs`, `analyse-specs`. `check-docs` was not run
+separately on the render; it runs the same markdownlint hook. `just initialize` also ran
+`ruff format .`, which reformatted fenced Python in `tickets/CONVENTIONS.md` (§4.2's
+exporter arguments became tuples, changing their meaning) and `tickets/P05-the-room.md`;
+both were reverted before anything was committed. At the maintainer's direction,
+`tickets` was then added to `.markdownlint-cli2.jsonc`'s `ignores` and to `[tool.ruff]
+extend-exclude` (item 1 below).
+
+**Hooks (§11 claim 14), Step 4 output:**
+
+```text
+$ just install-hooks
+prek installed at `/Users/scutting/projects/pawlour/.git/hooks/pre-commit`
+$ git rev-parse --git-common-dir
+/Users/scutting/projects/pawlour/.git
+$ git rev-parse --git-dir
+/Users/scutting/projects/pawlour/.git/worktrees/P00-foundation
+$ git rev-parse --git-path hooks
+/Users/scutting/projects/pawlour/.git/hooks
+$ cat "$(git rev-parse --git-path hooks)/pre-commit"   (the lines that matter)
+PREK="/Users/scutting/.supacode/repos/pawlour/P00-foundation/.venv/bin/prek"
+exec "$PREK" hook-impl --hook-dir "$HERE" --script-version 4 --hook-type=pre-commit -- "$@"
+```
+
+The claim holds: the two directories differ, `initialize.sh` refused, and the hooks
+directory is the shared one. The shim names this worktree's virtual environment, which
+is why `initialize.sh` refused: when this worktree is deleted the shim falls back to a
+`prek` on the PATH, which there is not, and every commit in the primary checkout fails;
+P13 (or the maintainer) reruns `just install-hooks` there once `main` holds the render.
+`git lfs install --local` added `pre-push`, `post-checkout`, `post-commit` and
+`post-merge` to the same shared directory, beside the `pre-commit` shim. The commit
+`2e26b36` went through the shim: its first attempt was refused by Prettier
+(`eslint.config.js`) and by markdownlint (the tickets), which is how both surfaced.
+
+**Large files (§11 claim 1), Step 9 output.** The per-hook `exclude` is honoured by prek
+0.4.12:
+
+```text
+# 1 MB of /dev/urandom at src/lib/assets/probe.bin, git add, just lint: exit 0
+check for added large files..............................................Passed
+# the same file at probe.bin, git add, just lint: exit 1
+check for added large files..............................................Failed
+- hook id: check-added-large-files
+- exit code: 1
+
+  probe.bin (1024 KB) exceeds 768 KB
+```
+
+No other hook failed in either run. Both files were removed and the index reset.
+
+**`git check-attr`** printed `blender/model/biscuit-poseable.blend: filter: lfs` before any
+such file exists.
+
+**`scripts/check_assets.py`.** `check`, `write` and `self-test` as §3 gives them; the
+self-test builds its tree under `tempfile.mkdtemp()` and runs the same `write_tree` and
+`check_tree` the commands run. It proves: the empty tree writes the stub byte for byte;
+`write` lists every file with the defaults `made:<today>`, `unsettled`, `0` and refuses only
+the unsettled audio; then `check` refuses exactly seven files, one per reason (over
+budget, unlisted, listed but absent, one tampered byte, unsettled audio, a licence outside
+the three, a `source` in none of the four forms), leaves the in-budget file alone, and
+refuses a manifest out of canonical form. Each refusal was mutated out in turn and the
+self-test failed for every one. `just assets-manifest` on the stub leaves it byte for byte
+unchanged. Ruff-clean with no per-file waiver beyond `scripts/**`.
+
+**Template files appended to**, lines before and after: `package.json` 71 to 75,
+`pyproject.toml` 72 to 84, `Justfile` 164 to 207, `.gitattributes` 4 to 18, `.gitignore` 47
+to 51, `.pre-commit-config.yaml` 166 to 169, `.pre-commit-fix.yaml` 41 to 41 (unchanged;
+item 2), `.prettierignore` 21 to 26, `eslint.config.js` 46 to 53, `lychee.toml` 15 to 16,
+`.markdownlint-cli2.jsonc` 25 to 27, `vitest.storybook.config.ts` 62 to 63. The lockfiles
+are regenerated, not appended. Nothing under `docs/`, `src/`, `tests/` or `stories/`
+differs from the render except the new `src/lib/assets/manifest.json`.
+
+**Verification** (the block above, run after the last code commit):
+
+```text
+$ cat .copier-answers.yml             -> _commit: v2.1.0, the four answers
+$ just lock-check                     -> exit 0
+$ git check-attr filter blender/model/biscuit-poseable.blend
+blender/model/biscuit-poseable.blend: filter: lfs
+$ uv run --frozen python scripts/check_assets.py check
+self-test: every refusal is live (budget, unlisted, absent, sha256, licence, source)
+check-assets: checked 0 file(s) against src/lib/assets/manifest.json
+$ grep -n 'check-assets' pyproject.toml Justfile
+pyproject.toml:81:  "analyse-specs", "check-assets",
+Justfile:130:check-assets:
+$ grep -n "'three'" vitest.storybook.config.ts
+48:  optimizeDeps: { include: ['@steven-cutting/biscuit-games', 'three'] },
+$ grep -n -A3 'check-added-large-files' .pre-commit-config.yaml
+76:      - id: check-added-large-files
+77-        args: [--maxkb=768]
+78-        # The served assets are the one place a large file is allowed:
+79-        # docs/decisions/0011-served-assets-are-blobs-and-blends-are-lfs.md.
+```
+
+`just check`, twice in a row, both exit 0, each running `lock-check`, `lint`,
+`frontend-static`, `frontend-coverage`, `frontend-build`, `storybook-build`,
+`storybook-test`, `check-docs`, `check-agents`, `check-specs`, `analyse-specs`,
+`check-assets` and ending "The worktree matches the check baseline. All checks passed
+and the worktree is unchanged." The network was available for both runs.
+
+**Open points answered.** `sharp`: `npm ci` needed no flag or environment variable here;
+`sharp` 0.35 ships its binary as optional `@img/sharp-*` packages, and the lockfile
+carries `@img/sharp-linux-x64` for CI, but a CI run was not possible before P12 (item 8).
+`pillow` 12.3.0 is still current and resolved on Python 3.14.
+
+**For P11:**
+
+1. `tickets` is in `.markdownlint-cli2.jsonc` `ignores` and in `[tool.ruff]
+   extend-exclude`, a deviation from Step 6 and §2.2 taken at the maintainer's direction
+   (the tickets are to be thrown away). The seven markdownlint findings remain in the
+   ticket prose. `tickets/README.md` ("the hook gate P00 installs runs lychee offline over
+   this directory") still holds for lychee and typos; CONVENTIONS.md §2's rows for
+   `pyproject.toml` and `.markdownlint-cli2.jsonc` do not mention `tickets`.
+2. T `v2.1.0`'s `.pre-commit-fix.yaml` has no `check-added-large-files` hook (it holds
+   only `end-of-file-fixer`, `trailing-whitespace`, ruff and markdownlint), so it was left
+   as rendered. CONVENTIONS.md §2 and §3 and this ticket name both prek configs; only
+   `.pre-commit-config.yaml` carries the `exclude`.
+3. The branch is `P00-foundation`, not `ticket/p00-foundation`, and the worktree is
+   `P00-foundation`, not `full-cozy` (CONVENTIONS.md §0 and §11 claim 14). Both were left
+   as the maintainer created them.
+4. The shared hooks directory now holds a shim naming this worktree's `.venv`; rerun
+   `just install-hooks` from the primary checkout once `main` holds the render, before
+   this worktree is removed.
+5. `scripts/check_assets.py` imports `re`, `shutil` and `datetime` beside the six modules
+   Step 7 names; all are standard library. A non-empty manifest's canonical text is
+   `{"schema_version": 1, "assets": [` then one entry per line indented two spaces,
+   comma-separated, sorted by path, then `]}` and a newline; `check` refuses any other
+   layout, so P03 and later lanes write it only through `just assets-manifest`.
+6. Prettier wrapped the `ignores` array in `eslint.config.js` over several lines once
+   `'blender/'` made it too long, so `copier update` may conflict there as well as on
+   `vitest.storybook.config.ts` (CONVENTIONS.md §12 names only the latter).
+7. The rendered Pages address is `https://steven-cutting.github.io/pawlour/` (T computes
+   it; `README.md` and decision 0010 carry it), while CONVENTIONS.md §1 decision 14 says
+   the site is seen at `https://stevencutting.com/pawlour/` through the redirect. P09 or
+   P13 decides which the handbook states.
+8. Not verifiable before P12: that CI's `npm ci` installs `sharp`'s Linux binary with
+   no flag, and that `storybook-build` passes offline (it was not tried offline here).
 
 ## Open points
 
