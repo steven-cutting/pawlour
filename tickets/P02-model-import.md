@@ -1,7 +1,7 @@
 ---
 id: P02
 title: "Model import and the animated exporter: D's `.blend` and scripts, `export_animated_glb.py`, the proof clip"
-status: open
+status: in_progress
 depends_on: [P00]
 parallel_with: [P01, P06, P09]
 branch: ticket/p02-model-import
@@ -274,18 +274,53 @@ and exit 0; two files under `blender/out/`; nothing (ignored); green.
 
 ## Hand-back notes
 
-Filled in by the agent that executes this ticket.
+Implemented locally on 2026-09-25. Visual acceptance remains pending; code is
+committed separately from P03, P04 and P05.
 
-- The file list and digests copied from D, and the count.
-- The exporter's argument names and defaults as the add-on spells them (Step 3).
-- The image-name mapping the material port uses (Step 6).
-- The outputs of `just model-clips` and `just model-export`, quoted, including the IK
-  variant's (§11 claim 3) and the morph assertion's (§11 claim 4).
-- The contact sheet's path, the script that made it, and the maintainer's approval
-  with its date.
-- The raw GLB's size and triangle count, for P03's before figures.
-- Anything handed back to P00 (an exclusion that did not hold) or forward to P04 (a
-  helper every clip will want in `build_clips.py`), as a numbered list for P11.
+- All 22 copied files match the source hashes. The complete file list, sixteen
+  source filenames and SHA-256 table are in `blender/README.md` and
+  `blender/provenance.json`; `just model-provenance` verifies them. No source GLB
+  was copied. The source `.blend` remains `95d164730e9354ab3d9bd561a73180690bbb055fffa9bf230c735f735234b4c3`.
+- The staged `.blend` is an LFS pointer with that oid and `size 12004899`;
+  `git check-attr filter` reports `lfs`.
+- Blender 5.2.1 LTS property defaults: `export_animations=True`,
+  `export_animation_mode='ACTIONS'`, `export_force_sampling=True`,
+  `export_frame_step=1`, `export_morph=True`, `export_morph_animation=True`,
+  `export_optimize_animation_size=True`, `export_anim_slide_to_zero=False`,
+  `export_image_format='AUTO'`, `export_def_bones=False`. The exporter explicitly
+  applies the ticket's changes. `just model-inspect` records the full evidence.
+- Packed image mapping: `<family>-<kind>.png`, kinds `color`, `normal`,
+  `roughness`, `occlusion`; families `coat`, `cream`, `ear-wave`, `eye`, `face-B`,
+  `nose`, `sweater-knit`, `sweater-label`, `sweater-rib`. The four `ear-wave`
+  image names have `.001` appended. All 36 are packed; no external paths are read.
+- `just model-clips` proof: `idle.stand: frames 1-120 (120 samples at 30 fps)`.
+  `just model-export`: `idle.stand: 120 samples, 3.966667s; weights=True,
+  above threshold=False`; 33 deformation joints, no CTRL nodes, 86,828 triangles.
+  The ordinary raw export is approximately 16.15 MB before P03 compression.
+- `just model-check-ik ai_tmp/proof-raw.glb ai_tmp/ik-probe.glb`:
+  `IK baked into front.lower.L: baseline span 0.00000000, probe span 0.26967822;
+  no CTRL nodes`. The normal proof was restored after this temporary variant.
+- The contact sheet is `ai_tmp/clips/idle.stand.jpg`, rendered with P04's
+  `scripts/contact_sheet.py`. Maintainer approval is pending, not inferred.
+- Targeted Python checks and the source provenance check pass. The aggregate
+  gate is recorded after all four tickets finish their local checks.
+
+Corrections to assumptions discovered in implementation:
+
+1. The copied `rig.py` imports `common.py` and therefore the unavailable rebuild
+   chain. It is retained byte-identically but not imported; animation reads
+   `rig.json` and imports only the independent `pose_io.py`.
+2. Blender emits joints in hierarchy traversal order, not `rig.json` order.
+   The exporter canonicalizes the palette while remapping inverse-bind matrices
+   and vertex joint indices together, then requires the exact requested order.
+3. 120 inclusive samples span 119 intervals: 3.966667 seconds, not 4.0. The
+   scripts retain the requested sample counts and identical loop endpoints;
+   P04 permits duration error of one frame. No duplicate frame extends a strip.
+4. P00 omitted the copied pose/rig JSON from Prettier and the source scripts
+   from EditorConfig. The narrow source exclusions now preserve their hashes.
+5. Shared helpers live in `blender/clips/_keys.py` and are skipped by the runner.
+   Root local Y is keyed as a constant in the proof to prevent a later seated
+   clip's height leaking into it; no horizontal root motion is authored.
 
 ## Open points
 

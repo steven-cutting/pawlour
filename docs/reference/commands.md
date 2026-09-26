@@ -73,6 +73,38 @@ trusting the exit code — `allium check` exits 0 on an `info` diagnostic and `a
 analyse` ignores diagnostics altogether. Both need the pinned binary, so a worktree that
 has not run `just initialize` must run `just install-allium` first.
 
+## Model and assets
+
+These local authoring recipes need Blender 5.2.1 LTS (`BLENDER` overrides its
+default application path). The full gate validates committed assets without
+rebuilding them. No authoring recipe reads the historical model studies, and
+none writes over the approved source. See [Blender provenance](../../blender/README.md).
+
+| Recipe | Purpose |
+| --- | --- |
+| `just model-provenance` | Check all copied model files against their recorded source hashes. |
+| `just model-inspect` | Record the installed exporter's defaults and packed image names under `ai_tmp/`. |
+| `just model-diagnose <script>` | Run a local Blender diagnostic; disposable scripts belong in `ai_tmp/`. |
+| `just model-clips` | Build all clip scripts into the derived `blender/out/biscuit-clips.blend`. `PAWLOUR_CLIPS=idle_stand` selects the proof; `PAWLOUR_IK_PROBE=1` enables its temporary IK probe. |
+| `just model-export` | Export portable materials, sampled animation and driven sweater morphs; verify the raw GLB's skeleton, clip names, durations and weights. |
+| `just model-sheet <clip>` | Render one twelve-frame contact sheet under `ai_tmp/clips/`. |
+| `just model-sheets` | Render a contact sheet for every clip. |
+| `just model-stills` | Render eighteen activity/phase WebP stills, each below 262,144 bytes. |
+| `just model-check-clips` | Check native loop endpoints, in-place motion, additive channels and authored frame ranges. |
+| `just model-check-ik <baseline> <probe>` | Compare ordinary and temporary IK GLBs: movement must bake into the lower-leg bone without exporting controls. |
+| `just cabin-export` | Build the room, raw GLB and three review camera renders. |
+| `just check-cabin [path]` | Verify the room's node names, navigation graph, item hierarchy, colours and triangle budget; defaults to the served cabin. |
+| `just check-cabin-self-test` | Exercise the room checker with deliberate contract violations. |
+| `just assets-build <name>` | Build `biscuit` or `cabin` through the offline, pinned gltf-transform pipeline; write the manifest and clip metadata. Budgets are 6,291,456 and 3,145,728 bytes respectively. |
+| `just assets-inspect <path>` | Measure a GLB's meshes, primitives, triangles, image payload and bytes. |
+| `just check-model-asset [path]` | Load Biscuit in three.js and verify its rig, baked clips, morph channels and bind height. |
+| `just assets-tools-help` | Show the pinned transform CLI's resize and join flags. |
+| `just check-assets` | Check manifest completeness, hashes, budgets and provenance, including checker self-tests. Part of `just check`. |
+| `just assets-manifest` | Recompute manifest sizes and hashes; retain each entry's source, licence and budget. |
+| `just python-check <paths...>` | Ruff lint and formatting checks for authoring tools. |
+| `just python-format <paths...>` | Apply Ruff's safe fixes and formatting to authoring tools. |
+| `just assets-format <paths...>` | Format selected asset-tool JavaScript and metadata with Prettier. |
+
 ## Publish
 
 | Recipe | Purpose |

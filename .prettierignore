@@ -23,4 +23,7 @@ docs/manifest.yml
 # The model's own build tooling, copied byte for byte and never reformatted; and
 # the served assets, which are binaries plus a manifest check-json owns.
 blender/src
+# These rig and pose JSON files are also byte-identical source copies.
+blender/model/rig.json
+blender/poses
 src/lib/assets

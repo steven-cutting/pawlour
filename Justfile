@@ -142,6 +142,19 @@ assets-manifest:
 assets-build name:
     sh scripts/build_assets.sh {{name}}
 
+assets-inspect path:
+    node scripts/inspect_asset.mjs "$1"
+
+check-model-asset path="src/lib/assets/biscuit.glb":
+    node scripts/check_model_asset.mjs "$1"
+
+assets-tools-help:
+    node_modules/.bin/gltf-transform resize --help
+    node_modules/.bin/gltf-transform join --help
+
+assets-format *paths:
+    node_modules/.bin/prettier --write "$@"
+
 # ------------------------------------------------------------------- model ---
 
 # blender/out/biscuit-clips.blend: the approved .blend plus every clip under
@@ -154,9 +167,52 @@ model-clips:
 model-export:
     "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background --python-exit-code 1 --python blender/export_animated_glb.py
 
+# Native clip review sheets and the eighteen still-mode images.
+model-sheet clip:
+    uv run --frozen python scripts/contact_sheet.py "$1"
+
+model-sheets:
+    uv run --frozen python scripts/contact_sheet.py --all-clips
+
+model-stills:
+    uv run --frozen python scripts/contact_sheet.py --all-stills
+
+model-check-clips:
+    uv run --frozen python scripts/contact_sheet.py --verify-only
+
+model-check-ik baseline probe:
+    uv run --frozen python scripts/check_ik_probe.py "$1" "$2"
+
+# Inspect Blender's installed exporter and the immutable source without exporting.
+model-inspect:
+    "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background --python-exit-code 1 --python blender/inspect_model.py
+
+# Run a local, reviewable Blender diagnostic; keep throwaway scripts in ai_tmp/.
+model-diagnose script:
+    "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background --python-exit-code 1 --python "$1"
+
+# Local Python checks for the asset tools, independent of the frontend.
+python-check *paths:
+    uv run --frozen ruff check "$@"
+    uv run --frozen ruff format --check "$@"
+
+python-format *paths:
+    uv run --frozen ruff check --fix-only "$@"
+    uv run --frozen ruff format "$@"
+
+# Verify byte-for-byte provenance without needing the upstream checkout.
+model-provenance:
+    uv run --frozen python scripts/check_model_source.py
+
 # blender/out/cabin-raw.glb: the room, built and exported in one run.
 cabin-export:
     "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}" --background --python-exit-code 1 --python blender/cabin/build.py
+
+check-cabin path="src/lib/assets/cabin.glb":
+    uv run --frozen python scripts/check_cabin.py "$1"
+
+check-cabin-self-test:
+    uv run --frozen python scripts/check_cabin.py --self-test
 
 # ----------------------------------------------------------------- develop ---
 

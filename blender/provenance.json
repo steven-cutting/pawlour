@@ -1,0 +1,29 @@
+{
+  "source": "biscuit_pics/models/biscuit",
+  "commit": "1d9d358",
+  "copied": "2026-09-25",
+  "files": {
+    "model/biscuit-poseable.blend": "95d164730e9354ab3d9bd561a73180690bbb055fffa9bf230c735f735234b4c3",
+    "model/rig.json": "8de405539beac9f090579c5628c349b3ef69057497fa566796fafa6c5b735d72",
+    "poses/lying.json": "74bb5ae6e5b29665eae929c0a29520894d18b892d44480667bb83c009f355c25",
+    "poses/paw-raised.json": "32f7d4ddefe3718f9569d5fc032b24534159f19b2bb592b2958ef0848f8f49e3",
+    "poses/sitting.json": "b85fe14d8c48cabf51a8495de59acbac88d5a11ce6e78047d23c107a4519aa03",
+    "poses/standing.json": "8d30fbebfa411ee089646556688a7aa4081218fea4d993fe6d1363304d6fd5fb",
+    "src/blender_pose_tools.py": "fa75cfa90682459754fc8818075a566daa209f3d9c5e6971118b147c5746d800",
+    "src/browser_test_utils.mjs": "7976da8ee83c85cb80d3a78386dfd20c13b89ea86c30900c59315ea31112062f",
+    "src/build.py": "512e35737850826119770cd4de1ca4bcf50f0f6be609f6b3de3e33ef078cbd8f",
+    "src/common.py": "76edb1b46f085242ed431c5291ade630ad3076f0b0b92fb6c8df4e098d1609e3",
+    "src/export_pose_glb.py": "6a2940fa03c8941626b3eab740e8e98b3bfcc0ac710938aabdb5ae2ae9b3a1dd",
+    "src/pose_io.py": "8299f2bd641d4324b675520659116f77b394224aefbc21b5be8d0277e7583705",
+    "src/pose_math.js": "538610a61dde475254c2add41c361abe03e52efd4900ada911e1a07eb3102398",
+    "src/pose_viewer.js": "6f2edafd5410eec65481d93d8432006410ca2ba96fcc412d7d3cd112e2c6fad4",
+    "src/proof_sheet.py": "4c2b8f571f625fc9db9bc55d7be5d027602250f44b4090e17a35532e03ded3f4",
+    "src/render.py": "28113f96b6f9bf0889d4812127a5620ba6986858c0e9161d1a0da412f3d906fc",
+    "src/rig.py": "2b76d70318b7e48ed4dab60abdd43551807371c9c66a600f219515f5f1e47c61",
+    "src/verify.py": "c0c5c3a5c229c48dcc290d689498c95c75b039ccc24c188146516a661b461fba",
+    "src/verify_browser.mjs": "d1d06e1cb60a9a1db1e6b616651b795eb2f7d331f0c31200634c3a93b1c82e7e",
+    "src/verify_interchange.py": "c48fc7034a08a31b79df69cefffb8d23d566dc9b7cb355915a87107aa145f6e0",
+    "src/viewer.py": "fc2d83975e81d9256f0e91b73d93cd656e651af93d7aa61c6168dd6203d71e80",
+    "src/viewer.template.html": "e8554d39b8d4a9e07527563ab0f5c239c661fbdaf44950e4e9df0bd8f8248ce5"
+  }
+}

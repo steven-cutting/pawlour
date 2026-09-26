@@ -108,6 +108,8 @@ repos:
       - id: editorconfig-checker
         name: EditorConfig
         types: [text]
+        # The vendored model tooling is verified by source hash, never restyled.
+        exclude: ^blender/src/
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: b82a6c8896e491b9cb377a99ff3412131920681b # v0.23.2

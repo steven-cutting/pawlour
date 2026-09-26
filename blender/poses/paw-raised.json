@@ -1,0 +1,654 @@
+{
+  "format": "biscuit-pose",
+  "version": 1,
+  "modelId": "biscuit-miami-soft-charm-poseable",
+  "rigVersion": 1,
+  "name": "Paw raised",
+  "bones": {
+    "root": {
+      "location": [
+        0,
+        0.0,
+        0
+      ],
+      "rotation": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "pelvis": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "spine": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "chest": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "neck": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "head": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0.9986295104026794,
+        3.5911293938539757e-09,
+        0.03242969512939453,
+        -0.04107765108346939
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "front.upper.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0.9537169337272644,
+        0.30070585012435913,
+        -1.021046713844953e-08,
+        9.769935083170367e-09
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "front.lower.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0.6427876353263855,
+        -0.7660444378852844,
+        -1.0613992323937893e-13,
+        -6.457283063809882e-08
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "front.paw.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0.8433914184570312,
+        0.537299633026123,
+        2.6724204582129554e-14,
+        1.1546993050615129e-07
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "hind.thigh.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "hind.shin.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "hind.hock.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "hind.paw.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "ear.1.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "ear.2.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "ear.3.L": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "front.upper.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "front.lower.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "front.paw.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "hind.thigh.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "hind.shin.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "hind.hock.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "hind.paw.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "ear.1.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "ear.2.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "ear.3.R": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "tail.1": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "tail.2": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "tail.3": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "tail.4": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "tail.5": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "tail.6": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "tail.7": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  },
+  "controls": {
+    "height": 0.0,
+    "body_pitch": 0.0,
+    "back_bend": 0.0,
+    "back_turn": 0.0,
+    "neck": 0.0,
+    "head_nod": 0.0,
+    "head_turn": 0.0,
+    "head_tilt": -6.0,
+    "front_upper_L": 35.0,
+    "front_lower_L": -100.0,
+    "front_paw_L": 65.0,
+    "front_spread_L": 0.0,
+    "hind_thigh_L": 0.0,
+    "hind_shin_L": 0.0,
+    "hind_hock_L": 0.0,
+    "hind_paw_L": 0.0,
+    "hind_spread_L": 0.0,
+    "ear_droop_L": 0.0,
+    "ear_spread_L": 0.0,
+    "front_upper_R": 0.0,
+    "front_lower_R": 0.0,
+    "front_paw_R": 0.0,
+    "front_spread_R": 0.0,
+    "hind_thigh_R": 0.0,
+    "hind_shin_R": 0.0,
+    "hind_hock_R": 0.0,
+    "hind_paw_R": 0.0,
+    "hind_spread_R": 0.0,
+    "ear_droop_R": 0.0,
+    "ear_spread_R": 0.0,
+    "tail_lift": 0.0,
+    "tail_sway": 0.0,
+    "tail_curl": 0.0,
+    "tail_drape": 0.0
+  },
+  "correctives": {
+    "Shoulder.L": 0.2775887342599722,
+    "Shoulder.R": 0,
+    "Hip.L": 0,
+    "Hip.R": 0,
+    "Belly": 0
+  },
+  "viewer": {
+    "yaw": 0.85,
+    "pitch": 0.32,
+    "frame": "body",
+    "display": "dressed",
+    "surface": "color",
+    "contours": true
+  }
+}

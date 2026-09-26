@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
+<title>Biscuit — Pose studio</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#ede7de;color:#32292a;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,a,input{font:inherit}button,a{-webkit-tap-highlight-color:transparent}main{height:100dvh;display:grid;grid-template-columns:320px 1fr}aside{z-index:2;background:#f8f5ed;padding:27px 25px;display:flex;flex-direction:column;border-right:1px solid #d9d1c7;overflow:auto}.eyebrow{text-transform:uppercase;font-size:10px;letter-spacing:2.2px;font-weight:750;color:#9c4943}h1{margin:14px 0 8px;font-size:52px;font-weight:850;letter-spacing:-3px;line-height:1;transform:skewY(-4deg)}.subtitle{font-size:14px;margin:11px 0 20px;color:#776662}.rule{height:5px;width:41px;background:#aa353b;transform:skewX(-23deg);margin-bottom:24px;flex-shrink:0}.label{font-weight:750;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 10px}.looks{display:flex;flex-direction:column;gap:7px}.looks button{text-align:left;padding:12px 13px;font-size:13px}.looks b{display:inline-block;width:23px;color:#a75348}.looks small{display:block;font-size:10px;font-weight:400;margin:5px 0 0 26px;opacity:.75}.controls button{border:1px solid #d2c7bd;background:transparent;color:#49393a;cursor:pointer;border-radius:2px}.controls button:hover{background:#ebe3d8}.controls button[aria-pressed=true]{background:#383037;color:#fff2dc;border-color:#383037}.looks button[aria-pressed=true] b{color:#e4b796}.row{display:flex;gap:5px;margin:0 0 16px}.row button{flex:1;min-width:0;font-size:11px;padding:8px 3px}.toggle{display:flex;gap:9px;align-items:center;margin:13px 0;cursor:pointer;font-size:12px}input{accent-color:#a3333c}input[type=checkbox]{width:15px;height:15px;margin:0}.small{color:#82726b;font-size:11px;line-height:1.6}.line{height:1px;background:#ddd3c8;margin:19px 0;flex-shrink:0}.files{display:flex;flex-direction:column;gap:10px}.files a{font-size:11px;color:#614648;text-decoration:none;display:flex;justify-content:space-between}.files a:hover{text-decoration:underline}.stats{margin-top:auto;padding-top:22px;font-size:10px;color:#82716b;line-height:1.8;font-variant-numeric:tabular-nums}strong{color:#594344}section{position:relative;min-width:0;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 46% 38%,#fff6e5 0%,#eee2d4 58%,#d7c6ba 100%)}section::before{content:"";position:absolute;width:38%;height:140%;right:-19%;top:-20%;background:#b4594c0b;transform:rotate(18deg);pointer-events:none}canvas{position:relative;display:block;width:100%;height:100%;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}.tag{position:absolute;top:30px;left:33px;letter-spacing:2px;font-size:10px;color:#917a6b;pointer-events:none}.tag b{color:#a23b42}.caption{position:absolute;left:33px;right:33px;bottom:26px;display:flex;gap:16px;justify-content:space-between;font-size:10px;color:#927a6e;pointer-events:none}.caption span:last-child{text-align:right}#state{color:#8e4147}.stamp small{display:block;font:11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.3px;margin-top:5px}.stamp{text-align:right;max-width:48%;line-height:1.3;position:absolute;right:30px;top:26px;font:italic 18px Georgia,serif;color:#977567;pointer-events:none}.error{position:absolute;top:35%;left:10%;right:10%;text-align:center;background:#f8f4eb;padding:28px;line-height:1.7}.error[hidden],.loading[hidden]{display:none}.error a{color:#9f3440}.loading{position:absolute;inset:0;display:grid;place-content:center;background:#f2e9ddee;color:#9c6653;letter-spacing:2px;font-size:11px;pointer-events:none}button:focus-visible,a:focus-visible,input:focus-visible,canvas:focus-visible{outline:3px solid #a73c45;outline-offset:3px}canvas:focus-visible{outline-offset:-4px}#sweater-options[data-hidden=true]{opacity:.65}#design-note{min-height:34px;margin:8px 0 0}.toggles{display:flex;gap:18px}.toggles .toggle{font-size:11px;margin:0}noscript .error{z-index:5}
+@media(max-width:720px){main{height:auto;min-height:100dvh;display:flex;flex-direction:column}aside{order:2;padding:24px;border-right:0}h1{font-size:42px}section{order:1;height:63dvh;min-height:390px;flex-shrink:0}.tag{top:18px;left:18px;font-size:9px}.stamp{top:16px;right:18px;font-size:16px}.caption{left:18px;right:18px;bottom:16px;font-size:9px}.caption span:first-child{max-width:140px}.stats{padding-top:18px}.rule{margin-bottom:18px}.subtitle{margin-bottom:16px}.looks{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.looks button{padding:10px 8px;font-size:11px;line-height:1.6}.looks b{display:block}.looks small{display:none}}
+.pose-presets{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pose-presets button{padding:10px}.pose-group{border-top:1px solid #ddd3c8;padding:12px 0}summary{cursor:pointer;font-size:13px;font-weight:650}.slider-row{display:grid;grid-template-columns:1fr 45px 27px;gap:6px;margin-top:15px;align-items:center}.slider-row label{font-size:11px}.slider-row output{font-size:10px;text-align:right;font-variant-numeric:tabular-nums}.slider-row input{grid-column:1/3;width:100%;height:23px;margin:0}.slider-row button{grid-column:3;grid-row:1/3;height:28px;padding:0}#pose-status{min-height:34px;margin:10px 0 4px}#pose-status[data-error=true]{color:#a12837}#reset-pose{margin-top:10px}.view-settings>summary{padding:10px 0}.subtitle{line-height:1.4}
+</style>
+</head>
+<body>
+<main><aside class="controls">
+  <div class="eyebrow">Pose studio / 01</div><h1>BISCUIT.</h1><p class="subtitle">Make herself at home</p><div class="rule"></div>
+  <p class="small" id="design-note">Set a pose, then fine-tune her stance, head, ears and tail.</p>
+  <div class="line"></div><p class="label">Start with a pose</p>
+  <div class="pose-presets" role="group" aria-label="Pose presets"><button data-pose="standing" aria-pressed="true">Standing</button><button data-pose="sitting" aria-pressed="false">Sitting</button><button data-pose="lying" aria-pressed="false">Lying down</button><button data-pose="paw-raised" aria-pressed="false">Paw raised</button></div>
+  <p id="pose-status" class="small" role="status" aria-live="polite">Standing</p>
+  <div class="row"><button id="open-pose">Open pose</button><button id="save-pose">Save pose</button><button id="save-png">Save PNG</button></div>
+  <input id="pose-file" type="file" accept=".json,application/json" hidden>
+  <div id="pose-controls"></div><div class="row"><button id="reset-pose">Reset to standing</button></div>
+  <details class="view-settings"><summary>View &amp; appearance</summary>
+  <div class="line"></div><p class="label" id="display-label">Display</p><div class="row" role="group" aria-labelledby="display-label"><button data-display="dressed" aria-pressed="true">Dressed</button><button data-display="sweater" aria-pressed="false">Sweater only</button><button data-display="biscuit" aria-pressed="false">Biscuit only</button></div>
+  <p class="label" id="framing-label">Framing</p><div class="row" role="group" aria-labelledby="framing-label"><button data-frame="sweater" aria-pressed="false">Sweater</button><button data-frame="forelegs" aria-pressed="false">Forelegs</button><button data-frame="collar" aria-pressed="false">Collar</button><button data-frame="body" aria-pressed="true">Full body</button></div>
+  <p class="label" id="view-label">View</p><div class="row" role="group" aria-labelledby="view-label"><button data-view="front" aria-pressed="false">Front</button><button data-view="hero" aria-label="Three-quarter view" aria-pressed="true">¾</button><button data-view="left" aria-pressed="false">Left</button><button data-view="right" aria-pressed="false">Right</button><button data-view="rear" aria-pressed="false">Rear</button><button data-view="underside" aria-label="Underside view" aria-pressed="false">Below</button><button data-view="top" aria-pressed="false">Top</button></div>
+  <p class="label" id="surface-label">Surface</p><div class="row" role="group" aria-labelledby="surface-label"><button data-mode="clay" aria-pressed="false">Clay</button><button data-mode="color" aria-pressed="true">Cream knit</button><button data-mode="wire" aria-pressed="false">Topology</button></div>
+  <div class="toggles"><label class="toggle"><input id="spin" type="checkbox"> Auto rotate</label><label class="toggle"><input id="contours" type="checkbox" checked> Contours</label></div><div class="line"></div>
+  </details><div class="line"></div><p class="label">Model files</p><div class="files">
+    <a href="model/biscuit-poseable.blend" download>Poseable Blender scene <span>↗</span></a>
+    <a href="model/biscuit-poseable.glb" download>Skinned model · GLB <span>↗</span></a>
+    <a href="previews/pose-overview.jpg">Pose overview <span>↗</span></a>
+    <a href="README.md">Posing guide <span>↗</span></a>
+  </div>
+  <div class="stats"><strong id="triangles">Dressed Biscuit</strong><br><span id="part-count"></span> parts · 33 deform bones<br>Soft Charm / Full Soft / Longer Drape<br>Persona 5 / Catherine inspired</div>
+</aside><section aria-label="Interactive posing studio for Biscuit">
+  <canvas id="canvas" aria-label="Biscuit. Drag to orbit. Scroll or use plus and minus to zoom. Arrow keys rotate. Space toggles rotation; Home resets the view." tabindex="0"></canvas>
+  <div class="tag"><b>MIAMI</b> / SOFT KNIT</div><div class="stamp"><span id="pose-name">Standing</span><small id="context-label">Dressed Biscuit</small></div>
+  <div class="caption"><span>Drag to orbit · scroll to zoom</span><span id="state" aria-live="polite">CREAM KNIT / FULL BODY</span></div>
+  <div class="loading" id="loading" role="status">GETTING BISCUIT READY…</div>
+  <div class="error" id="error" hidden role="alert"><span id="error-message">This browser could not start the 3D view.</span> Open <a href="previews/pose-overview.jpg">the preview sheet</a> or <a href="model/biscuit-poseable.blend">the Blender file</a>.</div>
+  <noscript><div class="error">Enable JavaScript for the turntable, or open <a href="previews/pose-overview.jpg">the preview sheet</a>.</div></noscript>
+</section></main>
+<script type="application/json" id="mesh-data">__GEOMETRY__</script>
+<script>
+__POSE_MATH__
+'use strict';
+(async()=>{
+const canvas=document.querySelector('#canvas');
+function fail(message){document.querySelector('#loading').hidden=true;document.querySelector('#error-message').textContent=message;document.querySelector('#error').hidden=false;document.querySelectorAll('.controls button,.controls input').forEach(el=>el.disabled=true);}
+try{
+const gl=canvas.getContext('webgl2',{antialias:true,alpha:true,preserveDrawingBuffer:true});if(!gl){fail('This browser could not start WebGL.');return;}
+let lost=false;canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();lost=true;fail('The 3D view was interrupted. Reload this page to restart it.');});canvas.addEventListener('webglcontextrestored',()=>location.reload());
+function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;}
+const program=gl.createProgram();
+gl.attachShader(program,shader(gl.VERTEX_SHADER,`#version 300 es
+precision highp float;precision highp int;
+layout(location=0)in vec3 position;layout(location=1)in vec3 normal;layout(location=2)in vec2 texcoord;layout(location=3)in vec4 tangent;
+uniform mat4 vp;uniform int pass;uniform float wireBias;out vec3 p;out vec3 n;out vec2 uv;out vec4 tan;
+void main(){p=position;n=normal;uv=texcoord;tan=tangent;gl_Position=vp*vec4(position+(pass==1?normal*.002:vec3(0.)),1.);if(pass==3)gl_Position.z-=wireBias*gl_Position.w;}`));
+gl.attachShader(program,shader(gl.FRAGMENT_SHADER,`#version 300 es
+precision highp float;precision highp int;
+in vec3 p;in vec3 n;in vec2 uv;in vec4 tan;uniform sampler2D colorMap,normalMap,roughMap,aoMap;
+uniform vec3 tint,solid,eye,dark,middle,light;uniform int pass;uniform bool textured,gloss,old;uniform float normalStrength;out vec4 result;
+vec3 linear(vec3 c){return mix(c/12.92,pow((c+.055)/1.055,vec3(2.4)),step(vec3(.04045),c));}
+vec3 srgb(vec3 c){return mix(12.92*c,1.055*pow(max(c,vec3(0.)),vec3(1./2.4))-.055,step(vec3(.0031308),c));}
+void main(){
+ if(pass==1||pass==3){result=vec4(.20,.135,.12,1.);return;}
+ vec3 N=normalize(n),V=normalize(eye-p),L=normalize(vec3(-3.5,-4.5,7.)),F=normalize(vec3(4.,-3.,4.));
+ if(textured&&pass==0){vec3 T=normalize(tan.xyz-dot(tan.xyz,N)*N);vec3 B=cross(N,T)*tan.w;vec3 m=texture(normalMap,uv).xyz*2.-1.;m.xy*=normalStrength;N=normalize(mat3(T,B,N)*normalize(m));}
+ float value=.12+.76*max(0.,dot(N,L))+.18*max(0.,dot(N,F));
+ vec3 base=textured?linear(texture(colorMap,uv).rgb)*tint:solid;
+ vec3 shade=mix(vec3(.32,.26,.245),vec3(.51,.43,.385),smoothstep(0.,.28,value));
+ shade=mix(shade,vec3(.82,.74,.66),smoothstep(.28,.48,value));shade=mix(shade,vec3(1.08,1.025,.93),smoothstep(.48,.71,value));
+ vec3 col=textured?base*shade*texture(aoMap,uv).r:solid;
+ if(gloss&&textured){float rough=texture(roughMap,uv).r;vec3 H=normalize(L+V);float spec=pow(max(0.,dot(N,H)),mix(100.,16.,rough));col=base*(.30+.82*max(0.,dot(N,L))+.18*max(0.,dot(N,F)))+vec3(.15)*spec;}
+ if(old)col=value>.68?light:value>.29?middle:dark;
+ if(pass==2)col=vec3(.35,.37,.35)*(.36+.71*value);
+ result=vec4(srgb(col),1.);
+}`));
+gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
+const u={};for(const name of ['vp','pass','wireBias','tint','solid','eye','dark','middle','light','textured','gloss','old','normalStrength','colorMap','normalMap','roughMap','aoMap'])u[name]=gl.getUniformLocation(program,name);
+for(const [i,name]of ['colorMap','normalMap','roughMap','aoMap'].entries())gl.uniform1i(u[name],i);
+const source=JSON.parse(document.querySelector('#mesh-data').textContent);document.querySelector('#mesh-data').remove();
+function bytes(data){const raw=atob(data),a=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i);return a;}
+function buffer(data,target=gl.ARRAY_BUFFER){const b=gl.createBuffer();gl.bindBuffer(target,b);gl.bufferData(target,bytes(data),gl.STATIC_DRAW);return b;}
+function skinData(vertices,joints,weights,morphs,stride){const rest=new Float32Array(bytes(vertices).buffer),data=new Float32Array(rest);const gpu=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,gpu);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);return {rest,data,buffer:gpu,joints:new Uint16Array(bytes(joints).buffer),weights:new Float32Array(bytes(weights).buffer),morphs:Object.entries(morphs).map(([k,v])=>[k,new Float32Array(bytes(v).buffer)])};}
+const parts=source.parts.map(p=>{
+ const batches=p.batches.map(b=>{const vao=gl.createVertexArray();gl.bindVertexArray(vao);const skin=skinData(b.vertices,b.joints,b.weights,b.morphs,12);for(const [i,size,offset] of [[0,3,0],[1,3,12],[2,2,24],[3,4,32]]){gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,size,gl.FLOAT,false,48,offset);}buffer(b.indices,gl.ELEMENT_ARRAY_BUFFER);gl.bindVertexArray(null);return {...skin,vao,count:b.count,texture:b.texture,tint:b.tint,solid:b.solid,gloss:b.gloss,bands:b.bands};});
+ const edges=gl.createVertexArray();gl.bindVertexArray(edges);const edgeData=skinData(p.edges,p.edgeJoints,p.edgeWeights,p.edgeMorphs,3);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);gl.bindVertexArray(null);
+ return {name:p.name,group:p.group,owner:p.owner,outline:p.outline,batches,edges,edgeData,edgeCount:p.edge_count};
+});
+delete source.parts;
+const textures={};
+await Promise.all(Object.entries(source.textures).map(async([name,url])=>{const im=new Image();im.src=url;await im.decode();const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);const wrap=name.startsWith('eye-')?gl.CLAMP_TO_EDGE:gl.REPEAT;gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,wrap);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,wrap);gl.generateMipmap(gl.TEXTURE_2D);textures[name]=tex;}));
+delete source.textures;
+const sub=(a,b)=>a.map((x,i)=>x-b[i]),dot=(a,b)=>a.reduce((v,x,i)=>v+x*b[i],0),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>a.map(x=>x/Math.hypot(...a));
+function multiply(a,b){const r=new Float32Array(16);for(let c=0;c<4;c++)for(let row=0;row<4;row++)for(let k=0;k<4;k++)r[c*4+row]+=a[k*4+row]*b[c*4+k];return r;}
+function view(eye,target){const z=norm(sub(eye,target)),x=norm(cross([0,0,1],z)),y=cross(z,x);return [x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1];}
+function projection(width,height){const near=.01,far=100;return [2/width,0,0,0,0,2/height,0,0,0,0,-2/(far-near),0,0,0,-(far+near)/(far-near),1];}
+const spinInput=document.querySelector('#spin'),contourInput=document.querySelector('#contours');
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+let yaw=.85,pitch=.32,zoom=source.frames.body.scale,mode='color',spin=false,drag=null,last=0,frame='body',display='dressed';
+function stopSpin(){spin=false;spinInput.checked=false;}
+function unselectView(){document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed','false'));}
+function visible(p){return p.owner==='garment'?display!=='biscuit':display!=='sweater';}
+function draw(time){
+ if(lost)return;const delta=Math.min((time-last)/1000,.05);last=time;if(spin&&!drag&&!document.hidden)yaw+=delta*.25;
+ const box=canvas.getBoundingClientRect(),ratio=Math.min(devicePixelRatio||1,2),w=Math.max(1,Math.round(box.width*ratio)),h=Math.max(1,Math.round(box.height*ratio));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+ canvas.dataset.camera=JSON.stringify({yaw,pitch,zoom,frame});gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ const target=source.frames[frame].target;const eye=[target[0]+9*Math.sin(yaw)*Math.cos(pitch),target[1]-9*Math.cos(yaw)*Math.cos(pitch),target[2]+9*Math.sin(pitch)];
+ const height=zoom*Math.max(1,1.05/(w/h));gl.uniformMatrix4fv(u.vp,false,multiply(projection(height*w/h,height),view(eye,target)));gl.uniform3fv(u.eye,eye);
+ gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);gl.uniform1i(u.pass,mode==='color'?0:2);
+ if(mode==='wire'){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);}
+ for(const p of parts){if(!visible(p))continue;gl.uniform1i(u.old,false);for(const b of p.batches){gl.bindVertexArray(b.vao);gl.uniform1i(u.textured,Boolean(b.texture));gl.uniform1i(u.gloss,b.gloss);gl.uniform3fv(u.tint,b.tint);gl.uniform3fv(u.solid,b.solid);gl.uniform1f(u.normalStrength,b.texture?.startsWith('face')?.18:.32);if(b.bands){gl.uniform3fv(u.dark,b.bands[0]);gl.uniform3fv(u.middle,b.bands[1]);gl.uniform3fv(u.light,b.bands[2]);}if(b.texture){for(const [i,kind]of ['color','normal','roughness','occlusion'].entries()){gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,textures[b.texture+'-'+kind]);}}gl.drawElements(gl.TRIANGLES,b.count,gl.UNSIGNED_INT,0);}}
+ gl.disable(gl.POLYGON_OFFSET_FILL);
+ // Reveal the editable cage under the 0.008-thick fabric, retaining depth occlusion.
+ if(mode==='wire'){gl.uniform1i(u.pass,3);gl.disable(gl.CULL_FACE);for(const p of parts){if(!visible(p))continue;gl.uniform1f(u.wireBias,p.owner==='garment'?.00020:.000008);gl.bindVertexArray(p.edges);gl.drawArrays(gl.LINES,0,p.edgeCount);}}
+ else if(contourInput.checked&&mode==='color'){gl.uniform1i(u.pass,1);gl.cullFace(gl.FRONT);for(const p of parts){if(!visible(p)||!p.outline)continue;for(const b of p.batches){gl.bindVertexArray(b.vao);gl.drawElements(gl.TRIANGLES,b.count,gl.UNSIGNED_INT,0);}}}
+ gl.bindVertexArray(null);requestAnimationFrame(draw);
+}
+function label(){
+ const stats={parts:(display!=='biscuit'?source.garment.parts:0)+(display!=='sweater'?source.character.parts:0),triangles:(display!=='biscuit'?source.garment.triangles:0)+(display!=='sweater'?source.character.triangles:0)};
+ document.querySelector('#state').textContent=(mode==='color'?'CREAM KNIT':mode.toUpperCase())+' / '+({body:'FULL BODY',sweater:'SWEATER',forelegs:'FORELEGS',collar:'COLLAR'})[frame];
+ document.querySelector('#context-label').textContent=({dressed:'Dressed Biscuit',sweater:'Sweater only',biscuit:'Biscuit only'})[display];
+ document.querySelector('#triangles').textContent=stats.triangles.toLocaleString()+' triangles';
+ document.querySelector('#part-count').textContent=stats.parts;
+ canvas.dataset.display=display;canvas.dataset.mode=mode;canvas.dataset.frame=frame;
+}
+document.querySelectorAll('[data-display]').forEach(button=>button.addEventListener('click',()=>{display=button.dataset.display;stopSpin();document.querySelectorAll('[data-display]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));label();}));
+document.querySelectorAll('[data-frame]').forEach(b=>b.addEventListener('click',()=>{frame=b.dataset.frame;zoom=source.frames[frame].scale;stopSpin();document.querySelectorAll('[data-frame]').forEach(el=>el.setAttribute('aria-pressed',String(el===b)));label();}));
+function preset(name){document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===name)));yaw=({hero:.85,front:0,left:Math.PI/2,right:-Math.PI/2,rear:Math.PI,underside:.65,top:0})[name];pitch=name==='hero'?.32:name==='underside'?-1.25:name==='top'?Math.PI/2-.001:0;stopSpin();label();}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>preset(b.dataset.view)));
+document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>{mode=button.dataset.mode;document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));contourInput.disabled=mode!=='color';label();}));
+spinInput.addEventListener('change',()=>{spin=spinInput.checked;if(spin)unselectView();});reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches)stopSpin();});
+canvas.addEventListener('pointerdown',event=>{if(event.button!==0)return;stopSpin();canvas.focus({preventScroll:true});drag=[event.clientX,event.clientY];canvas.setPointerCapture(event.pointerId);});
+canvas.addEventListener('pointermove',event=>{if(!drag)return;yaw-=(event.clientX-drag[0])*.008;pitch=Math.max(-1.45,Math.min(Math.PI/2-.001,pitch+(event.clientY-drag[1])*.008));drag=[event.clientX,event.clientY];unselectView();});for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>drag=null);
+canvas.addEventListener('wheel',event=>{event.preventDefault();const d=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?canvas.clientHeight:1);zoom=Math.max(.45,Math.min(8,zoom+d*.004));},{passive:false});
+canvas.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','Home',' '].includes(event.key))return;event.preventDefault();if(event.key===' '){spin=!spin;spinInput.checked=spin;if(spin)unselectView();return;}if(event.key==='Home'){zoom=source.frames[frame].scale;preset('hero');return;}stopSpin();unselectView();if(event.key==='ArrowLeft')yaw-=.12;if(event.key==='ArrowRight')yaw+=.12;if(event.key==='ArrowUp')pitch=Math.min(Math.PI/2-.001,pitch+.1);if(event.key==='ArrowDown')pitch=Math.max(-1.45,pitch-.1);if(event.key==='+'||event.key==='=')zoom=Math.max(.45,zoom-.2);if(event.key==='-')zoom=Math.min(8,zoom+.2);});
+__POSE_VIEWER__
+label();document.querySelector('#loading').hidden=true;canvas.dataset.ready='true';requestAnimationFrame(draw);
+}catch(error){console.error(error);fail('The 3D view could not be initialized.');}
+})();
+</script></body></html>
