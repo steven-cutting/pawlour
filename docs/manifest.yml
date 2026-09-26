@@ -46,6 +46,21 @@
     {"path": "decisions/0008-design-system-as-a-package.md", "title": "Decision 0008: The design system arrives as a package", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_design_system_as_a_package"], "requires": []},
     {"path": "decisions/0009-rendered-from-the-template.md", "title": "Decision 0009: Rendered from the template", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_rendered_from_template"], "requires": []},
     {"path": "decisions/0010-a-project-pages-site.md", "title": "Decision 0010: A project Pages site", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_project_pages_site"], "requires": []},
-    {"path": "decisions/0011-vendored-skills-outside-the-agent-contract.md", "title": "Decision 0011: Vendored skills sit outside the agent contract", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_vendored_skills"], "requires": []}
+    {"path": "decisions/0011-vendored-skills-outside-the-agent-contract.md", "title": "Decision 0011: Vendored skills sit outside the agent contract", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_vendored_skills"], "requires": []},
+
+    {"path": "design/art-direction.md", "title": "Art direction", "kind": "explanation", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["art_direction"], "requires": []},
+    {"path": "design/the-room.md", "title": "The room", "kind": "reference", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["room_contract"], "requires": []},
+    {"path": "how-to/export-the-model.md", "title": "Export the model", "kind": "how-to", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["model_export_procedure"], "requires": []},
+    {"path": "how-to/author-a-clip.md", "title": "Author a clip", "kind": "how-to", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["clip_authoring"], "requires": []},
+    {"path": "how-to/build-assets.md", "title": "Build assets", "kind": "how-to", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["asset_build_procedure"], "requires": []},
+    {"path": "how-to/test-on-a-phone.md", "title": "Test on a phone", "kind": "how-to", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["device_testing"], "requires": []},
+    {"path": "explanation/rendering.md", "title": "Rendering", "kind": "explanation", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["rendering_model"], "requires": []},
+    {"path": "explanation/the-director.md", "title": "The director", "kind": "explanation", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["director_model"], "requires": []},
+    {"path": "reference/asset-manifest.md", "title": "Asset manifest", "kind": "reference", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["asset_manifest_format"], "requires": []},
+    {"path": "reference/budget.md", "title": "Performance budget", "kind": "reference", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["performance_budget"], "requires": []},
+    {"path": "decisions/0012-served-assets-are-blobs-and-blends-are-lfs.md", "title": "Decision 0012: Served assets are blobs, and blends are LFS", "kind": "decision", "audience": ["contributor", "maintainer", "operator", "agent"], "canonical_for": ["decision_large_file_storage"], "requires": []},
+    {"path": "decisions/0013-the-canvas-lives-outside-the-coverage-glob.md", "title": "Decision 0013: The canvas lives outside the coverage glob", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_canvas_placement"], "requires": []},
+    {"path": "decisions/0014-this-repository-owns-its-animated-model.md", "title": "Decision 0014: This repository owns its animated model", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_model_ownership"], "requires": []},
+    {"path": "decisions/0015-three-js-is-the-renderer.md", "title": "Decision 0015: three.js is the renderer", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_renderer"], "requires": []}
   ]
 }

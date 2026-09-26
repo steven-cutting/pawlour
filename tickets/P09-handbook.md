@@ -1,7 +1,7 @@
 ---
 id: P09
 title: "Handbook: the game's pages, decisions 0011 to 0014, the manifest and the map"
-status: open
+status: done
 depends_on: [P00]
 parallel_with: [P01, P02, P03, P04, P05, P06, P07a, P07b, P08]
 branch: ticket/p09-handbook
@@ -210,13 +210,90 @@ grep count at or above twenty; `just check` green.
 
 Filled in by the agent that executes this ticket.
 
-- Which lanes had merged when the pages were written, and every place a page follows
-  `main` rather than `CONVENTIONS.md` (each is a `CONVENTIONS.md` correction for P11).
-- Every page that could not be verified against code because its lane had not merged.
-- The manifest key the pages are stored under (`pages` is assumed above; record the
-  real one).
-- The word count of the shortest page.
-- Which open points below were settled.
+Executed 2026-09-26 on branch `P09-handboo` (the maintainer's worktree; the ticket's
+`branch:` field says `ticket/p09-handbook`), from `main` at `3f72648`.
+
+- **Decision numbers shifted by one.** `docs/decisions/0011` was already taken by
+  `0011-vendored-skills-outside-the-agent-contract.md`, so, with the maintainer's
+  agreement, the game's four records are 0012 to 0015 in `CONVENTIONS.md`'s order:
+  0012 served assets are blobs and blends are LFS (§1 decision 18), 0013 the canvas lives
+  outside the coverage glob (decision 17), 0014 this repository owns its animated model
+  (decisions 5 and 21), 0015 three.js is the renderer (decision 16). For P11:
+  `CONVENTIONS.md` §1 decisions 16 to 21, §1 fact 10 ("a game's start at 0011"), §2's
+  `docs/**` row, §3's `.gitattributes` block and §9's table all carry the old numbers.
+- **Two files outside Files touched**, by the maintainer's agreement: the comments in
+  `.gitattributes` and `.pre-commit-config.yaml` pointed at
+  `0011-served-assets-are-blobs-and-blends-are-lfs.md` and now point at `0012-…`. Comment
+  lines only.
+- **Manifest**: the key is `pages`. It now has 53 entries, not 52: it held 39 before this ticket (T's 38 and
+  decision 0011), and the fourteen game entries appended
+  after decision 0011's in the Files-touched order. `just check-docs`: "Validated 53
+  pages and 54 canonical topics."
+- **`AGENTS.md`**: the deviations paragraph was already a list (decision 0011's bullet),
+  so the five deviations were appended to it, one hunk. The dependency bullet names what
+  `package.json` pins beyond the template: `three`, `@types/three`, `meshoptimizer`,
+  `sharp` and the four `@gltf-transform/*` packages, not only the four the ticket named.
+- **Page titles** (§9 gives none): Art direction, The room, Export the model, Author a
+  clip, Build assets, Test on a phone, Rendering, The director, Asset manifest,
+  Performance budget, and "Decision 00NN: …" for the records.
+- **Shortest page**: `docs/reference/budget.md`, 387 words.
+- **Lanes merged when written**: P00 to P06 and P07a. Not merged: P07b, P08, P10.
+- **Pages not verifiable against code** because their lane has not merged, written from
+  `CONVENTIONS.md`:
+  - `explanation/rendering.md` "Motion" section (P07b: mixer crossfades, walk, procedural
+    idle, fire flipbook, weather, steam, the 600 ms rig blend).
+  - `design/art-direction.md` "Overlays" section (P08: `overlay.css`, `TitleCard`, the wipe).
+  - `how-to/test-on-a-phone.md`: the `?debug` query and `window.__pawlour` are P10's
+    design (its Step 2) and do not exist.
+  - `explanation/the-director.md` "The ports it runs on": the page constructing ports is
+    P08's; `+page.svelte` is still the template seed.
+  - `reference/budget.md`: "Measured" is "not yet" in every row, for P10.
+- **Where a page follows `main` rather than `CONVENTIONS.md`** (corrections for P11):
+  1. §4.1: clip files use `_` for the dot (`idle_sit.py`); `FRAMES` counts samples, so a
+     clip lasts `(FRAMES − 1) / 30` s; `walk.py`'s `STRIDE` is 1.0 in model units, not
+     0.45 scene units.
+  2. §4.1: contact sheets and stills are rendered from a fixed review camera, not the
+     hearth camera; `sleep.bed.*` and `sleep.chair.*` stills are byte-identical.
+  3. §4.3: the local `gltf-transform` binary, not `npx`; `prune --keep-leaves true`;
+     Biscuit is joined by the skin-aware `scripts/join_assets.mjs` (the CLI `join` leaves
+     skinned meshes alone); the room skips `flatten`; the second resize is
+     `--pattern '*occlusion*'`; Biscuit's meshopt adds `--quantization-volume scene`;
+     normal maps are always stripped; `check_model_asset.mjs` runs after the build.
+  4. §3: the manifest is wrapped as `{"schema_version": 1, "assets": [...]}`; no entry
+     uses `biscuit_pics@`; `platform` is the licence of every `built:` file derived from
+     the model; `cabin.glb` is `cc0`. `.pre-commit-fix.yaml` has no large-file hook.
+     `git lfs install --local` now lives on `how-to/export-the-model.md`, not on T's
+     `develop-locally.md`.
+  5. §5.2: eleven `cabin.*` materials (`cabin.paper.sleeves` is the eleventh); numbered
+     nodes must be contiguous; `check_cabin.py` also caps primitives at 30; `just
+     check-cabin` is not part of `just check`, and the runtime checks names and the graph
+     only.
+  6. §5.3: Biscuit's ramp has four steps and the room's six (the maintainer's choice over
+     three and five); the toon shader is patched to read the ramp's colour; the ink is one
+     fixed `#33221f`; the vignette is a scene quad, not a post pass.
+  7. §5.4: `createScene` takes `frames`, sizes and callbacks and gets `animations` per
+     `apply`; the component takes `state`, `animations`, `frames`, `assets` and four
+     callbacks; the retry control is a button named "Retry 3D scene"; while the context
+     is lost, restore only asks the extension; the camera fits all four floor corners in
+     portrait only and levels the horizon; `@types/three` is 0.186.0 against `three`
+     0.186.1.
+  8. §6.1: `deps` is the random port only; commands are objects keyed by `kind`; a target
+     is a named node, not a point and facing; the four-second minimum applies to sleep;
+     the pet caption comes with the tap (as `cabin.allium` now says); motion off resolves
+     every movement forward after each command rather than freezing; `setPhase('auto')`
+     waits for the next clock reading; idle intervals are whole seconds and count idle
+     time only; she never chooses the food bowl.
+  9. §7: `pawlour.sound` is not persisted (`SoundNeverStartsUnasked`); no storage key
+     exists yet.
+- **Open points settled**: the design pages stay under `docs/design/` (the validator
+  does not care about directories); `art-direction.md` cites H's two pages by blob URL,
+  with `platform.md`'s sentence about links that rot; the two seed pages were rewritten
+  in place with their `canonical_for` unchanged.
+- **Verification**, run before `status:` was set: `just check-docs` green (53 pages, 54 topics); `just check-agents`
+  green; `just lint` green; manifest JSON parses with 53 pages;
+  `git diff --stat main -- AGENTS.md docs/manifest.yml docs/README.md` shows three files,
+  `AGENTS.md` in one hunk; the node grep on `the-room.md` counts 29 lines;
+  `just check` green ("All checks passed and the worktree is unchanged.").
 
 ## Open points
 

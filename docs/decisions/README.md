@@ -32,6 +32,10 @@ the specifications under `docs/specs/`, and unresolved ones are recorded there a
 | [0009](0009-rendered-from-the-template.md) | Rendered from the template |
 | [0010](0010-a-project-pages-site.md) | A project Pages site |
 | [0011](0011-vendored-skills-outside-the-agent-contract.md) | Vendored skills sit outside the agent contract |
+| [0012](0012-served-assets-are-blobs-and-blends-are-lfs.md) | Served assets are blobs, and blends are LFS |
+| [0013](0013-the-canvas-lives-outside-the-coverage-glob.md) | The canvas lives outside the coverage glob |
+| [0014](0014-this-repository-owns-its-animated-model.md) | This repository owns its animated model |
+| [0015](0015-three-js-is-the-renderer.md) | three.js is the renderer |
 
 ## The numbering
 

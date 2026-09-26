@@ -3,7 +3,7 @@
 package-lock.json linguist-generated=true
 uv.lock linguist-generated=true
 
-# Large-file policy: docs/decisions/0011-served-assets-are-blobs-and-blends-are-lfs.md.
+# Large-file policy: docs/decisions/0012-served-assets-are-blobs-and-blends-are-lfs.md.
 # Nothing the site serves may be an LFS object, because the shared workflows
 # check out without LFS and Pages would publish a pointer. The .blend is never
 # served or read in CI, so it lives in LFS.

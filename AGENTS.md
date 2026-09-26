@@ -173,6 +173,19 @@ Deliberate deviations for this repository, each recorded in
 - The Allium skills that `skills-lock.json` vendors sit outside the agent contract,
   and `just check-agents` runs `scripts/validate_agents.py` to leave them out
   (decision 0011).
+- Served assets are ordinary blobs under `src/lib/assets/` and the `.blend` is in
+  Git LFS; the hook `check-added-large-files` excludes `src/lib/assets/`
+  (decision 0012).
+- The three.js canvas lives under `src/routes/scene/`, outside the coverage glob,
+  and `vite.config.ts` is unchanged (decision 0013).
+- This repository owns a byte-for-byte copy of the approved model under
+  `blender/` (decision 0014).
+- `three`, `@types/three`, `meshoptimizer`, `sharp`, `@gltf-transform/cli`,
+  `@gltf-transform/core`, `@gltf-transform/extensions` and
+  `@gltf-transform/functions` are dependencies the template does not ship
+  (decisions 0014 and 0015).
+- `vitest.storybook.config.ts`, a managed file, gains `'three'` in
+  `optimizeDeps.include` (decision 0015).
 
 Record one here when this game departs from the template, and change the
 template instead when the departure would suit every game.

@@ -73,3 +73,28 @@ understand how the two relate.
 
 Pages this game adds are listed here, after everything the template manages, so an
 update from the template and an addition here land in different places.
+
+### Design
+
+- [Art direction](design/art-direction.md) — one rendering register per layer: cel Biscuit, a painted room, graphic overlays.
+- [The room](design/the-room.md) — the `cabin.glb` contract: every node the room must carry, and what checks it.
+
+### How to
+
+- [Export the model](how-to/export-the-model.md) — from the approved `.blend` and the clip scripts to an animated GLB.
+- [Author a clip](how-to/author-a-clip.md) — write or change an animation, and get its contact sheet approved.
+- [Build assets](how-to/build-assets.md) — compress a model for the site, and add any other served file.
+- [Test on a phone](how-to/test-on-a-phone.md) — serve a build to the phone, inspect it, and measure the budget.
+
+### Understand
+
+- [Rendering](explanation/rendering.md) — how a `SceneState` becomes a drawn room, and what happens when it cannot.
+- [The director](explanation/the-director.md) — the pure function that decides what Biscuit does next.
+
+### Look up
+
+- [Asset manifest](reference/asset-manifest.md) — every served file's size, hash, source, licence and budget.
+- [Performance budget](reference/budget.md) — the figures the phone is held to, and what was measured.
+
+The decisions this game has taken, 0011 onward, are in
+[the record](decisions/README.md).
