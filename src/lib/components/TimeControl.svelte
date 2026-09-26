@@ -27,4 +27,19 @@
   }
 </script>
 
-<SegmentedControl label="Time of day" options={OPTIONS} {value} onchange={chosen} />
+<div class="four">
+  <SegmentedControl label="Time of day" options={OPTIONS} {value} onchange={chosen} />
+</div>
+
+<style>
+  /*
+   * Four segments at the platform's padding run to 293px, wider than the
+   * dialog's body at 320px, so Night was cut off. Narrower padding keeps the
+   * four on one row at the narrowest width with every segment still past
+   * 44px (the story measures it). The platform's control is written for two
+   * or three choices; a four-choice fit is a hand-back to the hub.
+   */
+  .four :global(.segment) {
+    padding-inline: var(--s-4);
+  }
+</style>

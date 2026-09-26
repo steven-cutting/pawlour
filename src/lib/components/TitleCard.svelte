@@ -64,6 +64,8 @@
     display: grid;
     grid-template-rows: 1fr 1fr;
     font-family: var(--font-display);
+    /* The ground under the diagonal: the scarlet's cut corner shows black, never the page. */
+    background: var(--overlay-black);
     animation: sweep var(--dur-3) var(--ease);
   }
 

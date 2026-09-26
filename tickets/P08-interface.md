@@ -382,10 +382,31 @@ P11 for the ticket wording or `CONVENTIONS.md`:
   route test can inject the seven fakes; the app passes nothing and `onMount` builds the
   real adapters. `eslint-plugin-svelte`'s `valid-prop-names-in-kit-pages` refuses any
   prop on a route, so that one line carries a single-rule disable with the reason.
-- Three pure modules beyond the ticket's list, because decision 17 puts anything with a
+- Four pure modules beyond the ticket's list, because decision 17 puts anything with a
   decision in it under coverage: `src/lib/sentence.ts` (the hidden sentence),
   `src/lib/cues.ts` (the audio the page derives from one state and the next; the
-  director returns no effects) and `src/lib/data/controls.ts` (the row's entries).
+  director returns no effects), `src/lib/data/controls.ts` (the row's entries) and
+  `src/lib/drawn.ts` (below).
+- The runtime draws once per state it is handed (`scene.ts` `apply` has no comparison
+  of its own) and every tick returns a new state object, so a page that handed the
+  canvas `scene` directly would redraw the still four times a second. The page hands
+  it the previous state again unless a field the runtime draws changed
+  (`drawsTheSame` in `src/lib/drawn.ts`: activity, at, target, lookAt, phase, weather,
+  lights, fire, camera, caption, motion), which is MotionOffIsAStillDiorama's "drawn
+  once per change".
+- The loading card is for the first load only. A restore after a context loss reloads
+  the assets and reports `onProgress` again but never `onReady` a second time
+  (`scene.ts` announces it once), so without the guard the card would return and stay.
+- The platform `SegmentedControl` with four choices runs to 293 px at its own padding,
+  wider than the `Modal`'s body at 320 px, and Night was cut off. `TimeControl`
+  narrows the segment padding under a scoped `:global` so the four fit on one row with
+  every segment past 44 px (the story measures it). Hand-back to the hub: the control
+  is written for two or three choices; a four-choice fit belongs upstream.
+- `TitleCard` paints its whole box black under the scarlet panel, so the diagonal's cut
+  corner shows black and never the page.
+- P07b adds one manifest entry beside this ticket's five; `CONVENTIONS.md` §10's rule
+  applies: whichever lane merges second re-runs `just assets-manifest` on the merged
+  tree, re-sets its own entries' three hand fields, and reads the diff.
 - `stories/SceneCanvas.stories.svelte` already existed from P07a, still-only, and was
   left as it was. `stories/narrowest.ts` holds the viewport pin and the 44 px
   measurement the nine component stories share.
@@ -466,13 +487,18 @@ the caption through `Notice`'s `role="status"`, the room in words through the po
 hidden sentence, the card's copy through a polite region, failures through `Notice`.
 Nothing withheld is exposed. Motion: `animationsActive(true, prefersReducedMotion)`
 writes `data-animations` and the director's `motion`, the device wins, and the canvas
-stops its loop when it is false.
+stops its loop when it is false. Step 7's gates, `just frontend-static` and `just check`,
+ran green. The built Storybook was also looked at, not only tested: screenshots of the
+title card (loading and saved), the dialog open and at 320 px, the icon set, the row
+with her at the bed, the failed sound switch and the caption are under `ai_tmp/story-*.png`
+and `ai_tmp/story2-*.png`; the two defects they showed (the card's ground and the time
+control's fit, above) were fixed and re-shot.
 
 **Verification, as run.**
 
 ```text
 $ just frontend-coverage
- Test Files  23 passed (23)   Tests  307 passed (307)
+ Test Files  24 passed (24)   Tests  320 passed (320)
 All files          |     100 |    97.93 |     100 |     100 |
 $ just storybook-build && just storybook-test
  Test Files  11 passed (11)   Tests  34 passed (34)

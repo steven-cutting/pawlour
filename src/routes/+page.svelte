@@ -42,6 +42,7 @@
   import TitleCard from '$lib/components/TitleCard.svelte';
   import { cueFor } from '$lib/cues';
   import { ITEM_CONTROLS } from '$lib/data/controls';
+  import { drawsTheSame } from '$lib/drawn';
   import { initialState, step } from '$lib/domain/director';
   import type { Camera, Command, SceneState } from '$lib/domain/director';
   import type { Item } from '$lib/domain/items';
@@ -130,6 +131,7 @@
   let settingsOpen = $state(false);
   let card: 'hidden' | 'loading' | 'photo' = $state('hidden');
   let progress = $state(0);
+  let everReady = false;
   let busy = $state(false);
   let photos = $state(0);
   let photoNotice: string | null = $state(null);
@@ -144,6 +146,15 @@
 
   const frames = $derived(live?.frames ?? IDLE_FRAMES);
   const time = $derived<Phase | 'auto'>(scene.phaseOverride ?? 'auto');
+
+  // The runtime draws once per state it is handed, and every tick returns a
+  // new one. MotionOffIsAStillDiorama: the canvas gets the previous state back
+  // whenever nothing it draws has changed, so a still is drawn once per change.
+  let drawn: SceneState | undefined;
+  const picture = $derived.by(() => {
+    if (drawn === undefined || !drawsTheSame(drawn, scene)) drawn = scene;
+    return drawn;
+  });
 
   const ACTIONS = [
     {
@@ -389,16 +400,19 @@
     <div class="room">
       <SceneCanvas
         bind:this={canvas}
-        state={scene}
+        state={picture}
         animations={scene.motion}
         {frames}
         assets={ASSETS}
         onProgress={(fraction: number) => {
           progress = fraction;
-          if (card === 'hidden') card = 'loading';
+          // The card is for the first load only: a restore after a context
+          // loss reloads and reports progress again, but never `onReady`.
+          if (card === 'hidden' && !everReady) card = 'loading';
         }}
         onReady={() => {
           progress = 1;
+          everReady = true;
           if (card === 'loading') card = 'hidden';
         }}
         onTap={tapped}
