@@ -50,7 +50,8 @@ under `static/`, which the component workshop would copy into every story build.
 
 After the Biscuit pass, `scripts/clip_table.mjs` writes `src/lib/assets/biscuit.clips.json`
 — each clip's name, length in seconds, whether it loops, the walk's stride, and her
-bind-pose height — and `just check-model-asset` loads the result in three.js, plays every
+bind-pose height — and `scripts/check_model_asset.mjs`, the check behind
+`just check-model-asset`, loads the result in three.js, plays every
 clip and checks the rig, the morphs, the texture sizes and the draw calls. After the room
 pass, `just check-cabin` holds the file to [the room's contract](../design/the-room.md).
 

@@ -12,9 +12,10 @@ requires: []
 
 The template measures coverage with v8 over `src/lib/**/*.{ts,svelte}` and fails the
 gate below 90% on branches, functions, lines and statements, with no exclude. The unit
-tests run in jsdom, which has no WebGL context and no `requestAnimationFrame`. The
-three.js code that loads the models, builds materials and lights, raycasts taps and
-draws frames therefore cannot run in a unit test at all, let alone to 90%.
+tests run in jsdom, which cannot create a WebGL context. Parts of the three.js code can
+still be exercised there — loading the GLBs, checking the room and the rig, framing the
+camera, raycasting a tap — but the renderer, the lit materials and every drawn frame
+cannot, so the scene as a whole could never reach 90%.
 
 Lowering the threshold or adding a coverage exclude would break an invariant `AGENTS.md`
 states: lower the code's complexity, not the threshold. The studio's three.js viewer,
@@ -28,17 +29,19 @@ Everything three.js touches lives under `src/routes/scene/`, which the coverage
 phase it is, which caption to show, how long anything lasts — is a pure module under
 `src/lib/` and is tested to the floor like any other. The browser touchpoints the scene
 needs are ports under `src/lib/ports/` with fakes: the frame port stands in for
-`requestAnimationFrame`, and the clock, timer and random ports for the rest.
+`requestAnimationFrame`, because tests inject fakes rather than stub a global, and the
+clock, timer and random ports for the rest.
 
 `vite.config.ts` is not edited. The split is a rule about where code goes, not a setting.
 
 ## Consequences
 
-**No unit test measures the canvas code.** A regression in the materials, the lighting,
-the camera or the hit-test is caught by the story build, by the maintainer's eye on a
-screenshot, or on the phone, never by the coverage figure. The pressure is to keep the
-scene thin: anything that can be a pure function of a state is moved to `src/lib/` and
-tested there.
+**The coverage figure says nothing about the canvas code.** `tests/scene-assets.test.ts`
+loads the real GLBs and exercises the room contract, the rig, the camera framing and the
+hit-test, but nothing it covers counts toward the floor. What it cannot reach — the
+materials and lighting as drawn — is caught by the story build, by the maintainer's eye
+on a screenshot, or on the phone. The pressure is to keep the scene thin: anything that
+can be a pure function of a state is moved to `src/lib/` and tested there.
 
 **The story renders only the still.** A snapshot of a live WebGL canvas differs from run
 to run, so the `SceneCanvas` story mounts the component with `webgl` set to `false` and

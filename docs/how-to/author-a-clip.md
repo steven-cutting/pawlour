@@ -103,7 +103,7 @@ Yawn, stretch, circling, the treat and a directed look are later clips.
    refused clip is reworked, not shipped.
 5. Export and build the served model, as [Export the model](export-the-model.md) and
    [Build assets](build-assets.md) describe. `just assets-build biscuit` rewrites the
-   clip table and runs `just check-model-asset`, which plays every clip in three.js and
+   clip table and runs `scripts/check_model_asset.mjs` (`just check-model-asset`), which plays every clip in three.js and
    checks its length and the soles' contact with the floor.
 
 A new clip's name also has to be added where the tools list the clips: `CLIPS` in

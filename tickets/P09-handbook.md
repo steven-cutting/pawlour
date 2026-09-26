@@ -248,6 +248,12 @@ Executed 2026-09-26 on branch `P09-handboo` (the maintainer's worktree; the tick
   - `explanation/the-director.md` "The ports it runs on": the page constructing ports is
     P08's; `+page.svelte` is still the template seed.
   - `reference/budget.md`: "Measured" is "not yet" in every row, for P10.
+  - `reference/asset-manifest.md`: the `fire.webp` and `audio/` budget rows are the
+    design's; neither file exists on `main`.
+  - `explanation/the-director.md` "Time" (the page ticking the director every 250 ms)
+    and `explanation/rendering.md` "When it draws" (the frame-port loop while
+    animations are active): the wiring is P08's and P07b's; on `main` the scene draws
+    once per state and nothing subscribes to the frame port.
 - **Where a page follows `main` rather than `CONVENTIONS.md`** (corrections for P11):
   1. §4.1: clip files use `_` for the dot (`idle_sit.py`); `FRAMES` counts samples, so a
      clip lasts `(FRAMES − 1) / 30` s; `walk.py`'s `STRIDE` is 1.0 in model units, not
@@ -283,7 +289,10 @@ Executed 2026-09-26 on branch `P09-handboo` (the maintainer's worktree; the tick
      every movement forward after each command rather than freezing; `setPhase('auto')`
      waits for the next clock reading; idle intervals are whole seconds and count idle
      time only; she never chooses the food bowl.
-  9. §7: `pawlour.sound` is not persisted (`SoundNeverStartsUnasked`); no storage key
+  9. §11 claim 8: P06 found jsdom does provide `requestAnimationFrame`; decision 0013
+     says the frame port exists because tests never stub a global, not because jsdom
+     lacks it.
+  10. §7: `pawlour.sound` is not persisted (`SoundNeverStartsUnasked`); no storage key
      exists yet.
 - **Open points settled**: the design pages stay under `docs/design/` (the validator
   does not care about directories); `art-direction.md` cites H's two pages by blob URL,
