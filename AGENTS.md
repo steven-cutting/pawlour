@@ -168,6 +168,11 @@ the decision records it ships under `docs/decisions/`:
   its visual review.
 
 Deliberate deviations for this repository, each recorded in
-[the decision records](docs/decisions/README.md): none yet. Record one here
-when this game departs from the template, and change the template instead
-when the departure would suit every game.
+[the decision records](docs/decisions/README.md):
+
+- The Allium skills that `skills-lock.json` vendors sit outside the agent contract,
+  and `just check-agents` runs `scripts/validate_agents.py` to leave them out
+  (decision 0011).
+
+Record one here when this game departs from the template, and change the
+template instead when the departure would suit every game.

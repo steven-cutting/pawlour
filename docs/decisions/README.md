@@ -31,6 +31,7 @@ the specifications under `docs/specs/`, and unresolved ones are recorded there a
 | [0008](0008-design-system-as-a-package.md) | The design system arrives as a package |
 | [0009](0009-rendered-from-the-template.md) | Rendered from the template |
 | [0010](0010-a-project-pages-site.md) | A project Pages site |
+| [0011](0011-vendored-skills-outside-the-agent-contract.md) | Vendored skills sit outside the agent contract |
 
 ## The numbering
 

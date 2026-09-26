@@ -24,3 +24,21 @@ docs/manifest.yml
 # the served assets, which are binaries plus a manifest check-json owns.
 blender/src
 src/lib/assets
+
+# Vendored Allium skills from juxt/allium, pinned by skills-lock.json and kept
+# byte for byte so an update is a clean replace; the lock is the installer's.
+.agents/skills/allium
+.claude/skills/allium
+.agents/skills/distill
+.claude/skills/distill
+.agents/skills/elicit
+.claude/skills/elicit
+.agents/skills/propagate
+.claude/skills/propagate
+.agents/skills/tend
+.claude/skills/tend
+.agents/skills/weed
+.claude/skills/weed
+.agents/skills/witness
+.claude/skills/witness
+skills-lock.json
