@@ -36,7 +36,7 @@ configs, `.gitattributes`, `vitest.storybook.config.ts`, `scripts/check_assets.p
 `docs/manifest.yml`, `docs/README.md`), the way P12 and P13 may.
 
 Read first: `CONVENTIONS.md` §10, §11 and §12; `PRD.md`; the Hand-back notes and Open
-points of every ticket P00 to P10; `AGENTS.md`; the `code-review` and `fix-quality`
+points of every ticket P00 to P10; `AGENTS.md`; the `review-change` and `fix-quality`
 skills under `.agents/skills/`.
 
 ## Goal
