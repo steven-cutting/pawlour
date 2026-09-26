@@ -14,14 +14,14 @@ estimated_size: S
 
 Every lane has merged to `main`, P10 has measured the game on the phone, P11 has carried
 the hand-backs, and the hub's decision record (C01) has landed, but the repository still
-exists only as a local clone: no remote, and `gh repo view steven-cutting/biscuit_cozy`
+exists only as a local clone: no remote, and `gh repo view steven-cutting/pawlour`
 answers `Could not resolve to a Repository`. This ticket makes the GitHub repository,
 applies the settings no file can carry, pushes `main` once, and proves the three checks
 and the Pages deployment with the first runs. CONVENTIONS.md §1 decision 14 fixes the
 address: a public repository and a project Pages site served at
-`https://stevencutting.com/biscuit_cozy/`, built with `BASE_PATH=/biscuit_cozy` (T's
+`https://stevencutting.com/pawlour/`, built with `BASE_PATH=/pawlour` (T's
 `pages.yml` passes `base_path: /${{ github.event.repository.name }}`, §1 fact 9). The
-Pages API and `github.io` name the site `https://steven-cutting.github.io/biscuit_cozy/`;
+Pages API and `github.io` name the site `https://steven-cutting.github.io/pawlour/`;
 that address redirects to the user-site domain, which is what S measured on its first
 deploy and why decision 14 reads as it does.
 
@@ -76,13 +76,13 @@ P11 hand-back notes, and C01's hand-back notes (the decision number and the merg
 
 ## Goal
 
-- `steven-cutting/biscuit_cozy` exists, public, with `main` pushed from this clone and the
+- `steven-cutting/pawlour` exists, public, with `main` pushed from this clone and the
   LFS object uploaded.
 - Pages source GitHub Actions; `main` protected requiring `ci / frontend`, `ci / documents`
   and `ci / stories` (strict false, no review, no force push, no deletion, administrators
   unbound); private vulnerability reporting on; a second `--apply` prints `changed: 0`.
 - The first `CI` run is green on all three jobs and the first `Deploy to GitHub Pages`
-  run is green; `https://stevencutting.com/biscuit_cozy/` answers `200` with the game's
+  run is green; `https://stevencutting.com/pawlour/` answers `200` with the game's
   title; the two GLBs are served byte-identical to the manifest, with the content type
   and cache header §11 claim 13 names.
 - A fresh clone on a machine with git-lfs receives the real `.blend`.
@@ -104,8 +104,8 @@ P11 hand-back notes, and C01's hand-back notes (the decision number and the merg
 
 | Path | Class | Source | Change |
 | --- | --- | --- | --- |
-| `steven-cutting/biscuit_cozy` (repository, no file) | GitHub | `gh repo create` | created, public |
-| `steven-cutting/biscuit_cozy` (settings, no file) | GitHub | T `scripts/bootstrap_repo.sh` run from `ai_tmp/`, one API call | Pages source, protection on `main`, vulnerability reporting; optionally hygiene |
+| `steven-cutting/pawlour` (repository, no file) | GitHub | `gh repo create` | created, public |
+| `steven-cutting/pawlour` (settings, no file) | GitHub | T `scripts/bootstrap_repo.sh` run from `ai_tmp/`, one API call | Pages source, protection on `main`, vulnerability reporting; optionally hygiene |
 | `@steven-cutting/biscuit-games` (package settings, no file) | GitHub | the maintainer, in the UI | a read grant, only if step 8 shows it is needed |
 | `.git/config` (local, not committed) | local | `git remote add` | `origin` added |
 | `ai_tmp/bootstrap_repo.sh` (ignored) | local | T `v2.1.0` `scripts/bootstrap_repo.sh` | copied to run; never committed |
@@ -126,7 +126,7 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
    git status --short | wc -l
    git log --oneline | head -3
    git remote -v | wc -l
-   gh repo view steven-cutting/biscuit_cozy 2>&1 | head -1
+   gh repo view steven-cutting/pawlour 2>&1 | head -1
    git lfs ls-files --long
    ls /Users/scutting/projects/biscuit_games/docs/decisions/ | tail -3
    git -C /Users/scutting/projects/biscuit_games log --oneline main -- 'docs/decisions/00*-a-game-may-be-a-rendered-scene.md' | head -1
@@ -134,7 +134,7 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
    ```
 
    Expected: `main`; `0`; the merge commits of the last lanes and P11; `0` (no remote);
-   `GraphQL: Could not resolve to a Repository with the name 'steven-cutting/biscuit_cozy'`;
+   `GraphQL: Could not resolve to a Repository with the name 'steven-cutting/pawlour'`;
    one LFS file, the `.blend`; a listing that includes the record C01's hand-back names; a
    commit on H's `main` for it; `just check` green. If the record is absent from H's
    `main`, stop: nothing deploys before it (CONVENTIONS.md §12). If a remote or the
@@ -148,7 +148,7 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
    git -C /Users/scutting/projects/biscuit_games_template fetch --tags
    git -C /Users/scutting/projects/biscuit_games_template show v2.1.0:scripts/bootstrap_repo.sh > ai_tmp/bootstrap_repo.sh
    sed -n 12,18p ai_tmp/bootstrap_repo.sh
-   sh ai_tmp/bootstrap_repo.sh steven-cutting/biscuit_cozy; echo "rc=$?"
+   sh ai_tmp/bootstrap_repo.sh steven-cutting/pawlour; echo "rc=$?"
    ```
 
    Expected: the usage block; then a dry run against a repository that does not exist,
@@ -160,12 +160,12 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
    GitHub. Stop and ask, then:
 
    ```sh
-   gh repo create steven-cutting/biscuit_cozy --public --description "Biscuit at home in a log cabin: tap a thing, and she decides what to do about it."
-   git remote add origin git@github.com:steven-cutting/biscuit_cozy.git
-   gh repo view steven-cutting/biscuit_cozy --json name,visibility,defaultBranchRef --jq '[.name, .visibility, .defaultBranchRef.name] | join(" ")'
+   gh repo create steven-cutting/pawlour --public --description "Biscuit at home in a log cabin: tap a thing, and she decides what to do about it."
+   git remote add origin git@github.com:steven-cutting/pawlour.git
+   gh repo view steven-cutting/pawlour --json name,visibility,defaultBranchRef --jq '[.name, .visibility, .defaultBranchRef.name] | join(" ")'
    ```
 
-   Expected: the repository URL; then `biscuit_cozy PUBLIC` with an empty default branch.
+   Expected: the repository URL; then `pawlour PUBLIC` with an empty default branch.
    Created empty rather than with `--source . --push`, so the Pages source can be set
    before any workflow runs. The description is `.copier-answers.yml`'s (CONVENTIONS.md §1
    decision 1). SSH if `gh auth status` reports `Git operations protocol: ssh`; if the push
@@ -176,11 +176,11 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
    with no site:
 
    ```sh
-   gh api -X POST repos/steven-cutting/biscuit_cozy/pages -f build_type=workflow
-   gh api repos/steven-cutting/biscuit_cozy/pages --jq '[.build_type, .html_url] | join(" ")'
+   gh api -X POST repos/steven-cutting/pawlour/pages -f build_type=workflow
+   gh api repos/steven-cutting/pawlour/pages --jq '[.build_type, .html_url] | join(" ")'
    ```
 
-   Expected: a JSON body; then `workflow https://steven-cutting.github.io/biscuit_cozy/`
+   Expected: a JSON body; then `workflow https://steven-cutting.github.io/pawlour/`
    (the API names the `github.io` address; the served address is the user-site domain,
    step 8). If the `POST` answers `409`, a site exists: `PUT` the same body instead. If it
    answers `422` asking for a source, send `{"build_type": "workflow", "source":
@@ -189,7 +189,7 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
 5. **The real dry run.** Read-only, no authorisation:
 
    ```sh
-   sh ai_tmp/bootstrap_repo.sh steven-cutting/biscuit_cozy
+   sh ai_tmp/bootstrap_repo.sh steven-cutting/pawlour
    ```
 
    Expected: step 1 `already`; step 2 `not protected (HTTP 404)` with the three wanted
@@ -217,11 +217,11 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
    second run, then:
 
    ```sh
-   sh ai_tmp/bootstrap_repo.sh steven-cutting/biscuit_cozy --apply
-   sh ai_tmp/bootstrap_repo.sh steven-cutting/biscuit_cozy --apply
-   gh api repos/steven-cutting/biscuit_cozy/branches/main/protection --jq '[.required_status_checks.strict, ([.required_status_checks.checks[].context] | sort | join(",")), .enforce_admins.enabled, .allow_force_pushes.enabled, .allow_deletions.enabled, (.required_pull_request_reviews != null), (.restrictions != null)] | map(tostring) | join(" ")'
-   gh api repos/steven-cutting/biscuit_cozy/private-vulnerability-reporting --jq .enabled
-   gh secret list -R steven-cutting/biscuit_cozy
+   sh ai_tmp/bootstrap_repo.sh steven-cutting/pawlour --apply
+   sh ai_tmp/bootstrap_repo.sh steven-cutting/pawlour --apply
+   gh api repos/steven-cutting/pawlour/branches/main/protection --jq '[.required_status_checks.strict, ([.required_status_checks.checks[].context] | sort | join(",")), .enforce_admins.enabled, .allow_force_pushes.enabled, .allow_deletions.enabled, (.required_pull_request_reviews != null), (.restrictions != null)] | map(tostring) | join(" ")'
+   gh api repos/steven-cutting/pawlour/private-vulnerability-reporting --jq .enabled
+   gh secret list -R steven-cutting/pawlour
    ```
 
    Expected, first run: step 1 `already`; step 2 a `PUT` to `branches/main/protection`;
@@ -235,10 +235,10 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
 8. **The first runs, what they served, and the two claims.**
 
    ```sh
-   gh run list -R steven-cutting/biscuit_cozy --limit 5
-   gh run watch -R steven-cutting/biscuit_cozy --exit-status "$(gh run list -R steven-cutting/biscuit_cozy --workflow CI --limit 1 --json databaseId --jq '.[0].databaseId')"
-   gh run watch -R steven-cutting/biscuit_cozy --exit-status "$(gh run list -R steven-cutting/biscuit_cozy --workflow 'Deploy to GitHub Pages' --limit 1 --json databaseId --jq '.[0].databaseId')"
-   gh api repos/steven-cutting/biscuit_cozy/environments --jq '.environments[].name'
+   gh run list -R steven-cutting/pawlour --limit 5
+   gh run watch -R steven-cutting/pawlour --exit-status "$(gh run list -R steven-cutting/pawlour --workflow CI --limit 1 --json databaseId --jq '.[0].databaseId')"
+   gh run watch -R steven-cutting/pawlour --exit-status "$(gh run list -R steven-cutting/pawlour --workflow 'Deploy to GitHub Pages' --limit 1 --json databaseId --jq '.[0].databaseId')"
+   gh api repos/steven-cutting/pawlour/environments --jq '.environments[].name'
    ```
 
    Expected: `CI` `success` with jobs `frontend`, `documents`, `stories`; `Deploy to
@@ -254,17 +254,17 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
    the served page rather than guessed:
 
    ```sh
-   curl -sI https://steven-cutting.github.io/biscuit_cozy/ | grep -i -E '^(HTTP|location)'
-   curl -sI https://stevencutting.com/biscuit_cozy/ | head -1
-   curl -s https://stevencutting.com/biscuit_cozy/ | grep -o '<title>[^<]*</title>'
-   curl -sL https://stevencutting.com/biscuit_cozy/ | grep -o '/biscuit_cozy/_app/immutable/assets/[A-Za-z0-9._-]*\.glb' | sort -u
-   for f in $(curl -sL https://stevencutting.com/biscuit_cozy/ | grep -o '/biscuit_cozy/_app/immutable/assets/[A-Za-z0-9._-]*\.glb' | sort -u); do curl -sI "https://stevencutting.com$f" | grep -i -E '^(HTTP|content-type|cache-control)'; curl -sL "https://stevencutting.com$f" | shasum -a 256; done
+   curl -sI https://steven-cutting.github.io/pawlour/ | grep -i -E '^(HTTP|location)'
+   curl -sI https://stevencutting.com/pawlour/ | head -1
+   curl -s https://stevencutting.com/pawlour/ | grep -o '<title>[^<]*</title>'
+   curl -sL https://stevencutting.com/pawlour/ | grep -o '/pawlour/_app/immutable/assets/[A-Za-z0-9._-]*\.glb' | sort -u
+   for f in $(curl -sL https://stevencutting.com/pawlour/ | grep -o '/pawlour/_app/immutable/assets/[A-Za-z0-9._-]*\.glb' | sort -u); do curl -sI "https://stevencutting.com$f" | grep -i -E '^(HTTP|content-type|cache-control)'; curl -sL "https://stevencutting.com$f" | shasum -a 256; done
    uv run --frozen python -c "import json; m={e['path']: e['sha256'] for e in json.load(open('src/lib/assets/manifest.json'))['assets']}; print(m['src/lib/assets/biscuit.glb']); print(m['src/lib/assets/cabin.glb'])"
    ```
 
    Expected: a `301` from `github.io` with a `location` on `stevencutting.com`; `HTTP/2
    200`; `<title>Pawlour</title>` (or the title `src/lib/brand.ts` states); two `.glb`
-   paths under `/biscuit_cozy/_app/immutable/assets/` (which settles §11 claim 9 on Pages:
+   paths under `/pawlour/_app/immutable/assets/` (which settles §11 claim 9 on Pages:
    the asset URLs carry `paths.base`); for each, `200`, a `content-type` and a
    `cache-control`, and a digest equal to the manifest's for that file. Record the content
    type and the cache header verbatim: §11 claim 13 expected `model/gltf-binary` and a
@@ -272,15 +272,15 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
    Pages can take a minute after the run to serve the new content; retry `curl` rather
    than reading a `404` as failure inside that minute. If the GLB URLs are not in the HTML
    (they are loaded by script, not by a tag), read them from the served JS chunk instead:
-   `curl -sL <the page> | grep -o '/biscuit_cozy/_app/immutable/[^"]*\.js'` and grep the
+   `curl -sL <the page> | grep -o '/pawlour/_app/immutable/[^"]*\.js'` and grep the
    chunks for `.glb`.
 
 9. **A fresh clone receives the `.blend`.** In a scratch directory outside this repository:
 
    ```sh
-   git clone git@github.com:steven-cutting/biscuit_cozy.git /tmp/biscuit_cozy-clone-check
-   shasum -a 256 /tmp/biscuit_cozy-clone-check/blender/model/biscuit-poseable.blend
-   rm -rf /tmp/biscuit_cozy-clone-check
+   git clone git@github.com:steven-cutting/pawlour.git /tmp/pawlour-clone-check
+   shasum -a 256 /tmp/pawlour-clone-check/blender/model/biscuit-poseable.blend
+   rm -rf /tmp/pawlour-clone-check
    ```
 
    Expected: `95d164730e9354ab3d9bd561a73180690bbb055fffa9bf230c735f735234b4c3`
@@ -293,14 +293,14 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
 
 ## Acceptance criteria
 
-- [ ] `gh repo view steven-cutting/biscuit_cozy --json visibility` prints `PUBLIC`, and
+- [ ] `gh repo view steven-cutting/pawlour --json visibility` prints `PUBLIC`, and
       `origin` points at it.
 - [ ] Pages source is `workflow`; protection on `main` requires exactly the three `ci /`
       contexts with the flags step 7 expects; private vulnerability reporting is on; the
       second `--apply` printed `changed: 0`.
 - [ ] The first `CI` run and the first `Deploy to GitHub Pages` run are green, and the
       package grant was recorded as needed or not needed.
-- [ ] `https://stevencutting.com/biscuit_cozy/` answers `200` with the game's title, and
+- [ ] `https://stevencutting.com/pawlour/` answers `200` with the game's title, and
       both GLBs are served with the manifest's digests; §11 claims 9 and 13 are each
       recorded as held or failed with the printed evidence.
 - [ ] A fresh clone's `.blend` has the sha256 §1 fact 1 gives.
@@ -312,10 +312,10 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
 
 ```sh
 git remote -v
-gh api repos/steven-cutting/biscuit_cozy/pages --jq .build_type
-gh api repos/steven-cutting/biscuit_cozy/branches/main/protection --jq '[.required_status_checks.checks[].context] | sort | join(",")'
-gh run list -R steven-cutting/biscuit_cozy --limit 2 --json name,conclusion --jq '.[] | [.name, .conclusion] | join(" ")'
-curl -sI https://stevencutting.com/biscuit_cozy/ | head -1
+gh api repos/steven-cutting/pawlour/pages --jq .build_type
+gh api repos/steven-cutting/pawlour/branches/main/protection --jq '[.required_status_checks.checks[].context] | sort | join(",")'
+gh run list -R steven-cutting/pawlour --limit 2 --json name,conclusion --jq '.[] | [.name, .conclusion] | join(" ")'
+curl -sI https://stevencutting.com/pawlour/ | head -1
 git status --short
 ```
 

@@ -237,9 +237,9 @@ P04's; until P04 lands the component shows P03's single placeholder still,
    `lost` and shows the still. A second case renders with `webgl: false` and asserts the
    same still and no scene construction (the fake frame port records no `each` call).
 
-9. **Check CONVENTIONS.md §11 claim 9.** `BASE_PATH=/biscuit_cozy just frontend-build`
+9. **Check CONVENTIONS.md §11 claim 9.** `BASE_PATH=/pawlour just frontend-build`
    from a scratch route that imports `$lib/assets/biscuit.glb`, then `grep -o
-   '/biscuit_cozy/_app/immutable/assets/biscuit[^"]*glb' build/index.html` or the route's
+   '/pawlour/_app/immutable/assets/biscuit[^"]*glb' build/index.html` or the route's
    HTML: the URL carries the base. Record the URL.
 
 10. **Check §11 claim 11 and take the screenshot: the gate.** `just preview-lan` and
@@ -283,13 +283,13 @@ P04's; until P04 lands the component shows P03's single placeholder still,
 node scripts/stub_cabin.mjs && ls -la ai_tmp/stub-cabin/cabin.glb
 just frontend-static
 npx vitest run tests/scene-canvas.test.ts
-BASE_PATH=/biscuit_cozy just frontend-build && grep -o '/biscuit_cozy/_app/immutable/assets/[a-z]*[.-][A-Za-z0-9_-]*\.glb' build/index.html | sort -u
+BASE_PATH=/pawlour just frontend-build && grep -o '/pawlour/_app/immutable/assets/[a-z]*[.-][A-Za-z0-9_-]*\.glb' build/index.html | sort -u
 git status --porcelain src/lib
 just check
 ```
 
 Expected: the stub written; clean; one file, green; two URLs (`biscuit` and `cabin`)
-carrying `/biscuit_cozy/`; nothing under `src/lib` changed; green.
+carrying `/pawlour/`; nothing under `src/lib` changed; green.
 
 ## Hand-back notes
 

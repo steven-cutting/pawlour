@@ -360,7 +360,7 @@ A hub pull request, authorised before it is pushed, that:
 6. **The README row.** In H `README.md` lines 18-23, after the Pawjong row:
 
    ```markdown
-   | Pawlour | A room Biscuit lives in: tap a thing, and she decides what to do about it. | <https://stevencutting.com/biscuit_cozy/> |
+   | Pawlour | A room Biscuit lives in: tap a thing, and she decides what to do about it. | <https://stevencutting.com/pawlour/> |
    ```
 
    The address is CONVENTIONS.md §1 decision 14's; if Pawlour has not deployed when this

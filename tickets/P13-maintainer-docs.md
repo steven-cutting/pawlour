@@ -78,7 +78,7 @@ does not tag: it writes the changelog entry the tag will name and stops.
 ## Steps
 
 1. **Collect the facts.** From the P12 hand-back: the served address (expected
-   `https://stevencutting.com/biscuit_cozy/`), the three required contexts as GitHub
+   `https://stevencutting.com/pawlour/`), the three required contexts as GitHub
    reports them, whether `--hygiene` was applied, whether vulnerability reporting is on.
    From the P10 hand-back: the measured frame rate, draw calls, the two GLB sizes and the
    first-load total on the phone, against `PRD.md`'s budget table. From
@@ -156,8 +156,8 @@ does not tag: it writes the changelog entry the tag will name and stops.
    deploy succeeded. Then the two link definitions, replacing T's one:
 
    ```markdown
-   [Unreleased]: https://github.com/steven-cutting/biscuit_cozy/compare/v0.1.0...HEAD
-   [0.1.0]: https://github.com/steven-cutting/biscuit_cozy/releases/tag/v0.1.0
+   [Unreleased]: https://github.com/steven-cutting/pawlour/compare/v0.1.0...HEAD
+   [0.1.0]: https://github.com/steven-cutting/pawlour/releases/tag/v0.1.0
    ```
 
    Both resolve only after the tag exists; lychee runs `--offline` and skips them.
@@ -203,7 +203,7 @@ does not tag: it writes the changelog entry the tag will name and stops.
 just check-docs
 just check-agents
 for p in untrusted 'just check' 'explicit authorization' 'ai_tmp/' 'docs/specs/' runes; do printf '%s: ' "$p"; grep -c -- "$p" AGENTS.md; done
-grep -c 'stevencutting.com/biscuit_cozy' README.md
+grep -c 'stevencutting.com/pawlour' README.md
 grep -o 'docs/decisions/00[0-9][0-9][^)]*' AGENTS.md | sort -u | while read -r f; do test -f "$f" && echo "ok $f" || echo "MISSING $f"; done
 git diff main --stat -- AGENTS.md README.md CHANGELOG.md
 git tag --list

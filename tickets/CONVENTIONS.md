@@ -10,8 +10,8 @@ it.
 
 ## 0. What is being built, and where the sources are
 
-`steven-cutting/biscuit_cozy` (this repository; today one commit `0b55a6e` on `main`
-holding a 15-byte `README.md`, a worktree `full-cozy` on a branch of the same name, no
+`steven-cutting/pawlour` (this repository; today one commit `0b55a6e` on `main`
+holding a 10-byte `README.md`, a worktree `full-cozy` on a branch of the same name, no
 remote, no GitHub repository) becomes **Pawlour**, a Biscuit Games game: a static
 SvelteKit site rendered from the platform's Copier template, consuming the platform
 package, whose play surface is a three.js diorama of a log cabin in which Biscuit, the
@@ -60,12 +60,12 @@ interface), which ships in the package.
 
 Decisions, taken on 2026-09-25:
 
-1. **Name: Pawlour**, in the register of Poodl and Pawjong. The repository stays
-   `steven-cutting/biscuit_cozy`. Copier answers: `game_name` `Pawlour`, `game_slug`
+1. **Name: Pawlour**, in the register of Poodl and Pawjong. The repository is
+   `steven-cutting/pawlour`. Copier answers: `game_name` `Pawlour`, `game_slug`
    `pawlour`, `description` `Biscuit at home in a log cabin: tap a thing, and she decides
-   what to do about it.`, `repository` `steven-cutting/biscuit_cozy`. So the package and
+   what to do about it.`, `repository` `steven-cutting/pawlour`. So the package and
    the tooling project are `pawlour` and `pawlour-tooling`, the seed spec is
-   `docs/specs/pawlour.allium`, `base_path` is `/biscuit_cozy`, and the lockup reads
+   `docs/specs/pawlour.allium`, `base_path` is `/pawlour`, and the lockup reads
    "biscuit games / pawlour". The slug was settled as `pawlour` by the maintainer on
    2026-09-25; nothing asks again.
 2. **A Biscuit Games game**, rendered from T at `v2.1.0`, consuming
@@ -108,7 +108,7 @@ Decisions, taken on 2026-09-25:
     frame per state change; no clips, no fire flicker, no particles, no wipe; time and
     captions still work.
 14. **Public repository, GitHub Pages** through T's `pages.yml`, at
-    `https://stevencutting.com/biscuit_cozy/` (a project site under the account's
+    `https://stevencutting.com/pawlour/` (a project site under the account's
     user-site domain, which S measured on its first deploy; `steven-cutting.github.io`
     redirects there).
 15. **Clips: the core set in v1** — `idle.stand`, `idle.sit`, `walk`, `sit`, `lie`,
@@ -1085,7 +1085,7 @@ change that goes back through this document.
    does create a WebGL2 context (SwiftShader) well enough to mount the canvas. **P06**
    for the first half, **P08** for the second.
 9. A Vite import of a `.glb` from `src/lib/assets/` yields a URL carrying `paths.base` in
-   the prerendered build, and `GLTFLoader` fetches it under `/biscuit_cozy/`. **P07a**,
+   the prerendered build, and `GLTFLoader` fetches it under `/pawlour/`. **P07a**,
    proven on Pages by **P12**.
 10. `vitest.storybook.config.ts` accepting `'three'` in `optimizeDeps.include` is enough
     for a story that imports a component importing `three/addons/...` subpaths; if not,

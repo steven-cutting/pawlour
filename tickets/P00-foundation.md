@@ -12,8 +12,8 @@ estimated_size: L
 
 ## Context
 
-This repository (`steven-cutting/biscuit_cozy`, branch `main`, one commit `0b55a6e`
-holding a 15-byte `README.md`, no remote, no GitHub repository) becomes Pawlour, a
+This repository (`steven-cutting/pawlour`, branch `main`, one commit `0b55a6e`
+holding a 10-byte `README.md`, no remote, no GitHub repository) becomes Pawlour, a
 Biscuit Games game. `PRD.md` says what the game is; `CONVENTIONS.md` is the design; read
 both in full before anything else, then `README.md` in this directory for the worktree
 rules. This is the first ticket: nothing else can start until it has merged to `main`,
@@ -62,8 +62,8 @@ npm 11.17.0, Python 3.14, git-lfs 3.8.0, and a `~/.npmrc` line for `npm.pkg.gith
 `editorconfig-checker` are not on the PATH; the render installs them through `uv sync`
 and the hook cache.
 
-This worktree (`/Users/scutting/.supacode/repos/biscuit_cozy/full-cozy`) is a secondary
-worktree of `/Users/scutting/projects/biscuit_cozy`, so `scripts/initialize.sh` will not
+This worktree (`/Users/scutting/.supacode/repos/pawlour/full-cozy`) is a secondary
+worktree of `/Users/scutting/projects/pawlour`, so `scripts/initialize.sh` will not
 install the hooks (CONVENTIONS.md §11 claim 14); Step 4 installs them by hand.
 
 **Authorisation.** No step here pushes, tags, opens a pull request, creates a GitHub
@@ -115,7 +115,7 @@ file this ticket writes in final form; **stub** is a file the named lane replace
 
 | Path | Class | Source | Change |
 | --- | --- | --- | --- |
-| `README.md` | stub (P13) | the 15-byte stub deleted, then T's rendered `README.md` | replaced by the render |
+| `README.md` | stub (P13) | the 10-byte stub deleted, then T's rendered `README.md` | replaced by the render |
 | every path T renders | rendered | `uvx copier copy … --vcs-ref v2.1.0` | new |
 | `.copier-answers.yml` | gen | Copier | new; committed |
 | `package.json` | appended | CONVENTIONS.md §2.1 | four dependencies |
@@ -157,7 +157,7 @@ adds files, it never renames or reclassifies one.
 
    Answer `game_name` `Pawlour`, `game_slug` `pawlour`, `description`
    `Biscuit at home in a log cabin: tap a thing, and she decides what to do about it.`,
-   `repository` `steven-cutting/biscuit_cozy`. Never pass `--trust`. Read
+   `repository` `steven-cutting/pawlour`. Never pass `--trust`. Read
    `.copier-answers.yml` afterwards: `_commit: v2.1.0`, `_src_path:
    gh:steven-cutting/biscuit_games_template`, the four answers. This is CONVENTIONS.md
    §11 claim 2's first half; record whether the render was clean.
@@ -310,8 +310,5 @@ Filled in by the agent that executes this ticket.
 - **Node's `sharp` binary.** `sharp` downloads a platform binary on install; if `npm ci`
   in CI needs a flag or an environment variable for it, that is a workflow change
   (managed by G) and is handed back rather than made.
-- **The slug.** If the maintainer chooses `biscuit_cozy`, every `pawlour` in
-  CONVENTIONS.md §1 decision 1 and §8 changes and the change goes through
-  `CONVENTIONS.md` before the render.
 - **`pillow` on Python 3.14.** S pinned `pillow==12.3.0` and it resolved; the current
   release is re-read on the day.
