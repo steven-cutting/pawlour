@@ -1,13 +1,78 @@
 // tests/route.test.ts
-import { render, screen } from '@testing-library/svelte';
+import { createFakePreferences } from '@steven-cutting/biscuit-games';
+import type { DeviceAnswers } from '@steven-cutting/biscuit-games';
+import { render, screen, waitFor, within } from '@testing-library/svelte';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { GAME_NAME, GAME_TITLE } from '../src/lib/brand';
+import { CAPTIONS } from '../src/lib/data/captions';
+import { CLOCK_INTERVAL_MS, DURATION } from '../src/lib/domain/timing';
+import { createFakeAudio } from '../src/lib/ports/audio';
+import { createFakeClock } from '../src/lib/ports/clock';
+import { createFakeFrames } from '../src/lib/ports/frame';
+import type { Ports } from '../src/lib/ports/index';
+import { createFakeRandom } from '../src/lib/ports/random';
+import { createFakeStorage } from '../src/lib/ports/storage';
+import { createFakeTimer } from '../src/lib/ports/timer';
 import Page from '../src/routes/+page.svelte';
+
+/*
+ * The page, with every port a fake. CONVENTIONS.md §7 is the layout; the
+ * clauses are `cabin.allium`'s (EveryItemIsAControl, ACaptionIsShownAndAnnounced,
+ * TimeFollowsTheClockUntilOverridden, SoundNeverStartsUnasked,
+ * MotionOffIsAStillDiorama) and the platform's Dialog guarantees.
+ *
+ * Two things keep it deterministic. `phaseAt` reads the hour in this process's
+ * zone, so clock values are built from local components. And with motion on,
+ * a walk waits for the runtime's `arrived`, which never comes under jsdom, so
+ * the device asks for reduced motion by default and the director resolves
+ * every walk on the spot; the one motion test flips it.
+ */
+
+const NIGHT = new Date(2026, 0, 1, 23, 0).getTime();
+const MORNING = new Date(2026, 0, 1, 9, 0).getTime();
+const AFTERNOON = new Date(2026, 0, 1, 14, 0).getTime();
+const ITEMS = ['Bed', 'Chair', 'Water', 'Food', 'Toy', 'Lamp', 'Lights', 'Pet'];
+
+interface Fakes extends Ports {
+  audio: ReturnType<typeof createFakeAudio>;
+  clock: ReturnType<typeof createFakeClock>;
+  timer: ReturnType<typeof createFakeTimer>;
+  preferences: ReturnType<typeof createFakePreferences>;
+}
+
+function fakes(
+  options: { at?: number; stored?: Record<string, string>; device?: DeviceAnswers } = {}
+): Fakes {
+  return {
+    storage: createFakeStorage(options.stored ?? {}),
+    clock: createFakeClock(options.at ?? MORNING),
+    random: createFakeRandom([0]),
+    timer: createFakeTimer(),
+    frames: createFakeFrames(),
+    audio: createFakeAudio(),
+    preferences: createFakePreferences({ prefersReducedMotion: true, ...options.device })
+  };
+}
+
+function mount(options: Parameters<typeof fakes>[0] = {}) {
+  const ports = fakes(options);
+  const rendered = render(Page, { props: { ports } });
+  return { ...rendered, ports };
+}
+
+const button = (name: string) => screen.getByRole('button', { name });
+const sentence = () => screen.getByText(/^Biscuit is /);
+
+async function openSettings(): Promise<HTMLElement> {
+  await userEvent.click(button('Settings'));
+  return screen.findByRole('dialog', { name: 'Settings' });
+}
 
 describe('the page', () => {
   it('carries the heading the platform header draws for this game', () => {
-    render(Page);
+    mount();
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       `biscuit games / ${GAME_NAME}`
@@ -15,14 +80,229 @@ describe('the page', () => {
   });
 
   it('titles the document after the game', () => {
-    render(Page);
+    mount();
 
     expect(document.title).toBe(GAME_TITLE);
   });
 
   it('has a main landmark to put the game in', () => {
-    render(Page);
+    mount();
 
     expect(screen.getByRole('main')).toBeInTheDocument();
+  });
+});
+
+describe('the controls', () => {
+  it('offer every thing, her, and a photo, by name', () => {
+    mount();
+
+    for (const name of [...ITEMS, 'Photo']) {
+      expect(button(name)).toBeInTheDocument();
+    }
+  });
+
+  it('open the settings dialog from the header and close it on Escape', async () => {
+    mount();
+    const settings = button('Settings');
+    expect(settings).toHaveAttribute('aria-haspopup', 'dialog');
+
+    const dialog = await openSettings();
+
+    expect(within(dialog).getByRole('group', { name: 'Time of day' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('switch', { name: 'Ambient sound' })).not.toBeChecked();
+    expect(within(dialog).getByRole('group', { name: 'Camera' })).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+describe('the hidden sentence', () => {
+  it('states the scene from the clock and the weather drawn for the visit', async () => {
+    mount({ at: NIGHT });
+
+    await waitFor(() => {
+      expect(sentence()).toHaveTextContent('Biscuit is standing on the floor. It is night. Clear.');
+    });
+    expect(sentence()).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('follows her', async () => {
+    mount({ at: NIGHT });
+
+    await userEvent.click(button('Water'));
+
+    await waitFor(() => {
+      expect(sentence()).toHaveTextContent('Biscuit is drinking at the water bowl.');
+    });
+  });
+});
+
+describe('a tap on her', () => {
+  it('captions the pet in a status region, and the still says the same', async () => {
+    mount();
+    const caption = CAPTIONS.pet[0] ?? '';
+
+    await userEvent.click(button('Pet'));
+
+    const text = await screen.findByText(caption);
+    expect(text.closest('[role="status"]')).not.toBeNull();
+    expect(screen.getByRole('img', { name: caption })).toBeInTheDocument();
+  });
+
+  it('marks where she is once she has settled somewhere', async () => {
+    mount();
+
+    await userEvent.click(button('Chair'));
+
+    expect(await screen.findByRole('button', { name: 'Chair, she is here' })).toHaveAttribute(
+      'aria-current',
+      'true'
+    );
+  });
+});
+
+describe('sound', () => {
+  it('plays nothing until the switch is turned on, then the bed and her sounds', async () => {
+    const { ports } = mount();
+    const { audio, timer } = ports;
+
+    await userEvent.click(button('Water'));
+    await screen.findByText(CAPTIONS.drink[0] ?? '');
+    expect(audio.calls).toEqual([]);
+
+    const dialog = await openSettings();
+    await userEvent.click(within(dialog).getByRole('switch', { name: 'Ambient sound' }));
+    await waitFor(() => {
+      expect(audio.calls).toContain('bed:fire');
+    });
+    expect(audio.calls[0]).toBe('enable');
+    await userEvent.keyboard('{Escape}');
+
+    timer.advance(DURATION.drink * 1_000);
+    await userEvent.click(button('Toy'));
+
+    await waitFor(() => {
+      expect(audio.calls).toContain('play:squeak');
+    });
+    const enabled = audio.calls.indexOf('enable');
+    expect(audio.calls.findIndex((call) => call.startsWith('play:'))).toBeGreaterThan(enabled);
+    expect(audio.calls.slice(0, enabled).some((call) => call.startsWith('play:'))).toBe(false);
+  });
+
+  it('stops everything when the switch is turned off', async () => {
+    const { ports } = mount();
+    const { audio } = ports;
+    const dialog = await openSettings();
+    const toggle = within(dialog).getByRole('switch', { name: 'Ambient sound' });
+    await userEvent.click(toggle);
+    await waitFor(() => {
+      expect(audio.calls).toContain('bed:fire');
+    });
+
+    await userEvent.click(toggle);
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(button('Water'));
+    await screen.findByText(CAPTIONS.drink[0] ?? '');
+
+    expect(audio.calls.at(-1)).toBe('disable');
+  });
+});
+
+describe('time', () => {
+  it('persists a chosen phase and hands Auto back to the clock', async () => {
+    const { ports } = mount({ at: MORNING });
+    const dialog = await openSettings();
+
+    await userEvent.click(within(dialog).getByRole('radio', { name: 'Night' }));
+    await waitFor(() => {
+      expect(sentence()).toHaveTextContent('It is night.');
+    });
+    expect(ports.storage.read('pawlour.time')).toBe('night');
+
+    await userEvent.click(within(dialog).getByRole('radio', { name: 'Auto' }));
+    await waitFor(() => {
+      expect(sentence()).toHaveTextContent('It is morning.');
+    });
+    expect(ports.storage.read('pawlour.time')).toBeNull();
+  });
+
+  it('honours a stored phase and camera on opening', async () => {
+    mount({ at: MORNING, stored: { 'pawlour.time': 'evening', 'pawlour.camera': 'chair' } });
+
+    await waitFor(() => {
+      expect(sentence()).toHaveTextContent('It is evening.');
+    });
+    const dialog = await openSettings();
+    expect(within(dialog).getByRole('radio', { name: 'Evening' })).toBeChecked();
+    expect(within(dialog).getByRole('radio', { name: 'Chair' })).toBeChecked();
+  });
+
+  it('ignores stored nonsense', async () => {
+    mount({ at: MORNING, stored: { 'pawlour.time': 'teatime', 'pawlour.camera': 'roof' } });
+
+    await waitFor(() => {
+      expect(sentence()).toHaveTextContent('It is morning.');
+    });
+    const dialog = await openSettings();
+    expect(within(dialog).getByRole('radio', { name: 'Auto' })).toBeChecked();
+    expect(within(dialog).getByRole('radio', { name: 'Hearth' })).toBeChecked();
+  });
+
+  it('reads the clock once a minute', async () => {
+    const { ports } = mount({ at: MORNING });
+    await waitFor(() => {
+      expect(sentence()).toHaveTextContent('It is morning.');
+    });
+
+    ports.clock.set(AFTERNOON);
+    ports.timer.advance(CLOCK_INTERVAL_MS);
+
+    await waitFor(() => {
+      expect(sentence()).toHaveTextContent('It is evening.');
+    });
+  });
+});
+
+describe('the camera', () => {
+  it('persists the chosen preset', async () => {
+    const { ports } = mount();
+    const dialog = await openSettings();
+
+    await userEvent.click(within(dialog).getByRole('radio', { name: 'Window' }));
+
+    expect(ports.storage.read('pawlour.camera')).toBe('window');
+    expect(within(dialog).getByRole('radio', { name: 'Window' })).toBeChecked();
+  });
+});
+
+describe('motion', () => {
+  it('writes the animations attribute from the device, and the device wins', async () => {
+    const { ports, unmount } = mount({ device: { prefersReducedMotion: false } });
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute('data-animations', 'on');
+    });
+
+    ports.preferences.set({ prefersReducedMotion: true });
+    expect(document.documentElement).not.toHaveAttribute('data-animations');
+
+    ports.preferences.set({ prefersReducedMotion: false });
+    expect(document.documentElement).toHaveAttribute('data-animations', 'on');
+
+    unmount();
+    expect(document.documentElement).not.toHaveAttribute('data-animations');
+  });
+});
+
+describe('a photo', () => {
+  it('says so when the room has no frame to capture, and leaves nothing behind', async () => {
+    mount();
+
+    await userEvent.click(button('Photo'));
+
+    await screen.findByText('The room could not be photographed.');
+    expect(button('Photo')).toBeEnabled();
+    expect(document.querySelector('a[download]')).toBeNull();
   });
 });

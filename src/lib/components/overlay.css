@@ -1,0 +1,21 @@
+/*
+ * The overlay register: CONVENTIONS.md §5.3, P5 system 2. Flat scarlet, black
+ * and white panels split by hard diagonals, for the title card, the loading
+ * card and the photo frame. Declared once under `:root` and never redefined
+ * for a theme, because the card covers the page and is the same in every
+ * combination; `tests/overlay-contrast.test.ts` measures every pair below
+ * against the platform floors in all four anyway.
+ *
+ * The scarlet is the game's own, not the platform's warm family. Black type
+ * on it reads at 5.15 and it stands off black at 5.15 and off white at 4.08;
+ * white type on it would read at 4.08, below the text floor, so the word is
+ * black on scarlet and white sits only on black.
+ */
+:root {
+  --overlay-scarlet: #f5222d;
+  --overlay-black: #000000;
+  --overlay-white: #ffffff;
+  --overlay-ink-on-scarlet: var(--overlay-black);
+  --overlay-ink-on-black: var(--overlay-white);
+  --overlay-ink-on-white: var(--overlay-black);
+}
