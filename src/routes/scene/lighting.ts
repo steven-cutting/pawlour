@@ -1,5 +1,4 @@
 import {
-  Color,
   DirectionalLight,
   Group,
   HemisphereLight,
@@ -75,7 +74,7 @@ export function lighting(cabin: Cabin): { root: Group; apply(state: SceneState):
           material.transparent = true;
           material.opacity = 0.35;
           material.depthWrite = false;
-          material.emissive.copy(new Color(RIGS[state.phase].window));
+          material.emissive.set(RIGS[state.phase].window);
         }
       }
     }

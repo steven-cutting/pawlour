@@ -1,6 +1,7 @@
 import { Mesh, Plane, Raycaster, Vector2, Vector3 } from 'three';
 import type { Camera, Object3D } from 'three';
 import type { Cabin } from './cabin';
+import { FLOOR_HALF } from './camera';
 import type { Size } from './camera';
 
 export type Hit =
@@ -31,8 +32,8 @@ export function hitAt(
   const floor = ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), new Vector3());
   if (
     floor &&
-    Math.abs(floor.x) <= 2.5 &&
-    Math.abs(floor.z) <= 2 &&
+    Math.abs(floor.x) <= FLOOR_HALF.x &&
+    Math.abs(floor.z) <= FLOOR_HALF.z &&
     (!nearest || floor.distanceTo(ray.ray.origin) < nearest.distance)
   ) {
     return { kind: 'floor', point: { x: floor.x, z: floor.z } };

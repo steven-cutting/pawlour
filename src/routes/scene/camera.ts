@@ -6,7 +6,11 @@ export interface Size {
   width: number;
   height: number;
 }
-export const FLOOR_CORNERS = [-2.5, 2.5].flatMap((x) => [-2, 2].map((z) => new Vector3(x, 0, z)));
+/** Half the room's floor, in world units: the framing and floor-tap bounds. */
+export const FLOOR_HALF = { x: 2.5, z: 2 } as const;
+export const FLOOR_CORNERS = [-FLOOR_HALF.x, FLOOR_HALF.x].flatMap((x) =>
+  [-FLOOR_HALF.z, FLOOR_HALF.z].map((z) => new Vector3(x, 0, z))
+);
 
 export function frameCamera(
   camera: PerspectiveCamera,

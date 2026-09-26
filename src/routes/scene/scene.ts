@@ -1,6 +1,7 @@
 import {
   NoToneMapping,
   PerspectiveCamera,
+  Quaternion,
   Scene,
   SRGBColorSpace,
   Texture,
@@ -249,7 +250,7 @@ export function createScene(
     contact = disc();
     const fire = fireStill();
     fire.position.copy(cabin.fireAnchor.getWorldPosition(new Vector3())).y += 0.25;
-    fire.quaternion.copy(cabin.fireAnchor.quaternion);
+    fire.quaternion.copy(cabin.fireAnchor.getWorldQuaternion(new Quaternion()));
     world.add(lights.root, contact, fire, vignette());
     ready = true;
     options.onProgress(1);
@@ -314,8 +315,10 @@ export function createScene(
     },
     restore() {
       if (disposed || (!lost && !failed)) return;
-      if (lost && renderer.getContext().isContextLost() && contextRecovery) {
-        contextRecovery.restoreContext();
+      if (lost && renderer.getContext().isContextLost()) {
+        // Without the extension the browser restores on its own: preventDefault
+        // in contextLost asked for it. A renderer built on a lost context throws.
+        contextRecovery?.restoreContext();
         return;
       }
       try {
