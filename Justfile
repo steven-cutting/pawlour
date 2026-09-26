@@ -119,8 +119,10 @@ check-docs:
     uv run --frozen prek run --all-files markdownlint-cli2 typos lychee
     uv run --frozen bg-validate-docs
 
+# The package's validator with the skills skills-lock.json vendors left out;
+# decision 0011.
 check-agents:
-    uv run --frozen bg-validate-agents
+    uv run --frozen python scripts/validate_agents.py
 
 # ------------------------------------------------------------------ assets ---
 

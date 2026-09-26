@@ -9,7 +9,8 @@ requires: []
 # Agent contract
 
 Enforced by `bg-validate-agents`, a console script of the `biscuit-games-tooling`
-package, run by `just check-agents` and by a pre-commit hook. `AGENTS.md` is the single
+package, run through `scripts/validate_agents.py` by `just check-agents` and by a
+pre-commit hook. `AGENTS.md` is the single
 source of truth for how an agent works in this repository; everything else in the agent
 surface exists only so a particular tool can find it.
 
@@ -92,6 +93,16 @@ The validator lists managed files from Git, honouring only this repository's
 Local assistant state stays out of the inventory by being listed in `.gitignore`. That is
 deliberate: the check reads Git rather than walking the filesystem, so an ignored file is
 invisible to it.
+
+## Vendored skills
+
+The skills `skills-lock.json` pins come from upstream and are kept byte for byte, so none
+of the rules above apply to them. `scripts/validate_agents.py` leaves them out of the
+inventory and the skill checks, and fails if the lock names a skill whose
+`.agents/skills/<name>/SKILL.md` is missing. Their `.claude/skills/<name>` entries are
+symlinks to the canonical directory, not bridges.
+[Decision 0011](../decisions/0011-vendored-skills-outside-the-agent-contract.md) records
+why.
 
 ## Related pages
 

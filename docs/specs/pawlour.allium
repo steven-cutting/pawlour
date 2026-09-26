@@ -3,29 +3,37 @@
 -- Pawlour — the game
 --
 -- Scope
---   The root module of this game's specification. It states the figures the
---   platform also states, so the gate can hold the two equal, and one surface
---   with one guarantee, so the specification is checked rather than merely
---   present. What the game is, how it starts and how it ends is still to be
---   specified — here, or in modules that import this one.
+--   The root module of Pawlour, a room Biscuit lives in: the player taps a
+--   thing in it, and she decides what to do about that, on her own timing. It
+--   states the figures the platform also states, so the gate can hold the two
+--   equal, and the surface the game is played on. What happens in the room is
+--   cabin.allium's.
 --
 -- Includes
 --   - The six figures @steven-cutting/biscuit-games states in
 --     appearance.allium, operation.allium and play-surfaces.allium, restated
 --     under the same names so tests/platformSpecs.test.ts can hold each equal
 --     to the shipped text and to src/lib/config.ts.
---   - The Play surface: the one surface the game has before it has a game,
---     and the width it has to lay out in.
+--   - The Play surface: where the room is shown, and the width it has to lay
+--     out in.
 --
 -- Excludes
---   - Play. Rules, entities, outcomes and what any mark means belong to the
---     modules the game adds; this one names none of them.
---   - Colour values, markup and mechanics. The figures below are thresholds a
+--   - The room and everything she does in it: its things, the time of day,
+--     the weather, the captions, sound and motion. cabin.allium states those.
+--   - What the room is made of and how she is drawn: the model, the room, the
+--     clips and the camera positions. They are assets, not behaviour.
+--   - Colour values, markup and mechanism. The figures below are thresholds a
 --     rendering either meets or does not, and they name no colour.
+--   - Sound files, and the licence each one carries.
 --
 -- Dependencies
---   None. This is the root module. Allium has no cross-repository import, so
---   the platform's three modules are held equal by test rather than imported.
+--   cabin.allium — the room, the types it is described in, and the Cabin
+--   surface. Allium has no cross-repository import, so the platform's three
+--   modules are held equal by test rather than imported: cabin.allium
+--   restates, word for word, the four platform clauses its surface fulfils in
+--   its own right, and every other platform clause applies by citation.
+
+use "./cabin.allium" as cabin
 
 ------------------------------------------------------------
 -- Given

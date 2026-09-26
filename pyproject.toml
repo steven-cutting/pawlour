@@ -70,6 +70,21 @@ extend-exclude = [
   # The model's copied build tooling, and the served binaries and their manifest.
   "blender/src/",
   "src/lib/assets/",
+  # Vendored Allium skills from juxt/allium, pinned by skills-lock.json.
+  ".agents/skills/allium/",
+  ".claude/skills/allium/",
+  ".agents/skills/distill/",
+  ".claude/skills/distill/",
+  ".agents/skills/elicit/",
+  ".claude/skills/elicit/",
+  ".agents/skills/propagate/",
+  ".claude/skills/propagate/",
+  ".agents/skills/tend/",
+  ".claude/skills/tend/",
+  ".agents/skills/weed/",
+  ".claude/skills/weed/",
+  ".agents/skills/witness/",
+  ".claude/skills/witness/",
 ]
 
 [tool.biscuit-games-tooling]

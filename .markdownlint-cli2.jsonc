@@ -22,6 +22,22 @@
     "ai_tmp",
     ".venv",
     "blender/src",
-    "tickets"
+    "tickets",
+    // Vendored Allium skills from juxt/allium, pinned by skills-lock.json and
+    // kept byte for byte so an update is a clean replace.
+    ".agents/skills/allium",
+    ".claude/skills/allium",
+    ".agents/skills/distill",
+    ".claude/skills/distill",
+    ".agents/skills/elicit",
+    ".claude/skills/elicit",
+    ".agents/skills/propagate",
+    ".claude/skills/propagate",
+    ".agents/skills/tend",
+    ".claude/skills/tend",
+    ".agents/skills/weed",
+    ".claude/skills/weed",
+    ".agents/skills/witness",
+    ".claude/skills/witness"
   ]
 }
