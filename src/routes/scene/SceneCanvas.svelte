@@ -19,6 +19,7 @@
     onTap: (hit: Hit) => void;
     onArrived: () => void;
     onContextLost: () => void;
+    onError: () => void;
     webgl?: boolean;
   }
   let {
@@ -32,6 +33,7 @@
     onTap,
     onArrived,
     onContextLost,
+    onError,
     webgl = true
   }: Props = $props();
   let ready = $state(false);
@@ -97,11 +99,13 @@
           onError: () => {
             failed = true;
             ready = false;
+            onError();
           }
         });
         scene.apply(sceneState, animations);
       } catch {
         failed = true;
+        onError();
       }
     };
     capable = typeof window.WebGL2RenderingContext !== 'undefined';

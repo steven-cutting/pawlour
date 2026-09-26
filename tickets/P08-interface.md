@@ -334,7 +334,9 @@ Executed on branch `P08-interface` on 2026-09-26, from `main` at `3f72648`, with
 `SceneCanvas` (`src/routes/scene/SceneCanvas.svelte`) takes `state: SceneState`,
 `animations: boolean` (the ticket's `animationsActive`), `frames: FramePort`,
 `assets: SceneAssets` (`{ biscuit, cabin, clips, still(state) }`), `onProgress(fraction)`,
-`onReady()`, `onTap(hit: Hit)`, `onContextLost()` and `webgl?: boolean`; it exports
+`onReady()`, `onTap(hit: Hit)`, `onContextLost()` and `webgl?: boolean` (P07b, merged
+below, adds `random: RandomPort`, `onArrived()` and `assets.fire`; this ticket adds
+`onError()`); it exports
 `capture(): string` (throws `'The scene has no drawable frame to capture'` before the
 first frame, after a loss and under jsdom) and `forceContextRestore(): void`. `Hit` is
 `{ kind: 'item'; item: 'item.<name>' }` for all twelve room items, `{ kind: 'biscuit' }`
@@ -480,8 +482,9 @@ closes it and focus returns to Settings; Enter on Pet captions the pet.
 
 **Accessibility review** (the skill's seven steps against `cabin.allium` and H
 `operation.allium`): no findings. Colour: where she is carries `aria-current` and the
-words; the switch's state is the knob, the word and `checked`; the progress rule carries
-`aria-valuenow` and the copy. Keyboard: every control is a platform control; the canvas
+words; each light's button carries "on" or "off" in its name and as a visible word (added
+by the adversarial review below); the switch's state is the knob, the word and `checked`;
+the progress rule carries `aria-valuenow` and the copy. Keyboard: every control is a platform control; the canvas
 is `aria-hidden` and out of the tab order, and the row is the control. Announcements:
 the caption through `Notice`'s `role="status"`, the room in words through the polite
 hidden sentence, the card's copy through a polite region, failures through `Notice`.
@@ -515,6 +518,48 @@ $ grep -n 'globalThis\|window\.\|document\.' src/lib/components/
 $ just check
 All checks passed and the worktree is unchanged.
 ```
+
+**Codex adversarial review, 2026-09-26.** `main` (P07b, `db92a71`) was merged into the
+branch first, so the fixes stand against the real motion runtime. Four findings, all
+confirmed against the code and fixed:
+
+1. *Motion on stalled every walk.* The page set the director's `motion` from the device
+   but the branch's `SceneCanvas` predated P07b, so nothing sent `arrived` and a tap on
+   Water left her walking for good; the route tests hid it by asking for reduced motion.
+   Fixed by the merge: the page now passes P07b's `random`, `assets.fire` and
+   `onArrived`, which dispatches `arrived`. jsdom has no WebGL2, so a route test cannot
+   reach the runtime; `tests/route.test.ts` states the contract instead (with motion on
+   a tap leaves her "walking to the water bowl" and captions nothing until the runtime
+   reports), `svelte-check` holds the prop, and P07b's `tests/scene-motion.test.ts`
+   proves one arrival per walk. The walk end to end is P10's device pass.
+2. *A failed first load left the loading card over the retry button.* `scene.ts` reports
+   progress before fetching, `SceneCanvas` kept its failure to itself, and the fixed card
+   (`z-index: 10`) never went. `SceneCanvas` gains `onError()` beside `onContextLost()`
+   (the one change under `src/routes/scene/` in this ticket, made after P07b was done,
+   per CONVENTIONS.md §10); the page hides the card and says "The room could not be
+   drawn." through the page `Notice`, which is now one notice for a photo that failed and
+   a room that would not draw. A retry re-reports progress, so the card returns for it.
+   *Not unit-tested:* the path needs `window.WebGL2RenderingContext`, which jsdom lacks
+   and invariant 3 forbids stubbing; `src/routes/**` is outside the coverage floor. Carried
+   to P10 to verify on the device by blocking `cabin.glb`, and to P14
+   (`P14-webgl-test-lane.md`), which puts a real-Chromium WebGL2 lane in the gate so this
+   path, context loss and arrival stop depending on throwaway review routes.
+3. *A stale `enable()` overwrote Off.* The port resolves an enable that a later disable
+   overtook without starting anything, and the page took that for sound on; On, Off, On
+   in quick succession then never started the bed. The page keeps a request counter that
+   Off, unmount and every On bump, and only the latest request turns `sound` on. Tested
+   with a deferred `enable` in `tests/route.test.ts`.
+4. *Lamp and Lights exposed no state.* The row knew only where she is; the canvas is
+   `aria-hidden` and the sentence says nothing about lights, so a reader toggled a light
+   and heard nothing. `ItemControls` takes `lights` and names each light's button
+   "Lamp, on" / "Lights, off" in the hidden-name pattern the current marker uses, with a
+   visible word. The platform `Button` has no `pressed`, so the state rides in the name
+   rather than `aria-pressed`, which a reader would announce more reliably on change;
+   *hand-back to the platform:* a `pressed?: boolean` on `Button`, after which the two
+   buttons should carry `aria-pressed` and keep the word.
+
+Follow-up outside this review: P07b's `wipe.ts` (its step 7) is meant for the title card
+on load-in and photo mode; `TitleCard` still runs its own CSS `sweep`. Left as it is here.
 
 ## Open points
 

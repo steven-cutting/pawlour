@@ -10,6 +10,7 @@
   import biscuitUrl from '$lib/assets/biscuit.glb?url';
   import clips from '$lib/assets/biscuit.clips.json';
   import cabinUrl from '$lib/assets/cabin.glb?url';
+  import fireUrl from '$lib/assets/fire.webp?url';
   import fire from '$lib/assets/audio/fire.mp3';
   import lapping from '$lib/assets/audio/lapping.mp3';
   import rain from '$lib/assets/audio/rain.mp3';
@@ -57,6 +58,7 @@
   import { createAnimationFrames } from '$lib/ports/frame';
   import type { FramePort } from '$lib/ports/frame';
   import { createCryptoRandom } from '$lib/ports/random';
+  import type { RandomPort } from '$lib/ports/random';
   import { createWebStorage } from '$lib/ports/storage';
   import { createIntervalTimer } from '$lib/ports/timer';
   import { describeScene } from '$lib/sentence';
@@ -81,7 +83,9 @@
    * The director's state is one `$state.raw`: `step` returns a new object
    * each time and nothing here mutates one, so a proxy would only cost.
    * Every command goes through `dispatch`, which also hands the audio port
-   * the difference between the old state and the new (`cues.ts`).
+   * the difference between the old state and the new (`cues.ts`). The canvas
+   * hands back a tap, an `arrived` when a walk reaches its target (P07b), and
+   * whether it could be drawn at all.
    *
    * Every selector below names an element or a class this markup carries,
    * because `svelte-check --fail-on-warnings` turns an unused selector into a
@@ -120,11 +124,17 @@
   const ASSETS: SceneAssets = {
     biscuit: biscuitUrl,
     cabin: cabinUrl,
+    fire: fireUrl,
     clips,
     still: (state) => STILLS[stillFor(state)]
   };
-  /** Before the ports exist the canvas has nothing to draw with; this never fires. */
+  /** Before the ports exist the canvas has nothing to draw with; these are never reached. */
   const IDLE_FRAMES: FramePort = { each: () => () => undefined };
+  const IDLE_RANDOM: RandomPort = {
+    uniformChoice<Value>(items: readonly Value[]): Value {
+      return items[0] as Value;
+    }
+  };
 
   let live: Ports | undefined = $state.raw();
   let scene: SceneState = $state.raw(initialState('morning', 'clear', false));
@@ -134,8 +144,11 @@
   let everReady = false;
   let busy = $state(false);
   let photos = $state(0);
-  let photoNotice: string | null = $state(null);
-  let photoFailures = $state(0);
+  /** The one page notice: a photo that failed, or a room that could not be drawn. */
+  let notice: string | null = $state(null);
+  let failures = $state(0);
+  /** Bumped by every sound request and by Off, so an enable that resolves late gives way. */
+  let soundRequest = 0;
   /** What the canvas exports to the page (P07a); named here because a component import is untyped to the linter. */
   interface Canvas {
     capture(): string;
@@ -145,6 +158,7 @@
   let stopSaved: (() => void) | undefined;
 
   const frames = $derived(live?.frames ?? IDLE_FRAMES);
+  const random = $derived(live?.random ?? IDLE_RANDOM);
   const time = $derived<Phase | 'auto'>(scene.phaseOverride ?? 'auto');
 
   // The runtime draws once per state it is handed, and every tick returns a
@@ -224,14 +238,21 @@
 
   // SoundNeverStartsUnasked: `enable()` is reached from the switch's change
   // handler and nowhere else, and `sound` turns on only once it has resolved,
-  // so no cue can reach a port that has not started.
+  // so no cue can reach a port that has not started. The port resolves an
+  // enable that Off overtook without starting anything, so only the latest
+  // request may turn `sound` on: a stale one would leave the state on with
+  // no context behind it, and the next On would find nothing to cue.
   async function enableSound(): Promise<void> {
     const p = live;
     if (!p) return;
+    soundRequest += 1;
+    const ticket = soundRequest;
     await p.audio.enable();
+    if (ticket !== soundRequest || live !== p) return;
     dispatch({ kind: 'setSound', on: true });
   }
   function disableSound(): void {
+    soundRequest += 1;
     live?.audio.disable();
     dispatch({ kind: 'setSound', on: false });
   }
@@ -310,8 +331,8 @@
         card = 'hidden';
       });
     } catch {
-      photoFailures += 1;
-      photoNotice = 'The room could not be photographed.';
+      failures += 1;
+      notice = 'The room could not be photographed.';
     } finally {
       busy = false;
     }
@@ -377,6 +398,7 @@
       stopPreferences();
       stopSaved?.();
       stopSaved = undefined;
+      soundRequest += 1;
       p.audio.disable();
       document.documentElement.removeAttribute('data-animations');
       live = undefined;
@@ -403,6 +425,7 @@
         state={picture}
         animations={scene.motion}
         {frames}
+        {random}
         assets={ASSETS}
         onProgress={(fraction: number) => {
           progress = fraction;
@@ -415,7 +438,18 @@
           everReady = true;
           if (card === 'loading') card = 'hidden';
         }}
+        onError={() => {
+          // AContextLossLeavesAStill: the canvas shows its still and its retry
+          // button; the card would sit over both, so it goes, and the notice
+          // says why (AChangeNobodyIsLookingAtIsAnnounced).
+          if (card === 'loading') card = 'hidden';
+          failures += 1;
+          notice = 'The room could not be drawn.';
+        }}
         onTap={tapped}
+        onArrived={() => {
+          dispatch({ kind: 'arrived' });
+        }}
         onContextLost={() => undefined}
       />
     </div>
@@ -423,11 +457,11 @@
     <p class="visually-hidden" aria-live="polite">{describeScene(scene)}</p>
     <Caption caption={scene.caption} />
     <div class="controls">
-      <ItemControls items={ITEM_CONTROLS} active={scene.at} onselect={select}>
+      <ItemControls items={ITEM_CONTROLS} active={scene.at} lights={scene.lights} onselect={select}>
         <PhotoButton oncapture={photograph} {busy} />
       </ItemControls>
     </div>
-    <Notice message={photoNotice} sequence={photoFailures} />
+    <Notice message={notice} sequence={failures} />
   </main>
 </div>
 

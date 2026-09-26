@@ -27,13 +27,14 @@ import Page from '../src/routes/+page.svelte';
  * zone, so clock values are built from local components. And with motion on,
  * a walk waits for the runtime's `arrived`, which never comes under jsdom, so
  * the device asks for reduced motion by default and the director resolves
- * every walk on the spot; the one motion test flips it.
+ * every walk on the spot; the motion tests flip it.
  */
 
 const NIGHT = new Date(2026, 0, 1, 23, 0).getTime();
 const MORNING = new Date(2026, 0, 1, 9, 0).getTime();
 const AFTERNOON = new Date(2026, 0, 1, 14, 0).getTime();
-const ITEMS = ['Bed', 'Chair', 'Water', 'Food', 'Toy', 'Lamp', 'Lights', 'Pet'];
+// In the morning both practical lights are off, and a light's name says so.
+const ITEMS = ['Bed', 'Chair', 'Water', 'Food', 'Toy', 'Lamp, off', 'Lights, off', 'Pet'];
 
 interface Fakes extends Ports {
   audio: ReturnType<typeof createFakeAudio>;
@@ -207,6 +208,42 @@ describe('sound', () => {
 
     expect(audio.calls.at(-1)).toBe('disable');
   });
+
+  it('lets Off overtake an On still starting, and the next On starts the bed', async () => {
+    // The real port resolves an enable that a later disable overtook without
+    // starting anything (`generation` in `createWebAudio`), so the page must
+    // not take a stale resolution for sound on. `enable` here settles only
+    // when the test says so.
+    const resolvers: (() => void)[] = [];
+    const audio = createFakeAudio();
+    const deferred = {
+      ...audio,
+      enable(): Promise<void> {
+        void audio.enable();
+        return new Promise((resolve) => resolvers.push(resolve));
+      }
+    };
+    const ports = { ...fakes(), audio: deferred };
+    render(Page, { props: { ports } });
+    const dialog = await openSettings();
+    const toggle = within(dialog).getByRole('switch', { name: 'Ambient sound' });
+
+    await userEvent.click(toggle);
+    await userEvent.click(toggle);
+    resolvers[0]?.();
+    await waitFor(() => {
+      expect(toggle).not.toBeChecked();
+    });
+    expect(audio.calls).toEqual(['enable', 'disable']);
+
+    await userEvent.click(toggle);
+    resolvers[1]?.();
+    await waitFor(() => {
+      expect(audio.calls).toContain('bed:fire');
+    });
+    expect(toggle).toBeChecked();
+    expect(audio.calls).toEqual(['enable', 'disable', 'enable', 'bed:fire']);
+  });
 });
 
 describe('time', () => {
@@ -292,6 +329,29 @@ describe('motion', () => {
 
     unmount();
     expect(document.documentElement).not.toHaveAttribute('data-animations');
+  });
+
+  it('leaves a walk to the runtime when motion is on', async () => {
+    // With motion on the director waits for the canvas's `arrived` (P07b),
+    // which the page dispatches; under jsdom the canvas never boots, so this
+    // states the contract the page relies on rather than exercising the walk.
+    mount({ device: { prefersReducedMotion: false } });
+
+    await userEvent.click(button('Water'));
+
+    expect(sentence()).toHaveTextContent('Biscuit is walking to the water bowl.');
+    expect(screen.queryByText(CAPTIONS.drink[0] ?? '')).toBeNull();
+  });
+});
+
+describe('the lights', () => {
+  it('name their state, and a tap flips it', async () => {
+    mount();
+
+    await userEvent.click(button('Lamp, off'));
+
+    expect(button('Lamp, on')).toHaveTextContent('on');
+    expect(button('Lights, off')).toBeInTheDocument();
   });
 });
 

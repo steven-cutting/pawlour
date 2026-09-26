@@ -19,7 +19,8 @@
     'the two lights, and she herself, as a named control outside the canvas, so a keyboard',
     'reaches the room the way a thumb does. Where she is carries `aria-current` and the',
     'word “she is here”, never the fill alone (AppearanceNeverCarriesMeaningAlone); her own',
-    'button never carries it.',
+    'button never carries it. A light is a toggle the hidden canvas shows lit, so its button',
+    'carries “on” or “off” in its name and as a word (FullyKeyboardOperable).',
     '',
     'DirectManipulation.@invariant EveryControlIsAComfortableTarget: three per row at the',
     'narrowest width, each a platform `Button` measured at 44px both ways.'
@@ -30,7 +31,12 @@
     component: ItemControls,
     tags: ['autodocs'],
     parameters: { docs: { description: { component: OVERVIEW } } },
-    args: { items: ITEM_CONTROLS, active: 'floor', onselect: fn() }
+    args: {
+      items: ITEM_CONTROLS,
+      active: 'floor',
+      lights: { lamp: false, strings: false },
+      onselect: fn()
+    }
   });
 </script>
 
@@ -51,6 +57,16 @@
   play={async ({ canvasElement }) => {
     const bed = within(canvasElement).getByRole('button', { name: 'Bed, she is here' });
     await expect(bed).toHaveAttribute('aria-current', 'true');
+  }}
+/>
+
+<Story
+  name="The lamp is on"
+  args={{ lights: { lamp: true, strings: false } }}
+  play={async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole('button', { name: 'Lamp, on' })).toHaveTextContent('on');
+    await expect(canvas.getByRole('button', { name: 'Lights, off' })).toHaveTextContent('off');
   }}
 />
 

@@ -54,7 +54,8 @@
       onReady: fn(),
       onTap: fn(),
       onArrived: fn(),
-      onContextLost: fn()
+      onContextLost: fn(),
+      onError: fn()
     }
   });
 
