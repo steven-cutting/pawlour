@@ -40,6 +40,7 @@ rather than in a shell history.
 | `just storybook` | The component workshop on port 6006, with hot module replacement. |
 | `just scene-stub` | Write a disposable cabin GLB with the scene's required node contract to `ai_tmp/stub-cabin/cabin.glb`. |
 | `just scene-review <script>` | Run a local Node scene diagnostic or Chromium review script. Disposable scripts and evidence belong in `ai_tmp/`; this does not start a server or publish anything. |
+| `just fire-texture` | Rebuild the deterministic 256 × 2048 cel fire atlas with Pillow. Run `just assets-manifest` after changing it and review the one-entry diff. |
 
 ## Format and repair
 

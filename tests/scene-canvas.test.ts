@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { initialState } from '../src/lib/domain/director';
 import { createFakeFrames } from '../src/lib/ports/frame';
+import { createFakeRandom } from '../src/lib/ports/random';
 import SceneCanvas from '../src/routes/scene/SceneCanvas.svelte';
 import { stillFor } from '../src/routes/scene/still';
 
@@ -12,16 +13,19 @@ function props() {
     state: initialState('morning', 'clear', false),
     animations: false,
     frames,
+    random: createFakeRandom(),
     each,
     assets: {
       biscuit: '/biscuit.glb',
       cabin: '/cabin.glb',
+      fire: '/fire.webp',
       clips: { height: 3.113, clips: [] },
       still: (state: ReturnType<typeof initialState>) => `/stills/${stillFor(state)}.webp`
     },
     onProgress: vi.fn(),
     onReady: vi.fn(),
     onTap: vi.fn(),
+    onArrived: vi.fn(),
     onContextLost: vi.fn()
   };
 }

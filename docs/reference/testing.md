@@ -35,12 +35,13 @@ the repository root, one file per component.
 Files are named for what they cover rather than mirroring a source path: `ports.test.ts`,
 `platformSpecs.test.ts`, `lockup.test.ts`, `route.test.ts`.
 
-Two files in `tests/` are not tests. `platform.ts` resolves what the package ships
+Support files in `tests/` are imported rather than collected. `platform.ts` resolves what the package ships
 through its own `exports` subpaths and refuses any path outside `node_modules`, because a
 resolve that fell back to a copy in this repository would stay green while proving
 nothing about the package this game actually installs. `restated.ts` is this game's table
-of the platform clauses its modules restate, empty until it restates one. The `include`
-glob is `tests/**/*.test.ts`, so both are imported and never collected.
+of the platform clauses its modules restate, empty until it restates one.
+`helpers/scene.ts` loads real GLBs and decodes their embedded images locally for
+the scene suites. The `include` glob is `tests/**/*.test.ts`.
 
 ## Conventions
 
@@ -113,6 +114,8 @@ should be deleted rather than covered; see
 | `route.test.ts` | The page: the heading the platform header draws for this game, and a main landmark to put the game in. This game's file. |
 | `scene-canvas.test.ts` | The scene's captioned still without WebGL, explicit `webgl: false`, state changes, and capture without a drawable frame. No browser global is stubbed. |
 | `scene-assets.test.ts` | Real GLB loading, cabin and rig contracts, generated and broken stubs, quantized bind height, shared outline deformation, fixed poses, camera horizons and portrait framing, hit tests, gestures, still selection and resource disposal. Embedded images are decoded through a local GLTFLoader plugin. |
+| `scene-motion.test.ts` | Real named clips, 250 ms fades, reverse stand segments, additive pet over drink, natural walking speed, all five destinations, retargeting, single arrivals, procedural offsets without drift and frame subscription lifetime. |
+| `scene-effects.test.ts` | Fire atlas dimensions and palette, flipbook cadence, ember lifetime, exterior volumes for all three panes, shared particle budgets, interrupted 600 ms light blends, still cuts and token-gated wipe completion. |
 | `stories/` | Each component rendered in every state its surface names, in Chromium with axe over every one, and the figures only a layout engine can produce: the seed story frames the header at the narrowest supported width and measures every control there. |
 
 The GPU adapter stays in `src/routes/scene/`, outside the unchanged `src/lib/**`
@@ -120,7 +123,10 @@ coverage boundary. Its real WebGL checks use a disposable review route and a loc
 Chromium script, run with `just scene-review <script>`. The renderer factory permits
 counting draws without replacing a global. The ticket records capture pixels,
 context loss and recovery, pointer hits, keyboard retry, draw calls and the
-maintainer's visual review. Disposable probes and screenshots stay in `ai_tmp/`.
+maintainer's visual review. Motion recordings include bed arrival through sleep,
+toy play, petting while drinking, night fire and rain. Walking and reverse clips
+retain their natural time scale during fades; other crossfades may warp time.
+Disposable probes, screenshots and recordings stay in `ai_tmp/`.
 
 ## Related pages
 

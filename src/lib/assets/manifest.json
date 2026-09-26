@@ -7,6 +7,7 @@
   {"path": "src/lib/assets/biscuit.clips.json", "bytes": 1161, "sha256": "cb82bf9b3a434b8c925f8db5bf1d66cdbd7525e44c03c275c1addc9add86c2c2", "source": "built:2026-09-25", "licence": "platform", "budget": 0},
   {"path": "src/lib/assets/biscuit.glb", "bytes": 2525000, "sha256": "17cdd402b5bfb6e48dd3dc7ac347645b37d200c76b5cf9bb14346f009d82703a", "source": "built:2026-09-25", "licence": "platform", "budget": 6291456},
   {"path": "src/lib/assets/cabin.glb", "bytes": 586584, "sha256": "1064f47b92d48128ce4b36ddfb6bad043a6484e338b278e09c65da278da44d07", "source": "built:2026-09-25", "licence": "cc0", "budget": 3145728},
+  {"path": "src/lib/assets/fire.webp", "bytes": 6646, "sha256": "b570b306867340404206f08353318a4393b08862f042c57da57a004e8816297c", "source": "made:2026-09-26", "licence": "cc0", "budget": 262144},
   {"path": "src/lib/assets/stills/drink.evening.webp", "bytes": 13912, "sha256": "310057cac2f8ec404f794aeb7bbd83647f99cf3ee544b238def46bed85d5223d", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
   {"path": "src/lib/assets/stills/drink.morning.webp", "bytes": 16892, "sha256": "a96b6c78eb39e9c767926e2eb33ef6fd0f92423c17d157f0c6bd4e63b8cdf90a", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},
   {"path": "src/lib/assets/stills/drink.night.webp", "bytes": 12942, "sha256": "d9df494849111184c137a3eb72403ed51c3bebd20888605ea6c81b248e7e29d5", "source": "built:2026-09-25", "licence": "platform", "budget": 262144},

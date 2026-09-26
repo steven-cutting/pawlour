@@ -7,6 +7,7 @@
   import { initialState } from '../src/lib/domain/director';
   import type { SceneState } from '../src/lib/domain/director';
   import { createFakeFrames } from '../src/lib/ports/frame';
+  import { createFakeRandom } from '../src/lib/ports/random';
   import clips from '../src/lib/assets/biscuit.clips.json';
   import idle from '../src/lib/assets/stills/idle.morning.webp';
   import sleeping from '../src/lib/assets/stills/sleep.chair.night.webp';
@@ -41,15 +42,18 @@
       animations: false,
       webgl: false,
       frames: createFakeFrames(),
+      random: createFakeRandom(),
       assets: {
         biscuit: '',
         cabin: '',
+        fire: '',
         clips,
         still: (state: SceneState) => (state.activity === 'sleep' ? sleeping : idle)
       },
       onProgress: fn(),
       onReady: fn(),
       onTap: fn(),
+      onArrived: fn(),
       onContextLost: fn()
     }
   });
