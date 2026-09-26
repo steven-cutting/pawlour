@@ -1,0 +1,8 @@
+# Managed by Copier. Do not edit by hand; run `copier update` instead.
+_commit: v2.1.0
+_src_path: gh:steven-cutting/biscuit_games_template
+description: 'Biscuit at home in a log cabin: tap a thing, and she decides what to
+    do about it.'
+game_name: Pawlour
+game_slug: pawlour
+repository: steven-cutting/pawlour

@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+# Publishing needs write scopes that no other workflow here has, so the deploy
+# lives in its own file rather than as a job on the end of CI. It runs after CI
+# rather than beside it, so what it publishes is a commit CI has passed.
+
+on:
+  # Branch protection does not bind administrators, so a direct push to main
+  # reaches here unchecked unless this waits for CI. `CI` is ci.yml's `name:`;
+  # renaming that workflow without changing this line stops every deploy. No
+  # workflow_dispatch: a manual run would skip the gate, and a redeploy is a
+  # rerun of a gated run.
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: ['main']
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one that is already running: a
+# half-published site is worse than a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  pages:
+    # Only a green CI run of a push to main, and only if that commit was main's
+    # head when CI finished: the called workflow checks out github.sha, which for
+    # this event is main's head at that moment, so the equality is what makes the
+    # deployed commit the validated one. A run already waiting when a newer push
+    # lands still deploys its own commit, which CI passed; the newer push has its
+    # own CI run and deploys itself, and a newer waiting run cancels an older one.
+    # A re-run keeps its github.sha, which is what makes it a rollback.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_sha == github.sha
+    # The union of what the called jobs hold: the build reads the platform
+    # package, the deploy publishes.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      packages: read
+    uses: steven-cutting/biscuit_games_tooling/.github/workflows/game-pages.yml@6c5c07f6bec86e86b3930dfa41392e4b440e8c85 # v0.3.0
+    with:
+      # A project site: Pages serves the build at
+      # <owner>.github.io/<repository>/, so the app is built to live under that
+      # path. The name is read from the event rather than written here, which is
+      # what keeps this file the same in every game and keeps `paths.base` in
+      # svelte.config.js from drifting away from the address Pages actually
+      # serves.
+      base_path: /${{ github.event.repository.name }}
