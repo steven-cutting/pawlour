@@ -254,6 +254,18 @@ Executed 2026-09-26 on branch `P09-handboo` (the maintainer's worktree; the tick
     and `explanation/rendering.md` "When it draws" (the frame-port loop while
     animations are active): the wiring is P08's and P07b's; on `main` the scene draws
     once per state and nothing subscribes to the frame port.
+- **For P11 to carry into a new ticket: run the room checker inside the pipeline.**
+  `how-to/build-assets.md` now makes `just check-cabin` explicit steps (raw file before
+  the build, served file after), because nothing automatic enforces the room's contract:
+  `scripts/build_assets.sh` runs `check_model_asset.mjs` for Biscuit only, `just check`
+  omits `check-cabin`, and `requireCabin` checks names and the graph only, so a moved
+  `spot.*` or a missing `COLOR_0` passes every gate (found by the Codex adversarial
+  review of this branch). The proposed change mirrors Biscuit: the `cabin` branch of
+  `build_assets.sh` ends with `uv run --frozen python scripts/check_cabin.py "$out"`
+  before `just assets-manifest`. Then `how-to/build-assets.md` step 4,
+  `design/the-room.md`'s "What checks what" row and `blender/README.md` stop calling it
+  a manual step. That is a behaviour change to a P03/P05 file, so it was left out of
+  this handbook ticket.
 - **Where a page follows `main` rather than `CONVENTIONS.md`** (corrections for P11):
   1. §4.1: clip files use `_` for the dot (`idle_sit.py`); `FRAMES` counts samples, so a
      clip lasts `(FRAMES − 1) / 30` s; `walk.py`'s `STRIDE` is 1.0 in model units, not

@@ -19,7 +19,9 @@ under `static/`, which the component workshop would copy into every story build.
 1. Produce the raw file: `just model-export` for Biscuit
    ([Export the model](export-the-model.md)) or `just cabin-export` for the room. Each
    writes `blender/out/<name>-raw.glb`.
-2. Run the pipeline:
+2. For the room, check the raw file before building it:
+   `just check-cabin blender/out/cabin-raw.glb`.
+3. Run the pipeline:
 
    ```console
    just assets-build biscuit
@@ -30,10 +32,14 @@ under `static/`, which the component workshop would copy into every story build.
    and keeps every stage under `ai_tmp/` with its measurements in
    `ai_tmp/<name>-pipeline.jsonl`.
 
-3. Read the diff of `src/lib/assets/manifest.json`. The pipeline ends with
+4. For the room, run `just check-cabin` on the served file. Nothing else runs it: the
+   pipeline checks only Biscuit, `just check` leaves it out, and the runtime checks only
+   names and the navigation graph, so a moved `spot.*` or a missing `COLOR_0` passes
+   every other gate.
+5. Read the diff of `src/lib/assets/manifest.json`. The pipeline ends with
    `just assets-manifest`, which updates each rebuilt file's size and hash and checks it
    against its budget.
-4. Run `just check`, and commit the served files and the manifest together.
+6. Run `just check`, and commit the served files and the manifest together.
 
 ## What the pipeline does
 
@@ -52,8 +58,9 @@ After the Biscuit pass, `scripts/clip_table.mjs` writes `src/lib/assets/biscuit.
 — each clip's name, length in seconds, whether it loops, the walk's stride, and her
 bind-pose height — and `scripts/check_model_asset.mjs`, the check behind
 `just check-model-asset`, loads the result in three.js, plays every
-clip and checks the rig, the morphs, the texture sizes and the draw calls. After the room
-pass, `just check-cabin` holds the file to [the room's contract](../design/the-room.md).
+clip and checks the rig, the morphs, the texture sizes and the draw calls. The room pass
+runs no checker of its own; `just check-cabin`, run by hand as step 4 says, holds the
+file to [the room's contract](../design/the-room.md).
 
 `just assets-inspect <path>` measures any GLB — meshes, primitives, triangles, image
 bytes and file size — without changing it.
