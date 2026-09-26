@@ -1,7 +1,7 @@
 ---
 id: P06
 title: "Director and ports: the reducer, phases, weather, captions, the timer, frame and audio ports"
-status: open
+status: done
 depends_on: [P01]
 parallel_with: [P02, P03, P04, P05, P09]
 branch: ticket/p06-director-and-ports
@@ -386,6 +386,194 @@ Filled in by the agent that executes this ticket.
 - Any rule in Step 2 that the tests showed to be underspecified, with the reading taken
   (a hand-back to P07a or P08 where it changes what they draw or wire).
 - Which open points below were settled.
+
+### Executed 2026-09-25
+
+Executed in the worktree `/Users/scutting/.supacode/repos/pawlour/p_1_and_6` on its
+branch `p_1_and_6`, not `ticket/p06-director-and-ports`, as P01 was: the maintainer
+created both, and P01 (`862d539`) is already on it. Four product decisions were put to
+the maintainer before any code was written, and each took the recommendation; they are
+items 4a to 4d below.
+
+**1. Coverage.** `just frontend-coverage`: 7 files, 146 tests passed. Statements 100%
+(305/305), branches 100% (186/186), functions 100% (111/111), lines 100% (297/297). The
+`text` reporter prints a table with no rows when every file is full, so the per-file
+figures are from `coverage/coverage-summary.json` (statements, branches, functions,
+lines):
+
+| File | Figures |
+| --- | --- |
+| `src/lib/data/captions.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/domain/captions.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/domain/director.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/domain/items.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/domain/phases.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/domain/timing.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/domain/weather.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/ports/audio.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/ports/frame.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/ports/timer.ts` | 100 / 100 / 100 / 100 |
+| `src/lib/ports/clock.ts`, `random.ts`, `storage.ts`, `src/lib/brand.ts`, `config.ts`, `components/Lockup.svelte` | 100 / 100 / 100 / 100 (T's, unchanged) |
+
+**2. Captions.** 42 shipped, six per key: `sleep.bed`, `sleep.chair`, `drink`, `eat`,
+`play`, `pet` and `idle.long`. Every seed sentence from CONVENTIONS.md §6.3 is among
+them, and `tests/captions.test.ts` holds the seeds, the counts, uniqueness, and the
+register (no `!` or `?`, no whole-word `I`, `me`, `my` or `we`, under twelve words).
+
+**3. §11 claim 8, first half: false as written.** Under Vitest's jsdom environment
+here, `typeof globalThis.requestAnimationFrame` is `function` (Vitest creates jsdom with
+`pretendToBeVisual`), and `createAnimationFrames()` with no argument returns a port whose
+`each` starts and stops without error. `AudioContext` is `undefined`. The port stays
+required, because tests never stub a global, so this corrects CONVENTIONS.md §11 claim 8
+and changes no design (a P11 item). The claim's second half, about WebGL in the story
+job's Chromium, is P08's.
+
+**4. Rules Step 2 left open, and the reading taken.**
+
+- **a. Motion off (maintainer).** With `animations` false, nothing reports `arrived`:
+  P07a's still mode draws once and P07b's walker never subscribes. So while `motion` is
+  false, `step` resolves anything in motion after every command, the way
+  `motionChanged(false)` does. A walk arrives and settles, with its caption. A
+  transition finishes where it leads. A stand gets her up and off. A pet hands her back
+  at once and keeps its caption, because there is no still of a pet. A tap on a thing
+  therefore cuts straight to her doing it, and a tap on her is answered in words alone.
+  Hand-back to P07a: still mode never sends `arrived`. To P07b: an `arrived` that lands
+  when she is not walking is ignored, and the open point "snapping when motion goes off
+  mid-walk" is settled here (she is at the target, settled).
+- **b. "A tap on the thing she is at" (maintainer).** Read as PRD "unless she is
+  already doing that thing". A tap changes nothing when she is at the item and doing its
+  activity or one of its transitions (under a pet, the activity the pet interrupted), or
+  when `target.item` is already that item (walking to it, standing up to go to it, or
+  waiting on the minimum), which is the spec's "or already on her way to". Idling beside
+  a thing she has finished with, a tap starts it again *without a walk*: the director
+  knows she is already there, so it arrives at once rather than sending a zero-length
+  walk. Hand-back to P07b: no walk ever targets the spot she is standing on.
+- **c. Caption lifetime (maintainer).** The caption clears when she moves on from what
+  it describes: on entering `walk` or `stand`, on arriving (before any new sentence),
+  and when `drink`, `eat` or `play` ends. Handing her back after a pet keeps whatever is
+  showing. `sequence` is `shown.length + 1`, so it stays unique across the visit even
+  though `caption` is sometimes absent. Hand-back to P08: `Caption` announces on each new
+  `sequence` and hides its `Notice` while `caption` is absent. To P07a: the still's alt
+  text falls back as its ticket already says.
+- **d. Sleep has the minimum; a tap on her inside it is ignored (maintainer).**
+  `cabin.allium` says she gives "whatever she settles into" `minimum_activity_seconds`,
+  so Step 2's exemption of `sleep` from the minimum is dropped (the spec wins). A tap on
+  a thing in the first four seconds of sleep waits, as on any activity. A tap on her
+  there has nowhere to wait, because the state has no field for it, so it changes
+  nothing. After four seconds it wakes her through `stand`.
+- **e. The pet's caption lands on the `tapBiscuit` that starts the pet.**
+  `ACaptionIsShownAndAnnounced` says "its caption comes as the pet plays". Step 2's
+  "never on the tap" holds for taps on things. P01's hand-back invited this ticket to
+  raise it only if it disagreed; it does not.
+- **f. `sit` has two exits, and the fixed shape has no field to tell them apart.**
+  Reading taken: `sit` at the bed or the chair leads to `lie` and then to sleep, whoever
+  started it, because sitting down there is the first step of lying down in it. `sit`
+  anywhere else leads to `idle.sit`. The consequence: having woken and stood up in her
+  bed, if she then chooses `sit` for herself, she lies down and sleeps again, with a
+  caption. If that reads wrong on the recording, the fallback is one line: make `sit`
+  while `idle.stand` at the bed or the chair a no-change, as `sit` while `idle.sit`
+  already is.
+- **g. `untilIdleChoice` counts idle time only.** It counts down only while idle, and is
+  redrawn whenever an idle stretch begins: when `drink`, `eat` or `play` ends, when a
+  stand with no target ends, when a sit settles into `idle.sit`, and when a walk ends on
+  bare floor. A pet over an idle pauses it, and handing her back does not redraw it.
+  Counted any other way, it ran out during a long sleep, she chose the instant she woke,
+  and `idle.long` was unreachable. `initialState` has no random port, so the first
+  interval is the longest: `IDLE_INTERVAL.max × IDLE_FACTOR[phase]`, which is 28, 40 or
+  60 seconds. One edge the fixed shape cannot close: a phase change in the middle of an
+  idle stretch moves the long-idle mark under her. Evening to night at 25 idle seconds,
+  she has already said `idle.long` at 20 and says it again at 30. Night to evening at
+  25, the mark falls to 20 behind her and that stretch says nothing. `untilIdleChoice`
+  is not rescaled either. Preventing the second sentence needs a field the shape does
+  not have. It is at most one extra sentence per stretch and never a repeat, and it is
+  what P10's recording will show across a clock boundary.
+- **h.** Scaled intervals and the long-idle mark are rounded to the millisecond (22 ×
+  0.7 is `15.399999999999999` in floating point), so a tick lands on them exactly.
+- **i. `setPhase('auto')` only clears the override.** `phase` stays where it was until
+  the next `clockPhase`, because the director has no clock. Hand-back to P08: send
+  `clockPhase` with the clock's current phase straight after `setPhase('auto')`.
+- **j.** A phase change resets the lights and the fire only when the phase in effect
+  actually changes. `setPhase` or `clockPhase` naming the current phase keeps a toggled
+  light as the player left it.
+- **k.** `Target.item` can be `'floor'`, but the director never produces such a target in
+  v1. Arriving at one leaves her idle on bare floor, and a test holds it.
+- **l. Draw order**, stated in `director.ts`'s header so a test's fake offsets are
+  predictable: a caption draws once when a sentence is left; an idle stretch draws its
+  interval when it begins; her own choice draws the thing, then the next interval.
+- **m.** The ticket's defaults `globalThis as unknown as FrameHost` and `… as AudioHost`
+  fail `@typescript-eslint/no-unnecessary-type-assertion`, because `globalThis` already
+  satisfies both interfaces under the DOM lib. The defaults are plain `globalThis`, with
+  the same behaviour. CONVENTIONS.md §6.2's signature can drop the casts.
+- **n.** `items.ts` exports two names beyond Step 1: `Plan` (the return type of
+  `activityFor`, named) and `isWalkItem` (the guard the director uses). `director.ts` and
+  `timing.ts` export exactly Step 2's shape.
+- **o. The audio adapter.** `setBed`, `play` and `stop` do nothing until `enable()` has
+  resolved: nothing is queued. A `disable()` that lands while `enable()` is pending wins,
+  and the new context is closed. Two `enable()`s at once keep one context. A file that
+  fails to load is fetched again on next use. A loop dropped, or a one-shot stopped,
+  while its file loads never starts late. `createFakeAudio()` records every call even
+  before `enable`, so P08 can assert the order. It has no way to refuse `enable`. For
+  the failed-switch `Notice` (CONVENTIONS.md §12), P08 can drive `createWebAudio` with a
+  host whose `AudioContext` throws.
+- **p.** Poodl's timer block at `a2860fc` has five `it` cases, not six; Step 1's own list
+  names five. All five are ported, under the block name `timer port`.
+- **q.** The items cases sit in `tests/director.test.ts` and the weather's in
+  `tests/phases.test.ts`, because Files touched names only three test files.
+
+**5. Failing first.** Written against a `step` that returned its state unchanged, 62 of
+`tests/director.test.ts`'s 66 tests failed. The four that passed cover `items.ts` and
+`initialState`, which are not `step`'s. After the director was written, eleven
+single-rule mutants were each caught by the test named for that rule:
+
+- a pet inside sleep's minimum waking her;
+- a pet hiding the activity she is using;
+- a late `arrived` being honoured;
+- a tap on her destination being answered;
+- walking keeping the caption;
+- sleep with no minimum;
+- a pet's return settling again;
+- the long idle beating a choice on the same tick;
+- a pet keeping `lookAt`;
+- the clock overriding the player;
+- motion off leaving her walking.
+
+The file was restored byte for byte after each mutant.
+
+**6. Open points.**
+
+- *`pet` while walking*: kept refusing. `ATapIsAnInvitation` says the same ("While she
+  walks … a tap on her changes nothing").
+- *The chair's climb*: unchanged. The clip swap is `items.ts` alone.
+- *`idle.long`'s frequency*: not settled. With 4g, it fires once per idle stretch
+  whenever the interval drawn is longer than 20 seconds (20 draws in 21), until the
+  key's six sentences are spent. Carried forward to P10's recording.
+
+**7. Hand-backs for P11 to carry.**
+
+- **CONVENTIONS.md:** correct §11 claim 8's first half (item 3); drop the casts from
+  §6.2 (4m); drop §6.1's sleep exemption from the minimum (4d); and drop "persisted
+  under `pawlour.sound`" from §7, as P01 said.
+- **P08:** send `clockPhase` after `setPhase('auto')` (4i); the caption lifetime and
+  `sequence` (4c); the audio adapter's behaviour (4o).
+- **P07a and P07b:** 4a and 4b.
+- **P09:** `docs/reference/testing.md`'s "What the current suite proves" gains
+  `director.test.ts`, `phases.test.ts`, `captions.test.ts` and the three ports in
+  `ports.test.ts`; `explanation/the-director.md` states 4a to 4g.
+
+**Verification, as the ticket lists it.**
+
+- `just frontend-static`: ESLint clean, "All matched files use Prettier code style!",
+  svelte-check "836 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS".
+- `just frontend-coverage`: as item 1.
+- `grep -c "^describe('" tests/ports.test.ts`: `6` (`storage port`, `random port`,
+  `clock port`, then `timer port`, `frame port`, `audio port`). `git diff` of the file
+  removes no line: the imports gain five lines, and the three blocks follow `clock
+  port`.
+- `npx vitest run tests/captions.test.ts`: 1 file, 10 tests passed.
+- `just check`: exit 0 through all thirteen stages (lock-check, lint, frontend-static,
+  frontend-coverage, frontend-build, storybook-build, storybook-test, check-docs,
+  check-agents, check-specs, analyse-specs, check-assets, check-clean), ending "All
+  checks passed and the worktree is unchanged."
 
 ## Open points
 
