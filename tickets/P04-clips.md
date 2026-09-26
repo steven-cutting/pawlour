@@ -1,7 +1,7 @@
 ---
 id: P04
 title: "Clips, the core set: nine more scripted clips, contact sheets, the maintainer's approval, the stills"
-status: in_progress
+status: done
 depends_on: [P03]
 parallel_with: [P01, P05, P06, P07a, P08, P09]
 branch: ticket/p04-clips
@@ -259,7 +259,7 @@ done without it. Pushing and the pull request are separately authorised.
       (asserted by a small check in `contact_sheet.py` that prints the maximum
       difference; expected 0).
 - [x] No clip keys `root`'s local X or Z; `walk` keys `root`'s local Y only.
-- [ ] One approved contact sheet per clip, recorded with a date in the hand-back notes.
+- [x] One approved contact sheet per clip, recorded with a date in the hand-back notes.
 - [x] `biscuit.clips.json` lists ten clips with the §4.1 durations and `walk`'s
       `stride`; `biscuit.glb` is under 6,291,456 bytes.
 - [x] Eighteen stills exist, each under 262,144 bytes, and `just check-assets` is green.
@@ -286,21 +286,23 @@ green.
 ## Hand-back notes
 
 The ten scripts and their final contact sheets were built on 2026-09-25 with
-Blender 5.2.1 LTS. Maintainer approval is still pending for every sheet; no approval
-date or verdict is inferred from implementation or automated checks.
+Blender 5.2.1 LTS. The maintainer approved all ten clips on the same date with
+"I approve", in response to the final review request for the revised walk and
+all ten animations, including `idle.stand` as P02's proof. The approved moving
+previews and their contact sheets are presented in `ai_tmp/asset-review.html`.
 
 | Clip | Review sheet under `ai_tmp/clips/` | Samples | Export seconds | Approval |
 | --- | --- | --- | --- | --- |
-| `idle.stand` | `idle.stand.jpg` | 120 | 3.966667 | Pending |
-| `idle.sit` | `idle.sit.jpg` | 120 | 3.966667 | Pending |
-| `walk` | `walk.jpg` | 30 | 0.966667 | Pending |
-| `sit` | `sit.jpg` | 30 | 0.966667 | Pending |
-| `lie` | `lie.jpg` | 36 | 1.166667 | Pending |
-| `sleep` | `sleep.jpg` | 180 | 5.966667 | Pending |
-| `drink` | `drink.jpg` | 60 | 1.966667 | Pending |
-| `eat` | `eat.jpg` | 60 | 1.966667 | Pending |
-| `play` | `play.jpg` | 90 | 2.966667 | Pending |
-| `pet` | `pet.jpg` | 60 | 1.966667 | Pending |
+| `idle.stand` | `idle.stand.jpg` | 120 | 3.966667 | Approved 2026-09-25 |
+| `idle.sit` | `idle.sit.jpg` | 120 | 3.966667 | Approved 2026-09-25 |
+| `walk` | `walk.jpg` | 30 | 0.966667 | Approved 2026-09-25 |
+| `sit` | `sit.jpg` | 30 | 0.966667 | Approved 2026-09-25 |
+| `lie` | `lie.jpg` | 36 | 1.166667 | Approved 2026-09-25 |
+| `sleep` | `sleep.jpg` | 180 | 5.966667 | Approved 2026-09-25 |
+| `drink` | `drink.jpg` | 60 | 1.966667 | Approved 2026-09-25 |
+| `eat` | `eat.jpg` | 60 | 1.966667 | Approved 2026-09-25 |
+| `play` | `play.jpg` | 90 | 2.966667 | Approved 2026-09-25 |
+| `pet` | `pet.jpg` | 60 | 1.966667 | Approved 2026-09-25 |
 
 On 2026-09-25 the maintainer requested more activity in `play`: "biscuit play
 could have more going on". Its first sheet is retained as
@@ -308,8 +310,8 @@ could have more going on". Its first sheet is retained as
 head shake with spine counter-motion, ear and tail follow-through, a deeper
 play bow, and a high forward paw reach followed by a second tap. Root translation
 stays in place and the evaluated loop endpoints match within floating-point
-precision. The revised sheet is `ai_tmp/clips/play.jpg`; visual approval remains pending. The served
-asset and three play stills are rebuilt from this revision before hand-back.
+precision. The approved revised sheet is `ai_tmp/clips/play.jpg`. The served
+asset and three play stills were rebuilt from this revision before hand-back.
 
 At the maintainer's request, all ten clips also have looping animated WebP
 previews at `ai_tmp/clips/<name>-preview.webp`, displayed together in
@@ -317,12 +319,12 @@ previews at `ai_tmp/clips/<name>-preview.webp`, displayed together in
 the maintainer identified sliding feet and tilted front paws, naming `pet`, `walk`,
 `eat`, `drink` and `idle.stand`, then requested fixes and a check of every clip.
 The refreshed previews show a neutral ground grid; walk includes runtime travel
-with a following camera. No visual approval is recorded.
+with a following camera. Approval was withheld at that review.
 
 The next review on 2026-09-25 rejected the walk's overall motion as unnatural,
 especially the hind-leg bend. The maintainer requested a miniature-poodle walk
-and explicitly permitted hind-leg proportion changes if useful. The revised gait
-is ready for review; numerical contact checks alone do not establish visual acceptance.
+and explicitly permitted hind-leg proportion changes if useful. The resulting
+gait revision described below received the final approval recorded above.
 
 The first contact-corrected walk used the shorter-stride fallback: `STRIDE = 0.8` model units,
 65% stance, and a steady neck. The initial 1.6-unit cycle showed excessive reach
@@ -333,8 +335,8 @@ twist; keying the existing bend controls laterally restored the limb bend plane.
 The same correction applies to the planted front paws in `drink`, `eat` and
 `play`. No source bone, constraint, mesh, shape key or skin weight was edited.
 Walk target heights also compensate for their inherited root bob so the stance
-targets stay grounded. The final sheets have been checked for that deformation;
-this is agent review, not the maintainer's visual approval.
+targets stay grounded. Agent review checked the final sheets for that deformation
+before the maintainer's final visual approval.
 
 That revision's stance excursion was `STRIDE × STANCE = 0.52`, correcting the original
 step 3's full-stride excursion during stance: that wording would move planted paws
@@ -365,7 +367,8 @@ rest poses and weights remain unchanged. The moving side comparison is
 `ai_tmp/clips/walk-side-before-preview.webp` beside `walk-side-preview.webp` in
 the review gallery, alongside the updated three-quarter view and contact sheet.
 The revised walk's actual Paw geometry was checked at 401 times: maximum numerical
-floor penetration is 0.0000563 model units. Visual acceptance remains pending.
+floor penetration is 0.0000563 model units. The maintainer approved this revision
+with the other nine animations on 2026-09-25.
 
 The maintainer's foot-contact review exposed two separate native defects:
 optional IK pins the ankle but lets the sole inherit the lower-leg rotation,
