@@ -794,19 +794,24 @@ absent), `lookAt` (a point, or absent), `phase`, `phaseOverride`, `weather`, `li
 (`lamp`, `strings`), `fire` (0 to 1), `camera`, `sound`, `caption` (the sentence and a
 sequence number, or absent), `motion`. P06 embeds the type and the command union in its
 ticket and that text is canonical: it may add bookkeeping fields (`elapsed`,
-`untilIdleChoice`, `shown`) and an `arrived` command, and P07 and P08 read P06's file.
+`untilIdleChoice`, `shown`, `resume`) and an `arrived` command, and P07 and P08 read
+P06's file.
 `Item` in v1 is `bed`, `chair`, `water`, `food`, `toy`, `lamp`, `lights`; `jar` and `fire`
 ship as room anchors and the director ignores them until v1.1.
 
 Rules: a tap on the item she is using is ignored; a tap while she is busy replaces any
-pending target so the last tap wins once the current activity's minimum has elapsed;
-`walk` is entered by turning to face the target first; arriving at an item plays its
-transition and activity; a settled activity sets `caption` once (never on the tap);
-lights follow phase unless toggled, and a toggle holds until the phase changes; `fire`
-is 0.35 by morning, 0.7 by evening, 1.0 by night; `sleep` lasts until a tap or the sleep
-duration, then `stand` and `idle.stand`; when idle for the idle interval she chooses an
-activity by phase-weighted random choice; `motionChanged(false)` freezes `activity` at
-the nearest still-able state.
+pending target so the last tap wins once the current activity's minimum has elapsed; a
+tap on her is a reaction, not an activity: `pet` plays at once over `idle.stand`,
+`idle.sit`, `drink`, `eat` or `play`, with that activity's `elapsed` paused and any
+pending target kept, and hands her back to it after the pet duration; a tap on her while
+she walks, sits, lies, stands or is already being petted changes nothing, and asleep it
+wakes her as any tap does; `walk` is entered by turning to face the target first;
+arriving at an item plays its transition and activity; a settled activity sets `caption`
+once (never on the tap); lights follow phase unless toggled, and a toggle holds until
+the phase changes; `fire` is 0.35 by morning, 0.7 by evening, 1.0 by night; `sleep`
+lasts until a tap or the sleep duration, then `stand` and `idle.stand`; when idle for
+the idle interval she chooses an activity by phase-weighted random choice;
+`motionChanged(false)` freezes `activity` at the nearest still-able state.
 
 `timing.ts` constants (seconds): minimum activity 4; drink 6; eat 10; play 15; pet 2;
 sleep 90 by morning, 150 by evening, 300 by night; idle interval uniform 20 to 40, ×0.7
@@ -901,7 +906,9 @@ the platform's register (a name, then the prose that is the rule):
 - `EveryItemIsAControl`: every thing she can be sent to is a named control outside the
   canvas, and the canvas's own hit-test adds nothing a control does not offer.
 - `ATapIsAnInvitation`: a tap never interrupts the minimum of an activity; the last tap
-  wins when it ends; a tap on the thing she is using changes nothing.
+  wins when it ends; a tap on the thing she is using changes nothing; a tap on her is a
+  reaction that plays over what she is doing and returns her to it with the minimum
+  unspent.
 - `ACaptionIsShownAndAnnounced`: a caption appears once an activity has settled, never on
   the tap, is shown in words and announced in the same words, and is never repeated in a
   session.

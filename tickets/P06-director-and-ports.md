@@ -161,6 +161,7 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
      caption?: { text: string; sequence: number };
      motion: boolean;
      elapsed: number;         // seconds in the current activity
+     resume?: { activity: Activity; elapsed: number }; // what a pet interrupted
      untilIdleChoice: number; // seconds until she chooses for herself
      shown: readonly string[]; // captions shown this visit
    }
@@ -196,10 +197,21 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
      `elapsed` resets.
    - A settled activity sets `caption` once (`captions.ts`, Step 4) with the next
      `sequence`, on the tick that settles it, never on the tap; `shown` gains the text.
-   - `drink`, `eat`, `play`, `pet` end after `DURATION` and return to `idle.stand`
-     (`pet` returns to what she was doing before); `sleep` ends after `SLEEP[phase]` or
-     on any tap, through `stand`.
-   - `tapBiscuit`: `pet` if she is not walking; `lookAt` cleared.
+   - `drink`, `eat`, `play` end after `DURATION` and return to `idle.stand`; `pet` ends
+     after `DURATION.pet` and restores `resume` (the activity and its `elapsed`, exactly
+     as they were, and `resume` cleared) without settling that activity again, so it
+     sets no second caption; `sleep` ends after `SLEEP[phase]` or on any tap, including
+     a tap on her, through `stand`.
+   - `tapBiscuit` while `idle.stand`, `idle.sit`, `drink`, `eat` or `play`: `resume`
+     records the activity and its `elapsed`, `activity` becomes `pet`, `elapsed` resets,
+     `lookAt` is cleared; `target` and any pending target are kept and keep waiting, so
+     the interrupted activity's minimum is paused, not spent. A pet is a reaction, not
+     an activity change (`ATapIsAnInvitation`, PRD "What she does"): it plays at once,
+     never through the pending-target path. While `walk`, `sit`, `lie`, `stand` or
+     `pet`: no change (a one-shot is not interrupted, and a tap on the thing she is
+     using changes nothing). While `sleep`: the sleep ends as on any tap. A `tap(item)`
+     during a pet sets `target` and waits; when the pet ends, the `tap(item)` rule above
+     applies to the restored activity and its restored `elapsed`.
    - `tapFloor(point)`: `lookAt = point`; nothing else.
    - `tick(ms)`: advances `elapsed` and `untilIdleChoice`; when the latter reaches zero
      while idle, chooses an item by `idleWeights(phase)` through `deps.random`, issues it
@@ -213,14 +225,19 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
    - `toggleLight` flips one light and holds it until the next phase change.
    - `setWeather`, `setSound`, `setCamera` set their field.
    - `motionChanged(false)` sets `motion` false and, if walking, jumps `at` to the
-     target with the settled activity (the still shows her there); `motionChanged(true)`
-     sets `motion` true.
+     target with the settled activity (the still shows her there); if `pet`, restores
+     `resume` first (there is no `pet` still); `motionChanged(true)` sets `motion` true.
 
 3. **Write `tests/director.test.ts`** from the rules above and from `cabin.allium`'s
    clauses, one `describe` per clause name, each test's title the plain sentence the
    clause states; use `createFakeRandom` with offsets that make the choice explicit, and
    a helper `run(state, ...commands)` folding `step`. Cover every branch: the coverage
-   floor is measured over `src/lib/**` and the reducer is the largest module.
+   floor is measured over `src/lib/**` and the reducer is the largest module. Among the
+   `ATapIsAnInvitation` cases: a pet during each of `drink`, `eat` and `play` resumes
+   that activity with the same `elapsed` and no second caption; a pet while a target
+   waits on the minimum leaves the target waiting and the minimum unspent; a tap on her
+   while walking, in `sit`, `lie` or `stand`, or already being petted changes nothing; a
+   tap on her while asleep ends the sleep through `stand`.
 
 4. **Write the captions**: `src/lib/data/captions.ts` exporting `CAPTIONS: Record<Settled,
    readonly string[]>` with CONVENTIONS.md §6.3's seed sentences and enough more that
@@ -306,6 +323,9 @@ No other path. `tests/ports.test.ts` is appended, never reordered: a later
 - [ ] `tests/director.test.ts` has a `describe` per `cabin.allium` clause among
       `ATapIsAnInvitation`, `ACaptionIsShownAndAnnounced`, `TimeFollowsTheClockUntilOverridden`,
       `MotionOffIsAStillDiorama`, and each of Step 2's rules has a failing-first test.
+- [ ] The pet cases Step 3 names (resume with `elapsed` intact and no second caption, a
+      pending target kept, walking and transitions untouched, sleep ended) are among
+      them.
 - [ ] `CAPTIONS` holds at least forty sentences, at least five per key, and
       `tests/captions.test.ts` proves the register rules.
 - [ ] The three ports each have a real adapter taking its platform object as a defaulted

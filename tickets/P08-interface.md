@@ -107,7 +107,7 @@ and licence page are recorded. Pushing and the pull request are separately autho
 
 | Path | Class | Source | Change |
 | --- | --- | --- | --- |
-| `src/lib/components/ItemControls.svelte` | repo | new | a wrapping grid of platform `Button`s, one per item prop, three per row at 320 px |
+| `src/lib/components/ItemControls.svelte` | repo | new | a wrapping grid of platform `Button`s, one per entry prop (the seven items and Pet), three per row at 320 px |
 | `src/lib/components/TimeControl.svelte` | repo | new | `SegmentedControl` Auto, Morning, Evening, Night |
 | `src/lib/components/SoundControl.svelte` | repo | new | `Switch`, off by default; `onenable` and `ondisable` callbacks |
 | `src/lib/components/CameraControl.svelte` | repo | new | `SegmentedControl` Hearth, Window, Chair |
@@ -141,10 +141,15 @@ and licence page are recorded. Pushing and the pull request are separately autho
 2. **The components, test first.** For each of the eight, write the test from the
    guarantee it answers, then the component, then the story. Query by accessible role
    and name only. Shapes:
-   - `ItemControls`: props `items: readonly { id: Item; label: string; icon: IconName }[]`,
-     `active: Item | 'floor'`, `onselect: (item: Item) => void`. A `Button` per item;
-     the active one carries `aria-pressed="true"` and a word ("Bed, she is here"), never
-     colour alone. Three per row at 320 px through a CSS grid on `--shell-pad`.
+   - `ItemControls`: props `items: readonly { id: Item | 'biscuit'; label: string; icon: IconName }[]`,
+     `active: Item | 'floor'`, `onselect: (id: Item | 'biscuit') => void`. A `Button`
+     per entry; the active one carries `aria-pressed="true"` and a word ("Bed, she is
+     here"), never colour alone. The Pet button is the `biscuit` entry, mirroring P07a's
+     `Hit` kinds: the canvas hit-test offers her, so the row must (`EveryItemIsAControl`),
+     and a keyboard or screen reader reaches the pet the same way a thumb does. It never
+     carries `aria-pressed`, since she is not somewhere to be at. The test asserts that
+     activating the button named "Pet" calls `onselect('biscuit')`. Three per row at
+     320 px through a CSS grid on `--shell-pad`.
    - `TimeControl`: props `value: Phase | 'auto'`, `onchange`. A `SegmentedControl`
      with four options; the group is one tab stop and arrows move within it (the
      platform control does this; the test asserts the role and the names).
@@ -215,7 +220,9 @@ and licence page are recorded. Pushing and the pull request are separately autho
    `data-animations` on `document.documentElement` as H's how-to says; start the timer at
    250 ms calling `director.step(state, tick)` and, every 240th tick, `clockPhase` from
    the clock; return the unsubscribes. `onhit` maps `item.<name>` to `tap(item)`,
-   `biscuit` to `tapBiscuit`, `floor` to `tapFloor(point)`. `SceneState` lives in one
+   `biscuit` to `tapBiscuit`, `floor` to `tapFloor(point)`; `ItemControls`' `onselect`
+   maps the same way, an item to `tap(item)` and `biscuit` to `tapBiscuit`, so the
+   control row and the canvas issue identical commands. `SceneState` lives in one
    `$state`; components receive slices and callbacks. Every selector in the page's
    `<style>` names an element or class the markup carries (T's seed comment;
    `svelte-check --fail-on-warnings`).
@@ -257,7 +264,8 @@ and licence page are recorded. Pushing and the pull request are separately autho
     call precedes `enable`.
 
 11. **The route test.** Extend `tests/route.test.ts`: the heading, the title, the main
-    landmark, the item buttons by name, the Settings button, the hidden sentence's text
+    landmark, the item buttons by name (Bed, Chair, Water, Food, Toy, Lamp, Lights,
+    Pet), the Settings button, the hidden sentence's text
     for a fake state, the caption's `role="status"`. The page under jsdom mounts
     `SceneCanvas` in its fallback (no WebGL): assert the still's `alt` is the caption.
 
@@ -281,6 +289,9 @@ and licence page are recorded. Pushing and the pull request are separately autho
       role and name and a story whose narrowest-width play measures 44 px.
 - [ ] `src/routes/+page.svelte` constructs every port in `onMount` and nowhere else;
       `grep -n 'globalThis\|window\.\|document\.' src/lib/components/` finds nothing.
+- [ ] The Pet button in `ItemControls` dispatches `tapBiscuit` through
+      `onselect('biscuit')`, is reachable and activated by keyboard, and is asserted by
+      name in `tests/item-controls.test.ts` and `tests/route.test.ts`.
 - [ ] `audio.enable()` is called from `SoundControl`'s handler only, and a page test
       with the fake audio port proves no `play` precedes it.
 - [ ] `tests/overlay-contrast.test.ts` measures every text pair at or above 4.5 and the

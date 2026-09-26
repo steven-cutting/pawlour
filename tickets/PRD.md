@@ -87,7 +87,9 @@ only for load-in and photo mode, so the mechanism exists when a second room does
 
 Every tap on a thing is answered with a walk and an activity, unless she is already doing
 that thing, in which case she keeps doing it. Tapping something else while she is busy
-queues nothing: she finishes what she is doing, then the last tap wins.
+queues nothing: she finishes what she is doing, then the last tap wins. A tap on her is
+the one exception: the pet reaction plays at once over whatever she is doing, and she
+goes back to it afterwards, the time she had already spent on it intact.
 
 | Tap | What she does | Caption, once she has settled |
 | --- | --- | --- |
