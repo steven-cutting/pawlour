@@ -63,8 +63,10 @@
   import { createIntervalTimer } from '$lib/ports/timer';
   import { describeScene } from '$lib/sentence';
   import type { Hit } from './scene/hit';
-  import type { SceneAssets } from './scene/scene';
+  import type { SceneAssets, SceneDiagnostics } from './scene/scene';
   import SceneCanvas from './scene/SceneCanvas.svelte';
+  import { createDebugHook, debugRequested } from './scene/debug';
+  import type { DebugHook } from './scene/debug';
   import { stillFor } from './scene/still';
   import type { StillKey } from './scene/still';
 
@@ -153,11 +155,18 @@
   interface Canvas {
     capture(): string;
     forceContextRestore(): void;
+    diagnostics(): SceneDiagnostics | undefined;
   }
   let canvas: Canvas | undefined = $state();
+  /** The `?debug` measurement hook (P10), only while the address asks for it. */
+  let debug: DebugHook | undefined;
   let stopSaved: (() => void) | undefined;
 
   const frames = $derived(live?.frames ?? IDLE_FRAMES);
+  // A derived, so the canvas's effect tracks the boolean and not `scene`
+  // itself: read straight off `scene`, every tick re-ran it and redrew the
+  // still diorama four times a second (found by P10 on the debug counter).
+  const motion = $derived(scene.motion);
   const random = $derived(live?.random ?? IDLE_RANDOM);
   const time = $derived<Phase | 'auto'>(scene.phaseOverride ?? 'auto');
 
@@ -374,14 +383,38 @@
     // `data-animations` is the only selector under which the platform's
     // `--dur-*` tokens are anything but 0ms, and the device's reduced-motion
     // preference wins over it whatever the game sets.
-    const applyMotion = (): void => {
-      const active = animationsActive(true, p.preferences.prefersReducedMotion());
+    const setMotion = (active: boolean): void => {
       if (active) document.documentElement.setAttribute('data-animations', 'on');
       else document.documentElement.removeAttribute('data-animations');
       dispatch({ kind: 'motionChanged', active });
     };
+    const applyMotion = (): void => {
+      setMotion(animationsActive(true, p.preferences.prefersReducedMotion()));
+    };
     applyMotion();
     const stopPreferences = p.preferences.subscribe(applyMotion);
+
+    // The address is read here, never at module scope: the route prerenders.
+    // This is the one place the game writes to `window`, and only when asked.
+    if (debugRequested(window.location.search)) {
+      debug = createDebugHook({
+        timer: p.timer,
+        now: () => performance.now(),
+        host: window,
+        log: (line) => {
+          console.log(line);
+        },
+        source: {
+          read: () => canvas?.diagnostics()?.read(),
+          state: () => scene,
+          hideRoom: () => canvas?.diagnostics()?.hideRoom(),
+          showRoom: () => canvas?.diagnostics()?.showRoom(),
+          loseContext: () => canvas?.diagnostics()?.loseContext(),
+          restoreContext: () => canvas?.forceContextRestore(),
+          setAnimations: setMotion
+        }
+      });
+    }
 
     // The director ticks whether motion is on or off, so time passes in the
     // still diorama too; the clock is read once a minute for the phase.
@@ -396,6 +429,8 @@
       stopTick();
       stopClock();
       stopPreferences();
+      debug?.stop();
+      debug = undefined;
       stopSaved?.();
       stopSaved = undefined;
       soundRequest += 1;
@@ -423,7 +458,7 @@
       <SceneCanvas
         bind:this={canvas}
         state={picture}
-        animations={scene.motion}
+        animations={motion}
         {frames}
         {random}
         assets={ASSETS}
@@ -434,6 +469,7 @@
           if (card === 'hidden' && !everReady) card = 'loading';
         }}
         onReady={() => {
+          debug?.markFirstFrame();
           progress = 1;
           everReady = true;
           if (card === 'loading') card = 'hidden';

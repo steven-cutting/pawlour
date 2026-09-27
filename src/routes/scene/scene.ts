@@ -55,6 +55,16 @@ export interface SceneOptions {
   onError(error: unknown): void;
   onArrived: () => void;
 }
+/** What the `?debug` hook reads and pulls (P10); nothing else calls these. */
+export interface SceneDiagnostics {
+  /** The renderer's counters for the last drawn frame, and its frames drawn so far. */
+  read(): { frame: number; calls: number; triangles: number; textures: number; pixelRatio: number };
+  /** Draw Biscuit alone, so the triangle count is hers; `showRoom` puts everything back. */
+  hideRoom(): void;
+  showRoom(): void;
+  /** Lose the context through `WEBGL_lose_context`, the way the budget's last row is tested. */
+  loseContext(): void;
+}
 export interface SceneHandle {
   apply(state: SceneState, animations: boolean): void;
   resize(size: Size, pixelRatio: number): void;
@@ -62,6 +72,7 @@ export interface SceneHandle {
   capture(): string;
   restore(): void;
   dispose(): void;
+  diagnostics(): SceneDiagnostics;
   readonly lost: boolean;
 }
 
@@ -218,6 +229,14 @@ export function createScene(
     transforms();
   };
   const canAnimate = (): boolean => ready && animations && !lost && !disposed;
+  // Biscuit's triangles alone, for the budget: the effects, lights and discs
+  // sit beside the room under `world`, not under it, so all but her are hidden.
+  const setRoom = (visible: boolean): void => {
+    if (!biscuit || !ready || lost || disposed) return;
+    for (const child of world.children) if (child !== biscuit.root) child.visible = visible;
+    if (visible) update();
+    if (!loop.running) draw();
+  };
   const loop = createFrameLoop(
     frames,
     (dt) => {
@@ -446,6 +465,26 @@ export function createScene(
       canvas.removeEventListener('webglcontextrestored', contextRestored);
       clear();
       renderer.dispose();
+    },
+    diagnostics() {
+      return {
+        read: () => ({
+          frame: renderer.info.render.frame,
+          calls: renderer.info.render.calls,
+          triangles: renderer.info.render.triangles,
+          textures: renderer.info.memory.textures,
+          pixelRatio: renderer.getPixelRatio()
+        }),
+        hideRoom: () => {
+          setRoom(false);
+        },
+        showRoom: () => {
+          setRoom(true);
+        },
+        loseContext: () => {
+          contextRecovery?.loseContext();
+        }
+      };
     },
     get lost() {
       return lost;

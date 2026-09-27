@@ -4,7 +4,7 @@
   import type { FramePort } from '$lib/ports/frame';
   import type { RandomPort } from '$lib/ports/random';
   import { createScene } from './scene';
-  import type { SceneAssets, SceneHandle } from './scene';
+  import type { SceneAssets, SceneDiagnostics, SceneHandle } from './scene';
   import { tapGesture } from './hit';
   import type { Hit } from './hit';
 
@@ -54,6 +54,10 @@
   export function forceContextRestore(): void {
     if (scene) scene.restore();
     else boot?.();
+  }
+  /** The `?debug` hook's view of the scene (P10); undefined until it exists. */
+  export function diagnostics(): SceneDiagnostics | undefined {
+    return scene?.diagnostics();
   }
 
   onMount(() => {
