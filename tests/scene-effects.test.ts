@@ -40,11 +40,15 @@ describe('fire, weather and phase light', () => {
       .toBuffer({ resolveWithObject: true });
     expect([info.width, info.height, info.channels]).toEqual([256, 2048, 4]);
     const colours = new Set<string>();
+    // One assertion after the loop, not one per pixel: half a million `expect`
+    // calls took the test past Vitest's 5 s timeout on the CI runner.
+    let translucent = 0;
     for (let pixel = 0; pixel < data.length; pixel += 4) {
       const alpha = data[pixel + 3];
-      expect(alpha === 0 || alpha === 255).toBe(true);
+      if (alpha !== 0 && alpha !== 255) translucent += 1;
       if (alpha) colours.add(data.subarray(pixel, pixel + 3).toString('hex'));
     }
+    expect(translucent).toBe(0);
     expect([...colours].sort()).toEqual(['c8501e', 'f08a2a', 'ffd27a'].sort());
     const frames = Array.from({ length: 8 }, (_, index) =>
       data.subarray(index * 256 * 256 * 4, (index + 1) * 256 * 256 * 4).toString('base64')
