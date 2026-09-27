@@ -62,4 +62,9 @@ if [ "$name" = biscuit ]; then
     node scripts/clip_table.mjs "$out" src/lib/assets/biscuit.clips.json
     node scripts/check_model_asset.mjs "$out"
 fi
+if [ "$name" = cabin ]; then
+    # The room's contract (docs/design/the-room.md), held on every build the
+    # way check_model_asset.mjs holds Biscuit's; not part of `just check`.
+    uv run --frozen python scripts/check_cabin.py "$out"
+fi
 just assets-manifest

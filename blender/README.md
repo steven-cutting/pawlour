@@ -69,8 +69,9 @@ portrait stills. Review artifacts stay in `ai_tmp/`. Clip and room artwork
 requires maintainer visual approval before its tickets are closed.
 
 `just cabin-export` builds the room and its three camera renders from primitives.
-Run `just check-cabin blender/out/cabin-raw.glb`, `just assets-build cabin`, and
-`just check-cabin` to verify both raw and served contracts. The pipeline retains
+Run `just check-cabin blender/out/cabin-raw.glb`, then `just assets-build cabin`,
+which ends by running the same check on the served file, so both the raw and the
+served contracts are verified before the manifest is written. The pipeline retains
 named cabin items and their children for hit testing, while Biscuit's compatible
 skin primitives are combined by material without changing deformation.
 

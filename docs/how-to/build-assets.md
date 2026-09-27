@@ -32,10 +32,10 @@ under `static/`, which the component workshop would copy into every story build.
    and keeps every stage under `ai_tmp/` with its measurements in
    `ai_tmp/<name>-pipeline.jsonl`.
 
-4. For the room, run `just check-cabin` on the served file. Nothing else runs it: the
-   pipeline checks only Biscuit, `just check` leaves it out, and the runtime checks only
-   names and the navigation graph, so a moved `spot.*` or a missing `COLOR_0` passes
-   every other gate.
+4. For the room, the pipeline ends by running the check behind `just check-cabin` on the
+   served file, so a moved `spot.*` or a missing `COLOR_0` fails the build. Nothing else
+   runs it: `just check` leaves it out, and the runtime checks only names and the
+   navigation graph.
 5. Read the diff of `src/lib/assets/manifest.json`. The pipeline ends with
    `just assets-manifest`, which updates each rebuilt file's size and hash and checks it
    against its budget.
@@ -59,8 +59,9 @@ After the Biscuit pass, `scripts/clip_table.mjs` writes `src/lib/assets/biscuit.
 bind-pose height — and `scripts/check_model_asset.mjs`, the check behind
 `just check-model-asset`, loads the result in three.js, plays every
 clip and checks the rig, the morphs, the texture sizes and the draw calls. The room pass
-runs no checker of its own; `just check-cabin`, run by hand as step 4 says, holds the
-file to [the room's contract](../design/the-room.md).
+ends with `scripts/check_cabin.py`, the check behind `just check-cabin`, which holds the
+file to [the room's contract](../design/the-room.md); with the raw-file check in step 2,
+those are the only two runs, because `just check` leaves the room's contract out.
 
 `just assets-inspect <path>` measures any GLB — meshes, primitives, triangles, image
 bytes and file size — without changing it.
