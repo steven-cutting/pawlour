@@ -59,7 +59,10 @@ export interface SceneOptions {
 export interface SceneDiagnostics {
   /** The renderer's counters for the last drawn frame, and its frames drawn so far. */
   read(): { frame: number; calls: number; triangles: number; textures: number; pixelRatio: number };
-  /** Draw Biscuit alone, so the triangle count is hers; `showRoom` puts everything back. */
+  /**
+   * Draw Biscuit alone, so the triangle count is hers, and keep it so through
+   * every state change and resize until `showRoom` puts everything back.
+   */
   hideRoom(): void;
   showRoom(): void;
   /** Lose the context through `WEBGL_lose_context`, the way the budget's last row is tested. */
@@ -154,6 +157,7 @@ export function createScene(
   let weather: ReturnType<typeof createWeather> | undefined;
   let pendingTexture: Texture | undefined;
   let live = false;
+  let roomHidden = false;
   let retired: Material[] = [];
   let state: SceneState | undefined;
   let animations = false;
@@ -196,6 +200,12 @@ export function createScene(
     contact.position.copy(biscuit.root.position).y += 0.002;
     world.updateMatrixWorld(true);
   };
+  // Biscuit's triangles alone, for the budget: the effects, lights and discs
+  // sit beside the room under `world`, not under it, so all but her are hidden.
+  const isolate = (): void => {
+    if (!biscuit) return;
+    for (const child of world.children) if (child !== biscuit.root) child.visible = false;
+  };
   const update = (): void => {
     if (!state || !cabin || !biscuit || !lights || !contact) return;
     frameCamera(camera, cabin.cameras[state.camera], size);
@@ -226,15 +236,18 @@ export function createScene(
       lights.update(0, fire?.update(0, camera));
       weather?.update(0, camera);
     }
+    // `hideRoom` holds until `showRoom`. The fire, the weather and the still
+    // fire were just made visible again above, as a state change, a resize or
+    // a restored context asks; while she is being counted alone they go back.
+    if (roomHidden) isolate();
     transforms();
   };
   const canAnimate = (): boolean => ready && animations && !lost && !disposed;
-  // Biscuit's triangles alone, for the budget: the effects, lights and discs
-  // sit beside the room under `world`, not under it, so all but her are hidden.
   const setRoom = (visible: boolean): void => {
     if (!biscuit || !ready || lost || disposed) return;
-    for (const child of world.children) if (child !== biscuit.root) child.visible = visible;
+    roomHidden = !visible;
     if (visible) update();
+    else isolate();
     if (!loop.running) draw();
   };
   const loop = createFrameLoop(

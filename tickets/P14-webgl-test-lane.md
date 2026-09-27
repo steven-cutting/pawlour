@@ -88,6 +88,15 @@ At the end of this ticket, on branch `ticket/p14-webgl-test-lane`:
      notice "The room could not be drawn." is announced, and the retry button is
      reachable by a real pointer click (Playwright's actionability check is the
      assertion: the review's complaint was that the fixed card sat over it).
+  6. The `?debug` hook's isolation, through `SceneHandle.diagnostics()` on a drawn
+     scene: after `hideRoom()`, an `apply()` with the other `animations` value, an
+     `apply()` that starts a walk and a `resize()` each leave `read().calls` and
+     `read().triangles` at the Biscuit-only figures, and `showRoom()` raises them
+     again. P10's adversarial review found the room coming back on the next
+     `update()`; the fix (`roomHidden` in `scene.ts`) is evidenced today only by a
+     Chromium probe recorded in `P10-device-verification.md`, because `createScene`
+     loads through the browser's loaders and no jsdom test can reach it without a
+     seam this ticket's non-goals rule out.
 - `just browser-test` runs the lane; `just check` includes it; `docs/reference/testing.md`
   and `docs/reference/commands.md` describe it; the `SceneCanvas` story note no longer
   points at a review route. `just scene-review` stays for one-off visual work, and the
@@ -116,7 +125,7 @@ At the end of this ticket, on branch `ticket/p14-webgl-test-lane`:
 | --- | --- | --- |
 | `vitest.browser.config.ts` | repo, reserved (§10) | new: the lane, modelled on `vitest.storybook.config.ts` |
 | `vitest.config.ts` | repo, reserved (§10) | lists the new project beside the other two, if that file still names them |
-| `tests/browser/scene-canvas.browser.test.ts` | repo | new: goals 1 to 4 |
+| `tests/browser/scene-canvas.browser.test.ts` | repo | new: goals 1 to 4 and 6 |
 | `tests/browser/page.browser.test.ts` | repo | new: goal 5 |
 | `tests/browser/fixtures/` | repo | served fixtures the failure test controls, if a bad path alone is not enough |
 | `Justfile` | repo, reserved (§10) | `browser-test`; `check` includes it; `check-browsers` runs before it as it does before the story run |
@@ -138,7 +147,7 @@ At the end of this ticket, on branch `ticket/p14-webgl-test-lane`:
    `sveltekit()` plugin, the browser block, `include: ['tests/browser/**/*.test.ts']`,
    no coverage block, and a header saying why it is a separate file. Wire the recipe and
    the gate.
-3. **`SceneCanvas` in the browser.** Goals 1 to 4, in that order; each waits on a
+3. **`SceneCanvas` in the browser.** Goals 1 to 4 and then 6, in that order; each waits on a
    callback, never on time, except the walk, which waits on `onArrived` with a timeout
    derived from the measured speed and the distance to the target. Serve the real
    assets the way the app does (`?url` imports resolve under Vite in the browser run).
@@ -155,7 +164,7 @@ At the end of this ticket, on branch `ticket/p14-webgl-test-lane`:
 
 ## Acceptance criteria
 
-- `just browser-test` runs the five goals green in headless Chromium on the maintainer's
+- `just browser-test` runs the six goals green in headless Chromium on the maintainer's
   machine and in CI, with WebGL2 present and no global stubbed.
 - `just check` includes the lane, and the `src/lib/**` coverage figures it reports are
   unchanged by it.

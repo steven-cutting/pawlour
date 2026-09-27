@@ -41,12 +41,15 @@ it. It needs a Mac and the phone on the same network, and nothing outside it.
 
 The Network tab shows what loaded and how large it was; the Timelines tab's Rendering
 Frames shows the frame rate. Adding `?debug` to the address makes the scene log, once a
-second, the frames it drew in that second, its draw calls, triangles and textures, its
-pixel ratio, her activity and the camera, phase and weather; and exposes
-`window.__pawlour` with `loseContext()` and `restoreContext()` for context loss,
-`hideRoom()` and `showRoom()` for her triangles alone, `setAnimations(false)` for the
-still diorama without touching the phone's settings, `state()` for the director's state,
-and `report()` for the run's first-frame time, minimum and median. In the console,
+second, its frame rate over the time since the last line (the frames drawn divided by
+the time that actually passed, so a line the phone delayed still reads true), its draw
+calls, triangles and textures, its pixel ratio, her activity and the camera, phase and
+weather; and exposes `window.__pawlour` with `loseContext()` and `restoreContext()` for
+context loss, `hideRoom()` and `showRoom()` for her triangles alone (the room stays
+hidden through her walks, camera changes and rotations until `showRoom()`),
+`setAnimations(false)` for the still diorama without touching the phone's settings,
+`state()` for the director's state, and `report()` for the run's first-frame time,
+minimum and median. In the console,
 `copy(JSON.stringify(__pawlour.report()))` puts the whole run on the Mac's clipboard.
 Keep Safari in the foreground for the whole run: the phone suspends a backgrounded page,
 and the samples on either side of the gap read low. The frames are counted from the

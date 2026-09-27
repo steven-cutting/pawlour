@@ -92,6 +92,28 @@ describe('createDebugHook', () => {
     expect(source.read).toHaveBeenCalledTimes(3);
   });
 
+  it('normalises the count by the time that actually passed, not by the interval asked for', () => {
+    const { log, host, tick } = fixture();
+    // A callback held back under load covers more than a second: 60 frames in
+    // 1.5 s is 40 fps, and reporting 60 would hide the stall that delayed it.
+    tick(60, 1500);
+    expect(log.mock.calls[0]?.[0]).toContain('t=1.5s fps=40 ');
+    // The next one comes early to catch up: 30 frames in half a second is 60.
+    tick(30, 500);
+    expect(log.mock.calls[1]?.[0]).toContain('t=2.0s fps=60 ');
+    expect(host.__pawlour?.report()).toMatchObject({ samples: 2, min: 40, median: 50 });
+  });
+
+  it('takes no sample from a tick the clock says covered no time', () => {
+    const { log, timer, tick } = fixture();
+    tick(60);
+    // The timer fires but the clock has not moved: nothing to divide by.
+    timer.advance(1000);
+    expect(log).toHaveBeenCalledTimes(1);
+    tick(60);
+    expect(log.mock.calls[1]?.[0]).toContain('t=2.0s fps=60 ');
+  });
+
   it('logs the first drawn frame once, with the time it was marked', () => {
     const { log, hook, tick } = fixture();
     tick(0, 1234);

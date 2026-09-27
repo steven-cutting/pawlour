@@ -32,6 +32,12 @@ LAN by `just preview-lan` and read through the `?debug` hook and the Mac's Web I
 The 4G row waits on the phone's Network Link Conditioner, which needs Xcode on the Mac;
 Safari's Web Inspector cannot throttle on its own.
 
+The frame-rate row was read from a hook that counted the frames drawn between two timer
+ticks and called that a second; the hook now divides by the time that actually passed.
+The run bounds the difference: 147 samples over 149 s, so the ticks drifted by under
+1.5% on average, which moves a reading at 60 by less than one frame. The row stands
+within that margin and is retaken with the corrected hook at the next device pass.
+
 The "Measured" column is filled from the device, with the date and the build measured,
 by following [Test on a phone](../how-to/test-on-a-phone.md). A figure is never copied
 here from a desktop browser.

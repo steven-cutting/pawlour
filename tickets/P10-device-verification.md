@@ -297,6 +297,44 @@ has no presets; the phone's Network Link Conditioner is the throttle, not measur
 3, a wrong budget: not reached, 60 fps holds at DPR 2; the triangles budget is the one
 that is wrong, handed to P11 with the figure.
 
+**Codex adversarial review (2026-09-26), two findings, both fixed here:**
+
+- *The hook called every tick a second.* `debug.ts` reported the frames drawn between
+  two timer callbacks as the rate, and `setInterval` arrives late under load: a tick that
+  covered 1.5 s of frames read 60 where the truth was 40, in the very sample a stall
+  would show in. Fixed: the clock is kept with the frame baseline and each sample is
+  frames × 1000 / the milliseconds the clock says passed, rounded; a tick that covered
+  no time takes no sample and its frames roll into the next. `tests/scene-debug.test.ts`
+  holds both (red before the fix: a 1.5 s tick logged `fps=60`). The phone's frame-rate
+  row was taken before the fix; run 2's 147 samples over 149 s bound the drift at under
+  1.5%, which is under one frame at 60, so `docs/reference/budget.md` keeps the figures
+  with that caveat under the table and the row is retaken at the next device pass.
+- *`hideRoom()` did not hold.* `setRoom(false)` only set visibility, and the next
+  `update()` (every `apply()`, `resize()` and restored context) set the fire, the weather
+  and the still fire visible again, so a walk finishing or a rotation between
+  `hideRoom()` and the reading put non-Biscuit geometry back into "Biscuit alone". Fixed:
+  `scene.ts` keeps a `roomHidden` flag that `update()` honours until `showRoom()`.
+  Evidence, Chromium on the Mac against the preview build, hook lines read after each
+  step (`ai_tmp/p10-probe7.mjs.txt`, outputs `ai_tmp/p10-probe7*.json`; the after-fix
+  run read its "room" sample before the first hook line had arrived, so that file's
+  `room` is empty and its `hiddenBelowRoom` flag is false by timing, and the `showRoom()`
+  row is the comparison):
+
+  | Step | Before the fix (calls, triangles) | After (calls, triangles) |
+  | --- | --- | --- |
+  | `hideRoom()` | 28, 173,656 | 28, 173,656 |
+  | then `setAnimations(false)` | 29, 173,658 (the still fire back) | 28, 173,656 |
+  | then `setAnimations(true)` | 33, 173,714 (fire and snow back) | 28, 173,656 |
+  | then a tap on Bed (a walk starts) | 33, 173,714 | 28, 173,656 |
+  | then a viewport resize | 33, 173,714 | 28, 173,656 |
+  | `showRoom()` | 63, 199,388 | 34, 174,914 (mid-walk, this framing) |
+
+  The phone's 28-call figure in the table above was not contaminated: it is exactly
+  14 primitives × 2, and any returned effect would have added calls. No jsdom test can
+  hold this path: `createScene` loads its GLBs and the fire texture through the
+  browser's own loaders, and reaching it in Node would need a loader seam that exists
+  only for the test, which P14 rules out; it belongs to that ticket's browser lane.
+
 ## Open points
 
 - **Keep the debug hook.** It writes to `window` behind a query and is the only way to

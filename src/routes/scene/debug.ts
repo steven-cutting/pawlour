@@ -13,7 +13,11 @@
  * Frames are counted from the renderer's own frame counter rather than from a
  * second frame-port subscription. A second subscriber keeps asking for frames
  * after the scene has stopped its loop and would read 60 in a still diorama,
- * where the counter must stay at 0 between changes. The host and the clock are
+ * where the counter must stay at 0 between changes. The count is divided by
+ * the time the clock says passed since the last sample, not by the second the
+ * timer was asked for: `setInterval` arrives late under load, and a late tick
+ * that counted a second and a half of frames as one second would read high in
+ * the very sample that should show the stall. The host and the clock are
  * arguments, as the ports' are, so a test drives the hook without stubbing.
  */
 import type { SceneState } from '$lib/domain/director';
@@ -119,8 +123,10 @@ export function createDebugHook(options: {
   const samples: DebugSample[] = [];
   // The baseline is the scene's counter now, so the first line counts only
   // the frames drawn after the hook started; a scene that appears later is
-  // baselined at its first reading and counted from the sample after it.
+  // baselined at its first reading and counted from the sample after it. The
+  // clock is kept with it, so each sample is a rate over the time it covers.
   let lastFrame: number | undefined = source.read()?.frame;
+  let lastAt = started;
   let firstFrameMs: number | null = null;
 
   const report = (): DebugReport => {
@@ -137,16 +143,22 @@ export function createDebugHook(options: {
   const sample = (): void => {
     const reading = source.read();
     if (!reading) return;
+    const at = now();
     if (lastFrame === undefined) {
       lastFrame = reading.frame;
+      lastAt = at;
       return;
     }
+    const covered = at - lastAt;
+    // Two ticks on the same instant cover nothing; a rate over nothing is not a sample.
+    if (covered <= 0) return;
     // A rebuilt renderer restarts its counter; the sample after it is not negative.
-    const fps = Math.max(0, reading.frame - lastFrame);
+    const fps = Math.round((Math.max(0, reading.frame - lastFrame) * 1000) / covered);
     lastFrame = reading.frame;
+    lastAt = at;
     const state = source.state();
     const next: DebugSample = {
-      elapsedMs: now() - started,
+      elapsedMs: at - started,
       fps,
       calls: reading.calls,
       triangles: reading.triangles,
