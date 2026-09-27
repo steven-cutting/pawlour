@@ -1,7 +1,7 @@
 ---
 id: P12
 title: "Repository: create it, grant the package, enable Pages, first push, first deploy"
-status: open
+status: done
 depends_on: [P11, C01]
 parallel_with: []
 branch: ticket/p12-repository
@@ -293,19 +293,22 @@ other ticket; the steps below act on `main` as it stands after P11 merged.
 
 ## Acceptance criteria
 
-- [ ] `gh repo view steven-cutting/pawlour --json visibility` prints `PUBLIC`, and
+- [x] `gh repo view steven-cutting/pawlour --json visibility` prints `PUBLIC`, and
       `origin` points at it.
-- [ ] Pages source is `workflow`; protection on `main` requires exactly the three `ci /`
+- [x] Pages source is `workflow`; protection on `main` requires exactly the three `ci /`
       contexts with the flags step 7 expects; private vulnerability reporting is on; the
       second `--apply` printed `changed: 0`.
 - [ ] The first `CI` run and the first `Deploy to GitHub Pages` run are green, and the
-      package grant was recorded as needed or not needed.
-- [ ] `https://stevencutting.com/pawlour/` answers `200` with the game's title, and
+      package grant was recorded as needed or not needed. **Not as written:** the first
+      `CI` run failed on a test timeout and its deploy was skipped; the second `CI` run
+      (pull request 1 merged) and the first deploy that ran are green, and the grant was
+      not needed (hand-back notes).
+- [x] `https://stevencutting.com/pawlour/` answers `200` with the game's title, and
       both GLBs are served with the manifest's digests; §11 claims 9 and 13 are each
       recorded as held or failed with the printed evidence.
-- [ ] A fresh clone's `.blend` has the sha256 §1 fact 1 gives.
-- [ ] No tracked file other than this ticket changed; nothing under `ai_tmp/` was committed.
-- [ ] Every authorisation was asked for and given before the action, and the hand-back
+- [x] A fresh clone's `.blend` has the sha256 §1 fact 1 gives.
+- [x] No tracked file other than this ticket changed; nothing under `ai_tmp/` was committed.
+- [x] Every authorisation was asked for and given before the action, and the hand-back
       table lists each with its date.
 
 ## Verification
@@ -338,6 +341,185 @@ Filled in by the agent that executes this ticket.
 - Whether the package grant was needed, and what the maintainer did if it was.
 - Anything handed to P13 (the deployed address as served, the check names as GitHub
   reports them, whether `--hygiene` was applied, whether vulnerability reporting is on).
+
+### Outcome (executed 2026-09-26; GitHub timestamps below are UTC on 2026-09-27)
+
+- `steven-cutting/pawlour` exists, public, created empty; `origin` is
+  `git@github.com:steven-cutting/pawlour.git`; `main` was pushed from this clone (47
+  commits) with the one LFS object uploaded by the pre-push hook first (`Uploading LFS
+  objects: 100% (1/1), 12 MB`), and `git lfs push --all origin main` afterwards transferred
+  nothing.
+- Pages source `workflow`; `main` protected `false ci / documents,ci / frontend,ci /
+  stories false false false false false`; private vulnerability reporting `true`;
+  `--hygiene` applied (`true false false`); no secret stored. The second `--apply` and the
+  second `--apply --hygiene` each printed `changed: 0`.
+- **The first `CI` run failed on a recipe** (below); the deploy that followed it was
+  skipped. The fix went through pull request 1; its merge is the first deploy, and every
+  run since is green. `https://stevencutting.com/pawlour/` answers `HTTP/2 200` with
+  `<title>Pawlour</title>`; both GLBs are served byte-identical to the manifest.
+- **The C01 gate was overridden.** C01 had not landed when this ticket ran (H `main`
+  `575e3dd`, decisions to `0017`, no pull request for the record; `tickets/C01-hub-decision.md`
+  `status: open`). Step 1 says stop; the maintainer chose to deploy regardless, on
+  2026-09-26, and this table records it. CONVENTIONS.md §12 "The hub decision gates
+  shipping" did not hold for this deploy; C01 remains open and is now overdue rather than
+  gating.
+- The step 2 dry run against the repository that did not yet exist aborted at the
+  script's step 3 (`gh secret list` answers `HTTP 404` on a missing repository, and the
+  script dies on it) with `rc=1`, as the ticket allowed for; the real dry run in step 5
+  printed exactly the expected states and `changed: 0 (dry run; 2 would change)`, `rc=0`.
+- Branch: this worktree's branch is `P12-repository`, not `ticket/p12-repository`,
+  matching every lane before it (CONVENTIONS.md §0).
+
+### Authorisations asked for and given
+
+| Date | Action | Given | Result |
+| --- | --- | --- | --- |
+| 2026-09-26 | Deploy with C01 not landed (override of CONVENTIONS.md §12) | yes | recorded above |
+| 2026-09-26 | `gh repo create steven-cutting/pawlour --public`; `git remote add origin` | yes | `pawlour PUBLIC`, empty default branch |
+| 2026-09-26 | `POST repos/steven-cutting/pawlour/pages -f build_type=workflow` | yes | accepted first time, no `409`/`422` fallback needed; read back `workflow` |
+| 2026-09-26 | `git push -u origin main` (first push) | yes | LFS object first, then `main -> main` |
+| 2026-09-26 | `bootstrap_repo.sh --apply`, twice | yes | `changed: 2`, then `changed: 0` |
+| 2026-09-26 | `bootstrap_repo.sh --apply --hygiene`, twice (asked separately, at the maintainer's request) | yes | `changed: 1`, then `changed: 0` |
+| 2026-09-26 | Push branch `fix-fire-cels-test` and open pull request 1 | yes | PR 1 opened |
+| 2026-09-26 | Merge pull request 1 (`--merge`) | yes | merged as `b20b27a`; first deploy |
+| 2026-09-26 | Package grant | not needed | every `npm ci` installed `@steven-cutting/biscuit-games` with the run's token; no `404` |
+| 2026-09-26 | `gh run rerun` | not needed | the failure was a recipe, fixed by PR 1, not rerun |
+| 2026-09-26 | Push this branch and open its pull request | asked at hand-back | — |
+
+### Runs
+
+| Run | Workflow | Trigger | Commit | Result | Duration |
+| --- | --- | --- | --- | --- | --- |
+| 36294566967 | CI | push `main` | `a2bd022` | **failure** (`ci / frontend`; `documents`, `stories` success) | 2m7s |
+| 36294566924 | Chromatic | push `main` | `a2bd022` | success (no token; publish skipped) | 1m15s |
+| 36294672280 | Deploy to GitHub Pages | `workflow_run` | `a2bd022` | skipped (CI not green) | 8s |
+| 36298235979 | CI | pull request 1 | `ad8563b` | success, all three jobs | 2m11s |
+| 36298936631 | CI | push `main` (the merge) | `b20b27a` | success, all three jobs | 2m9s |
+| 36298936616 | Chromatic | push `main` | `b20b27a` | success | 1m12s |
+| 36299042675 | Deploy to GitHub Pages | `workflow_run` | `b20b27a` | success (`pages / build`, `pages / deploy`) | 41s |
+
+Environment created: `github-pages` (deployment 6688731324 of `b20b27a`). Three
+workflows run on a push to `main`, not two: `Chromatic` runs too and is green without a
+token.
+
+### The first `CI` failure, and pull request 1
+
+`ci / frontend` fell at `just frontend-coverage`: `tests/scene-effects.test.ts` > "ships
+eight different transparent cels in exactly three opaque colours" timed out at Vitest's
+5000 ms (the file took 5954 ms on the runner; 354 of 355 tests passed). The test decoded
+`fire.webp` with `sharp` and called `expect` once per pixel, 524,288 times; on this
+machine that took 1,480 ms, and the decode plus the loop without `expect` takes 21 ms. Per
+Non-goals, the fix was a follow-up on `main` through a pull request: branch
+`fix-fire-cels-test` from `main`, one file, the loop counts translucent pixels and asserts
+once (22 ms after), `just check` green; pull request 1, CI green on all three checks,
+merged with a merge commit as `b20b27a`, branch deleted by hygiene. What the test proves
+is unchanged. Nothing was pushed to `main` from here after the first push.
+
+### §11 claim 9 (asset URLs carry `paths.base` on Pages): held, by resolution
+
+The GLB URLs are not literal strings in the HTML or the chunks. The served chunk builds
+each as a URL relative to the module that imports it:
+
+```text
+new URL(`../assets/biscuit.DhjxBwHq.glb`, import.meta.url).href
+new URL(`../assets/cabin.Do5zhgvC.glb`, import.meta.url).href
+```
+
+The module is `https://stevencutting.com/pawlour/_app/immutable/nodes/2.T_okP15a.js`, so
+the browser fetches
+`https://stevencutting.com/pawlour/_app/immutable/assets/biscuit.DhjxBwHq.glb` and
+`https://stevencutting.com/pawlour/_app/immutable/assets/cabin.Do5zhgvC.glb`, both under
+`/pawlour/`, both `200`. The HTML's `modulepreload` links are relative (`./_app/...`) too,
+while the still's `<img src>` is absolute, `/pawlour/_app/immutable/assets/idle.morning.CbeYF1Hu.webp`.
+A local build without `BASE_PATH` emits the same `new URL(...)` form, so the base reaches
+the GLB through the module's own address rather than through a `paths.base` string. The
+claim's substance, that `GLTFLoader` fetches under `/pawlour/`, holds.
+
+### §11 claim 13 (content type and cache header): half held
+
+Verbatim, for both `biscuit.DhjxBwHq.glb` and `cabin.Do5zhgvC.glb`:
+
+```text
+HTTP/2 200
+content-type: model/gltf-binary
+cache-control: max-age=600
+```
+
+The content type is the one the claim hoped for: **held**. The cache header is a ten-minute
+`max-age` on an immutable, hashed path; GitHub Pages sends the same `max-age=600` for the
+page (`text/html`) and the still (`image/webp`): the "long cache header for hashed
+filenames" half **failed**. It is Pages' behaviour, not a file here; it goes back through
+CONVENTIONS.md as a design note (every visit revalidates the GLBs after ten minutes, by
+`etag`).
+
+Digests of what Pages serves, equal to `src/lib/assets/manifest.json`:
+
+| File | Served bytes | Served sha256 | Manifest |
+| --- | --- | --- | --- |
+| `biscuit.DhjxBwHq.glb` | 2,525,000 | `17cdd402b5bfb6e48dd3dc7ac347645b37d200c76b5cf9bb14346f009d82703a` | equal |
+| `cabin.Do5zhgvC.glb` | 586,584 | `1064f47b92d48128ce4b36ddfb6bad043a6484e338b278e09c65da278da44d07` | equal |
+
+### The address
+
+`curl -sI https://steven-cutting.github.io/pawlour/` answers `HTTP/2 301` with
+`location: https://stevencutting.com/pawlour/`; `https://stevencutting.com/pawlour/`
+answers `HTTP/2 200`. The Pages API itself names the site `http://stevencutting.com/pawlour/`
+(`html_url`), not the `github.io` address the ticket expected, because the owner's user
+site carries that custom domain. So §1 decision 14's open half is answered: the site is
+seen at `https://stevencutting.com/pawlour/`.
+
+### The fresh clone
+
+`git clone git@github.com:steven-cutting/pawlour.git` into a scratch directory:
+`blender/model/biscuit-poseable.blend` is 12,004,899 bytes with sha256
+`95d164730e9354ab3d9bd561a73180690bbb055fffa9bf230c735f735234b4c3`, §1 fact 1's digest.
+LFS travelled.
+
+### The package grant
+
+Not needed. The package is public; every `npm ci` step across the three CI runs (nine
+jobs) and the Pages build installed `@steven-cutting/biscuit-games` with the run's own
+token, and no `404 Not Found` appeared. The maintainer did nothing on the package.
+
+### Verification (the ticket's block, run after the deploy)
+
+```console
+$ git remote -v
+origin	git@github.com:steven-cutting/pawlour.git (fetch)
+origin	git@github.com:steven-cutting/pawlour.git (push)
+$ gh api repos/steven-cutting/pawlour/pages --jq .build_type
+workflow
+$ gh api repos/steven-cutting/pawlour/branches/main/protection --jq '[.required_status_checks.checks[].context] | sort | join(",")'
+ci / documents,ci / frontend,ci / stories
+$ gh run list -R steven-cutting/pawlour --limit 2 --json name,conclusion --jq '.[] | [.name, .conclusion] | join(" ")'
+Deploy to GitHub Pages success
+CI success
+$ curl -sI https://stevencutting.com/pawlour/ | head -1
+HTTP/2 200
+$ git status --short
+ M tickets/P12-repository.md
+```
+
+`just check` was green in this worktree before step 3 (step 1) and again before this
+commit. Nothing under `ai_tmp/` was committed.
+
+### Handed to P13
+
+- The served address is `https://stevencutting.com/pawlour/`; `github.io` redirects to it
+  with a `301` and the Pages API names the custom-domain address. The README should name
+  the served address only.
+- The check names as GitHub reports them: `ci / frontend`, `ci / documents`, `ci / stories`.
+- `--hygiene` applied: delete branch on merge, wiki off, projects off. Private
+  vulnerability reporting on. No Chromatic token.
+- Pages serves every file with `cache-control: max-age=600` (§11 claim 13's cache half
+  failed); a design note for CONVENTIONS.md, not a README fact.
+- Pull request 1 (`fix-fire-cels-test`) is the one commit on `main` beyond P11.
+
+### Handed to C01
+
+- C01 is still open and no longer gates a deploy that has happened. Its record should say
+  the game shipped before it, on 2026-09-26, with the maintainer's override, rather than
+  reading as though the gate held.
 
 ## Open points
 
