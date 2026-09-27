@@ -328,8 +328,10 @@ has a ticket: P15 to P20, H01 and C03.
 - §12: `copier update` also conflicts on `eslint.config.js`.
 - `PRD.md`: the sleep minimum under "What she does"; `Notice` alone and the pet's caption
   under "Captions"; the budget measured on a 17 Pro Max; the triangles row replaced by
-  the measured 86,828 and 173,656 with the 45,000 target withdrawn; open questions for
-  the door and the ceiling plane, and the caption count.
+  the measured 86,828 and 173,656 with the 45,000 target withdrawn on P10's
+  recommendation, and `docs/reference/budget.md`'s row brought into agreement so the row
+  is no longer a miss; open questions for the door and the ceiling plane, and the
+  caption count.
 
 **Tickets written**, each with its index row in `README.md`: P15 (the second device
 pass: 4G, the frame-rate row, `idle.long`, a rejected `enable()`, the failed load), P16
@@ -355,8 +357,9 @@ exit 0 through every stage (lock-check, lint, frontend-static, frontend-coverage
 27 files, 355 tests, 100 / 97.63 / 100 / 100; frontend-build, storybook-build,
 storybook-test: 11 files, 35 tests; check-docs, check-agents, check-specs,
 analyse-specs, check-assets, check-clean), ending "All checks passed and the
-worktree is unchanged."; run before this file's last edit, which the hook gate
-then linted at commit
+worktree is unchanged." Run twice: once before the tickets were committed, and
+again on the final tree after a review corrected two rows of testing.md and the
+budget page's triangle row; this paragraph is the only edit after the second run.
 ```
 
 ## Open points
