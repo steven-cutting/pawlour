@@ -16,7 +16,11 @@ remote, no GitHub repository) becomes **Pawlour**, a Biscuit Games game: a stati
 SvelteKit site rendered from the platform's Copier template, consuming the platform
 package, whose play surface is a three.js diorama of a log cabin in which Biscuit, the
 approved poseable model animated with Blender-authored clips, walks between the things
-the player taps. `PRD.md` says what it is.
+the player taps. `PRD.md` says what it is. The lanes were in fact executed in worktrees the maintainer
+created, named for the ticket id on branches of the same name (`P00-foundation`,
+`p_1_and_6`, `P_2_3_4_and_5`, `P07a-scene-static`, `P07b-scene-motion`, `P08-interface`,
+`P09-handboo`), not `full-cozy` and not the `ticket/…` names the tickets' `branch:` fields
+give (corrected by P11).
 
 Seven repositories are the sources, cited with a letter and, where it matters, line
 numbers that refer to these exact commits:
@@ -108,9 +112,10 @@ Decisions, taken on 2026-09-25:
     frame per state change; no clips, no fire flicker, no particles, no wipe; time and
     captions still work.
 14. **Public repository, GitHub Pages** through T's `pages.yml`, at
-    `https://stevencutting.com/pawlour/` (a project site under the account's
-    user-site domain, which S measured on its first deploy; `steven-cutting.github.io`
-    redirects there).
+    `https://steven-cutting.github.io/pawlour/`, the address T computes and `README.md`,
+    `AGENTS.md` and decision 0010 carry; whether `stevencutting.com/pawlour/` reaches it
+    through the user-site redirect is P12's to see on the first deploy (P00 hand-back
+    item 7; corrected by P11).
 15. **Clips: the core set in v1** — `idle.stand`, `idle.sit`, `walk`, `sit`, `lie`,
     `sleep`, `drink`, `eat`, `play`, `pet`; v1.1 adds `yawn`, `stretch`, `circle`,
     `treat`, `look`.
@@ -121,17 +126,18 @@ P09:
 
 16. **three.js is the renderer** (S ticket C03 chose it for the same model and its steps
     5 and 6 are the reference for the cel look), pinned exactly, with `@types/three` at
-    the same version; `three/addons` for `GLTFLoader` and `MeshoptDecoder`. Decision 0014.
+    the same version; `three/addons` for `GLTFLoader` and `MeshoptDecoder`. Decision 0015
+    (corrected by P11).
 17. **The canvas lives outside the coverage glob.** Everything three.js touches sits
     under `src/routes/scene/`, which `vite.config.ts`'s `include` of `src/lib/**` does
     not measure and jsdom could not run; everything with a decision in it is a pure
     module under `src/lib/` tested to the floor; the browser touchpoints the scene needs
     are ports under `src/lib/ports/` with fakes. `vite.config.ts` is not edited. S C03
-    is the precedent. Decision 0012.
+    is the precedent. Decision 0013 (corrected by P11).
 18. **Served assets are ordinary blobs; `.blend` files are LFS.** G's three workflows
     check out without `lfs: true`, so Pages would publish a pointer; nothing the site
     serves may be an LFS object. The `.blend` is never served or read in CI, so it is
-    LFS. Decision 0011.
+    LFS. Decision 0012 (corrected by P11).
 19. **Assets are imported by Vite** from `src/lib/assets/`, so every URL is hashed and
     carries `paths.base` (T decision 0010: every path the app builds goes through
     `paths.base`). Nothing goes under `static/`, which Storybook's `staticDirs` would ship
@@ -140,8 +146,9 @@ P09:
     under `blender/cabin/`, and exported through the same pipeline as Biscuit (§4, §5).
 21. **All dependencies land in P00.** `package.json` and the lockfiles are files no lane
     touches (§10), so P00 adds `three`, `@types/three`, `@gltf-transform/cli` and `sharp`
-    at exact pins even though P00 uses none of them. Decision 0013 records the fork of
-    the model; the dependency list is recorded in `AGENTS.md`'s deviations.
+    at exact pins even though P00 uses none of them. Decision 0014 records the fork of
+    the model (corrected by P11); the dependency list is recorded in `AGENTS.md`'s
+    deviations.
 
 Facts, each verified in source, that shape the mechanism:
 
@@ -224,9 +231,10 @@ Facts, each verified in source, that shape the mechanism:
    lands with a test and a story, and every story runs axe with `test: 'error'`;
    `scripts/initialize.sh` skips `install-hooks` in a secondary worktree; `dev` and
    `preview` bind `127.0.0.1`; the first `just check` needs the network.
-8. **Vite 8.2.1 knows `glb`, `gltf` and `ktx2` as asset types** (`KNOWN_ASSET_TYPES`), so
-   `import url from '$lib/assets/biscuit.glb'` yields a hashed, base-aware URL with no
-   configuration; `.json` imports parse as modules; `mp3` is an asset type too.
+8. **Vite 8.2.1 does not list `glb` among its known asset types** (`webp` and `mp3` it
+   does), and `vite.config.ts` is reserved, so the page imports
+   `import url from '$lib/assets/biscuit.glb?url'`, which yields a hashed, base-aware URL;
+   `.json` imports parse as modules (P08 hand-back; corrected by P11).
 9. **G's workflows** (`game-ci.yml`, `game-pages.yml`, `game-chromatic.yml` at `v0.3.0`)
    check out with `persist-credentials: false` and without `lfs: true`. `game-ci.yml`
    runs three jobs, `frontend`, `documents` and `stories`, and the required checks on
@@ -237,8 +245,9 @@ Facts, each verified in source, that shape the mechanism:
     and the bridge body byte for byte; **`bg-validate-docs`** requires the five
     frontmatter keys equal to the manifest entry, the H1 equal to the title, forty words,
     no template delimiters or `TODO`/`TBD`/`FIXME`, resolvable links, every page reachable
-    from `docs/README.md`, nothing unregistered. T decisions run 0001 to 0010; a game's
-    start at 0011.
+    from `docs/README.md`, nothing unregistered. T decisions run 0001 to 0010; 0011 was
+    taken by this repository's vendored-skills record before P09 ran, so the game's start
+    at 0012 (P09 hand-back; corrected by P11).
 11. **P's `src/lib/ports/timer.ts`** is the shape for a repeating port: `TimerPort {
     every(intervalMs, tick): () => void }`, a `Scheduler` interface, `createIntervalTimer(
     scheduler = {...globalThis})`, `FakeTimer` with `advance(ms)`. P constructs every port
@@ -283,21 +292,22 @@ written by P00 and touched by no lane; a lane that needs a change there hands it
 ```text
 .copier-answers.yml                          P00   rendered; answers as §1 decision 1
 package.json, package-lock.json              P00   T's, appended: three, @types/three, @gltf-transform/cli, sharp (§2.1) (no lane)
-pyproject.toml, uv.lock                      P00   T's, appended: recipes gain check-assets; ruff and typos excludes for blender/src/ (§2.2) (no lane)
+pyproject.toml, uv.lock                      P00   T's, appended: recipes gain check-assets; ruff and typos excludes for blender/src/, and ruff excludes tickets/ (§2.2) (no lane) (corrected by P11)
 Justfile                                     P00   T's, appended: the assets and model sections (§2.3) (no lane)
 .gitattributes                               P00   T's, appended (§3) (no lane)
 .gitignore                                   P00   T's, appended: blender/out/ (no lane)
-.pre-commit-config.yaml, .pre-commit-fix.yaml  P00 T's, check-added-large-files gains exclude (§3) (no lane)
+.pre-commit-config.yaml, .pre-commit-fix.yaml  P00 T's; only the first holds check-added-large-files, which gains exclude (§3) (no lane) (corrected by P11)
 .prettierignore                              P00   T's, appended: blender/src, src/lib/assets
 eslint.config.js                             P00   T's, ignores gains 'blender/'
 lychee.toml                                  P00   T's, exclude_path gains "blender/src"
-.markdownlint-cli2.jsonc                     P00   T's, ignores gains "blender/src"
+.markdownlint-cli2.jsonc                     P00   T's, ignores gains "blender/src" and "tickets" (corrected by P11)
 vitest.storybook.config.ts                   P00   optimizeDeps.include gains 'three' (a deviation, §1 decision 21) (no lane)
 scripts/check_assets.py                      P00   §3, final (no lane); P03 may extend only through a hand-back
 scripts/build_assets.sh                      P03   the gltf-transform pipeline (§4.3)
 scripts/contact_sheet.py                     P04   renders a clip to a sheet under ai_tmp/ (Blender + Pillow)
 scripts/strip_normals.mjs, scripts/clip_table.mjs, scripts/placeholder_still.mjs   P03   pipeline helpers on @gltf-transform/core and sharp
-scripts/check_cabin.py                       P05   asserts the §5.2 contract on cabin.glb
+scripts/check_cabin.py                       P05   asserts the §5.2 contract on cabin.glb; run by build_assets.sh after P11
+scripts/join_assets.mjs, scripts/optimize_cabin.mjs, scripts/check_model_asset.mjs, scripts/inspect_asset.mjs   P03   the skin-aware join, the two cabin passes, the served-model check in three.js, the stage measurements (corrected by P11)
 scripts/make_fire.py                         P07b  draws the flame flipbook (Pillow)
 scripts/make_audio.py                        P08   synthesises the five loops
 src/lib/assets/manifest.json                 P00   stub `{"schema_version": 1, "assets": []}`; P03 fills; P04, P05, P08 append through `just assets-manifest`
@@ -327,13 +337,15 @@ src/lib/data/captions.ts                     P06   the bank (§6.3)
 src/lib/ports/timer.ts, frame.ts, audio.ts   P06   (§6.2); cases appended to tests/ports.test.ts
 src/lib/components/ItemControls.svelte, TimeControl.svelte, SoundControl.svelte, CameraControl.svelte, Caption.svelte, TitleCard.svelte, PhotoButton.svelte, SettingsDialog.svelte   P08  each with tests/<name>.test.ts and stories/<Name>.stories.svelte
 src/lib/photo.ts                             P08   the title-card composition, pure (§7)
+src/lib/sentence.ts, cues.ts, drawn.ts, data/controls.ts   P08   the hidden sentence, the audio cues between two states, the redraw test, the row's entries: pure, under coverage (corrected by P11)
+src/lib/icons/*.svg, LICENSE-lucide.txt, src/lib/components/GameIcon.svelte   P08   the row's nine Lucide icons, outside src/lib/assets/ because the manifest has no source form for them (corrected by P11)
 src/lib/components/overlay.css               P08   the graphic register's tokens (§5.3)
 tests/scene-canvas.test.ts                   P07a  the still renders when WebGL2RenderingContext is absent
 src/routes/scene/SceneCanvas.svelte          P07a  the canvas component (§5)
 src/routes/scene/scene.ts, materials.ts, lighting.ts, camera.ts, cabin.ts, biscuit.ts, hit.ts, still.ts   P07a
 src/routes/scene/motion.ts, walk.ts, fire.ts, weather.ts, wipe.ts, idle.ts   P07b
 src/routes/+page.svelte                      P08   T's seed replaced (§7)
-docs/** (game pages, decisions 0011–0014)    P09   (§9); docs/manifest.yml and docs/README.md appended by P09 only
+docs/** (game pages, decisions 0012–0015)    P09   (§9); docs/manifest.yml and docs/README.md appended by P09 only (corrected by P11)
 tests/*.test.ts (game tests)                 the ticket that owns the module
 stories/*.stories.svelte (game stories)      P08
 tickets/                                     the maintainer's; each ticket edits its own `status:` line
@@ -429,7 +441,7 @@ preview-lan:
 `.gitattributes` (P00 appends to T's one line):
 
 ```text
-# Large-file policy: docs/decisions/0011-served-assets-are-blobs-and-blends-are-lfs.md.
+# Large-file policy: docs/decisions/0012-served-assets-are-blobs-and-blends-are-lfs.md (corrected by P11).
 # Nothing the site serves may be an LFS object, because the shared workflows
 # check out without LFS and Pages would publish a pointer. The .blend is never
 # served or read in CI, so it lives in LFS.
@@ -445,17 +457,20 @@ blender/**/*.blend filter=lfs diff=lfs merge=lfs -text
 ```
 
 `git lfs install --local` runs in P00 (it is per clone; `scripts/initialize.sh` does not
-run it and is a managed file, so P00 documents it in `docs/how-to/develop-locally.md`'s
-game section through P09 and runs it by hand). A CI checkout sees pointer text for the
+run it and is a managed file, so P00 ran it by hand and P09 documents it on the game's
+`docs/how-to/export-the-model.md`, not on T's `develop-locally.md`; corrected by P11). A CI checkout sees pointer text for the
 `.blend`, which nothing there reads.
 
-`.pre-commit-config.yaml` and `.pre-commit-fix.yaml`: the `check-added-large-files` hook
-gains `exclude: ^src/lib/assets/` (a per-hook `exclude`, §11 claim 1). No other hook
-changes. `--maxkb` stays at 768, so a large file anywhere else is still refused.
+`.pre-commit-config.yaml`: the `check-added-large-files` hook gains
+`exclude: ^src/lib/assets/` (a per-hook `exclude`, §11 claim 1); `.pre-commit-fix.yaml`
+has no such hook at T `v2.1.0` and is left as rendered (P00 hand-back item 2; corrected
+by P11). No other hook changes. `--maxkb` stays at 768, so a large file anywhere else is still refused.
 
-**The manifest.** `src/lib/assets/manifest.json` is strict JSON, one object per line inside
-`assets`, sorted by `path`, one trailing newline (Prettier ignores it; `check-json` parses
-it). Every file under `src/lib/assets/` has an entry except the manifest itself. An
+**The manifest.** `src/lib/assets/manifest.json` is strict JSON wrapped as
+`{"schema_version": 1, "assets": [` … `]}`, one object per line inside `assets`, indented
+two spaces and comma-separated, sorted by `path`, one trailing newline; `check` refuses
+any other layout, so the file is written only through `just assets-manifest` (P00
+hand-back item 5; corrected by P11). Prettier ignores it; `check-json` parses it. Every file under `src/lib/assets/` has an entry except the manifest itself. An
 entry:
 
 ```json
@@ -468,7 +483,9 @@ Fields, all required, in this order: `path`, `bytes`, `sha256`, `source`
 hand or by a script here, `cc0:<url>` for a public-domain download), `licence`
 (`unsettled`, `cc0`, or `platform` for a file whose licence is the platform's own
 unresolved question, H `docs/design/character.md` lines 128–134) and `budget` (bytes;
-`0` for no budget).
+`0` for no budget). As shipped, `platform` is the licence of every `built:` file derived
+from the model, `cabin.glb` and everything made here is `cc0`, and no entry uses the
+`biscuit_pics@` form (P09 hand-back item 4; corrected by P11).
 
 `write` fills `source`, `licence` and `budget` with defaults for a new file; the ticket
 that adds the file then sets those three fields by hand in the same commit, and they are
@@ -507,9 +524,11 @@ and `blender_pose_tools.py`, which the exporter and the clip scripts import.
 
 **Stills.** `src/lib/assets/stills/<activity>.<phase>.webp`, one per activity in
 `idle`, `sleep.bed`, `sleep.chair`, `drink`, `eat`, `play` and per phase in `morning`,
-`evening`, `night` (eighteen files), rendered by P04's `scripts/contact_sheet.py` from
-the hearth camera at 1170×2532 (the phone's portrait pixel size) and encoded WebP at
-quality 80, each under 262,144 bytes. They are what still mode shows before the renderer
+`evening`, `night` (eighteen files), rendered by P04's `scripts/contact_sheet.py`
+(`just model-stills`) on a neutral ground from a fixed review camera, not the hearth
+camera, at 1170×2532 (the phone's portrait pixel size) and encoded WebP at quality 80,
+each under 262,144 bytes; the `sleep.bed.*` and `sleep.chair.*` stills are byte-identical
+(P04 and P09 hand-backs; corrected by P11; stills from the runtime are P18). They are what still mode shows before the renderer
 has drawn and what context loss shows. They are `built:` files. Until P04 lands, P03
 ships one placeholder, `stills/idle.morning.webp`, encoded from D
 `models/biscuit/previews/standing-hero.png` (source
@@ -528,14 +547,15 @@ file whose licence is `unsettled` ships: `check` refuses it.
 **Content policy.** No photograph of the real dog is copied (D `biscuit_pics/raw/`,
 163 files, most with camera EXIF). Nothing under D `inspiration/`, `generated/bad/`,
 `generated/3d/`, `model_sheets/`, `ai_tmp/` or `good/`. The licence of the model itself
-is the platform's open question; the manifest says `platform` for every `biscuit_pics@`
-entry and the game does not resolve it.
+is the platform's open question; the manifest says `platform` for every file derived
+from the model and the game does not resolve it (corrected by P11).
 
 ## 4. The model and the animation pipeline
 
 ### 4.1 Clips
 
-A clip is a python script `blender/clips/<name>.py` exporting one function
+A clip is a python script `blender/clips/<name>.py` (the dot written `_`: `idle_sit.py`;
+corrected by P11) exporting one function
 `build(rig: bpy.types.Object, start: int) -> int` that, on the open scene, creates an
 Action named `<name>` (the dotted name, `idle.stand`), keyframes it, pushes it as a strip
 on an NLA track named `<name>` starting at frame `start`, and returns the last frame
@@ -579,17 +599,18 @@ Rules every clip obeys:
 - **The correctives take care of themselves**: the drivers stay on the shape keys and
   the exporter bakes them (§1 fact 4). No clip keyframes a shape key.
 - **Every clip has a contact sheet**: `scripts/contact_sheet.py <name>` renders twelve
-  evenly spaced frames from the hearth camera's angle with `render.py`'s settings into
+  evenly spaced frames from a fixed review camera, not the hearth camera's angle
+  (corrected by P11), with `render.py`'s settings into
   `ai_tmp/clips/<name>.jpg`, and the maintainer's approval of the sheet is the gate for
   the clip. A clip the maintainer refuses is reworked, not shipped.
 
 The core set, with duration, kind and what it must read as:
 
-| Clip | Frames at 30 fps | Kind | Reads as |
+| Clip | Samples at 30 fps (`FRAMES`; a clip lasts `(FRAMES − 1) / 30` s, corrected by P11) | Kind | Reads as |
 | --- | --- | --- | --- |
 | `idle.stand` | 120 | loop | standing, weight shifting once, head turning a little; the P02 proof clip |
 | `idle.sit` | 120 | loop | sitting, ears settling, one look aside |
-| `walk` | 30 | loop | one stride cycle, four-beat, head level, tail up; stride length recorded (§4.3) |
+| `walk` | 30 | loop | one stride cycle, four-beat, head level, tail up; `STRIDE` 1.0 model units, recorded by §4.3, and planted paws travel `STRIDE × STANCE` during stance (P04; corrected by P11) |
 | `sit` | 30 | one-shot | standing to sitting |
 | `lie` | 36 | one-shot | sitting to lying, head coming down last |
 | `sleep` | 180 | loop | lying, slow breath (the runtime adds the rest), head turned away from the hearth camera or under a foreleg (`PRD.md`, her eyes stay open) |
@@ -645,30 +666,36 @@ names equal `rig.json`'s bone names in order. §11 claims 3 and 4 are what P02 p
 `scripts/build_assets.sh <name>` (P03) takes `biscuit` or `cabin` and runs:
 
 ```sh
-npx gltf-transform prune  blender/out/<name>-raw.glb ai_tmp/<name>.1.glb
-npx gltf-transform dedup  ai_tmp/<name>.1.glb        ai_tmp/<name>.2.glb
-npx gltf-transform flatten ai_tmp/<name>.2.glb       ai_tmp/<name>.3.glb
-npx gltf-transform join   ai_tmp/<name>.3.glb        ai_tmp/<name>.4.glb   # per material; keeps skins and morphs (§11 claim 5); the cabin pass adds --keepNamed true
-npx gltf-transform resize ai_tmp/<name>.4.glb        ai_tmp/<name>.5a.glb --width 1024 --height 1024
-npx gltf-transform resize ai_tmp/<name>.5a.glb       ai_tmp/<name>.5.glb --pattern "occlusion|roughness" --width 512 --height 512
-npx gltf-transform webp   ai_tmp/<name>.5.glb        ai_tmp/<name>.6.glb --quality 82
-npx gltf-transform meshopt ai_tmp/<name>.6.glb       src/lib/assets/<name>.glb --level medium
+gt=node_modules/.bin/gltf-transform   # the pinned local binary; never npx, which could fetch
+$gt prune   blender/out/<name>-raw.glb ai_tmp/<name>.1.glb --keep-leaves true
+$gt dedup   ai_tmp/<name>.1.glb  ai_tmp/<name>.2.glb   # cabin: scripts/optimize_cabin.mjs dedup, keeping unique material names
+$gt flatten ai_tmp/<name>.2.glb  ai_tmp/<name>.3.glb   # biscuit only; the room keeps its item hierarchy
+$gt join    ai_tmp/<name>.3.glb  ai_tmp/<name>.4-cli.glb   # biscuit only; the CLI join leaves skinned meshes alone (§11 claim 5)
+node scripts/join_assets.mjs <name> … ai_tmp/<name>.4.glb   # the skin-aware join; cabin: keepNamed, no flatten
+node scripts/strip_normals.mjs ai_tmp/<name>.4.glb ai_tmp/<name>.4n.glb
+$gt resize  ai_tmp/<name>.4n.glb ai_tmp/<name>.5.glb  --width 1024 --height 1024
+$gt resize  ai_tmp/<name>.5.glb  ai_tmp/<name>.5o.glb --width 512 --height 512 --pattern '*occlusion*'   # a glob, not a regular expression
+$gt webp    ai_tmp/<name>.5o.glb ai_tmp/<name>.6.glb  --quality 82
+$gt meshopt ai_tmp/<name>.6.glb  src/lib/assets/<name>.glb --level medium --quantization-volume scene   # cabin: scripts/optimize_cabin.mjs meshopt, positions kept as floats
 ```
 
+(The block is what `build_assets.sh` runs after P03, with every stage measured by
+`scripts/inspect_asset.mjs` into `ai_tmp/<name>-pipeline.jsonl`; corrected by P11.) It
 then writes `src/lib/assets/biscuit.clips.json`:
 
 ```json
-{ "clips": [ { "name": "walk", "seconds": 1.0, "loop": true, "stride": 0.45 }, ... ], "height": 3.113 }
+{ "clips": [ { "name": "walk", "seconds": 0.9666666388511658, "loop": true, "stride": 1 }, ... ], "height": 3.11312993250124 }
 ```
 
-`seconds` from the GLB's animation samplers, `loop` from §4.1, `stride` (scene units of
-forward travel per cycle at the runtime's scale, §5.1) from a constant in
-`blender/clips/walk.py` that the script reads, `height` from the GLB's bind bounds; then
-runs `just assets-manifest`. Normal maps are removed before `resize` (`gltf-transform
-prune --keep-attributes false` does not do this; the script strips `normalTexture` from
-every material with `scripts/strip_normals.mjs`, a small `@gltf-transform/core` script beside it; the
-clip table is written by `scripts/clip_table.mjs`) unless P07a's
-look review keeps them, in which case P07a hands back a one-line change to the script.
+`seconds` from the GLB's animation samplers, `loop` from §4.1, `stride` (model units of
+forward travel per cycle, read as a literal from `blender/clips/walk.py`; the runtime
+multiplies it by its scale, §5.1; corrected by P11), `height` from the GLB's bind bounds
+(recovered from the stationary root's inverse-bind matrix, since meshopt stores the
+quantisation there); then runs `just assets-manifest`. Normal maps are always removed
+before `resize` (`gltf-transform prune --keep-attributes false` does not do this; the
+script strips `normalTexture` from every material with `scripts/strip_normals.mjs`, a
+small `@gltf-transform/core` script beside it; the clip table is written by
+`scripts/clip_table.mjs`); P07a's look review kept none (corrected by P11).
 The `cabin` pass skips `join` where P05 needs separate item meshes for hit-testing (§5.2):
 every mesh under an `item.*` empty is kept apart by `join --keepNamed true`.
 Its deduplication also preserves unique material names. The cabin meshopt pass
@@ -677,7 +704,10 @@ position quantization would shift the named pane origins that weather and room
 validation use. `scripts/optimize_cabin.mjs` implements those two cabin passes;
 the character keeps the standard compression settings.
 
-`check_assets.py check` then proves the budgets. P03 records, in its hand-back, the
+After the build, `scripts/check_model_asset.mjs` loads Biscuit's file with the real
+`GLTFLoader` and plays every clip through an `AnimationMixer`, and `scripts/check_cabin.py`
+holds the room to §5.2 (P03; P11 added the latter); `check_assets.py check` then proves
+the budgets (corrected by P11). P03 records, in its hand-back, the
 triangle count, draw-call count (materials × primitives), file size and texture bytes
 before and after, and whether `join` reduced the 148 meshes to a number the phone can
 draw (§12); if not, `gltf-transform simplify` is the next lever and its error figure is
@@ -692,7 +722,8 @@ at the floor's centre, +Y up (after export), the hearth wall at −Z. Biscuit is
 the runtime so that her bind-pose height (`biscuit.clips.json` `height`, 3.113 today)
 becomes **0.55 units** (a miniature poodle to the top of the topknot); the factor is
 computed, never hard-coded. An empty's forward is its local −Z. Walking speed is
-`stride / seconds` of the `walk` clip at that scale, so the feet do not slide.
+`stride × scale / seconds` of the `walk` clip, with `stride` in model units (1.0):
+0.18276 scene units a second as P07b measured, so the feet do not slide (corrected by P11).
 
 ### 5.2 The `cabin.glb` contract
 
@@ -715,11 +746,15 @@ Required empties (glTF nodes with no mesh), by exact name:
 | `steam.anchor` | the mug's steam |
 
 Meshes: every mesh carries `COLOR_0` vertex colours in the phase-neutral warm axis (§5.3)
-and a material named `cabin.<surface>` (`cabin.log`, `cabin.plank`, `cabin.rug`,
-`cabin.leather`, `cabin.ceramic`, `cabin.cloth`, `cabin.metal`, `cabin.paper`,
-`cabin.stone`, `cabin.glass`); no textures in v1 except one 512² `cabin.rug` colour map and one for the
-record sleeves. The window glass is `cabin.glass` and is transparent. Triangles in total
-at most 40,000; P05 records the figure.
+and a material named `cabin.<surface>`: eleven of them, `cabin.log`, `cabin.plank`,
+`cabin.rug`, `cabin.leather`, `cabin.ceramic`, `cabin.cloth`, `cabin.metal`, `cabin.paper`,
+`cabin.paper.sleeves`, `cabin.stone`, `cabin.glass` (corrected by P11); no textures in v1
+except one 512² `cabin.rug` colour map and one for the record sleeves. The window glass is
+`cabin.glass` and is transparent. Triangles in total at most 40,000 and primitives at most
+30, both held by `scripts/check_cabin.py`, which runs at the end of `just assets-build
+cabin` and not in `just check`; numbered nodes (`nav.*`, `light.strings.*`) are
+contiguous; P05 measured 25,634 triangles and 25 primitives; the runtime's `requireCabin`
+checks names and the graph only (P05 and P09 hand-backs; corrected by P11).
 
 The maintainer's 2026-09-25 room revision puts the shelf on the left wall and adds
 two windows. These positions are in glTF metres; all other P05 positions stay as
@@ -740,25 +775,30 @@ using the pane's orientation, sharing the existing particle budget across them.
 ### 5.3 The look, one register per layer
 
 **Biscuit (P5 system 1, S C03's recipe).** Every `MeshStandardMaterial` in `biscuit.glb`
-is replaced by a `MeshToonMaterial` with a three-band `gradientMap` (`NearestFilter`,
+is replaced by a `MeshToonMaterial` with a four-step `gradientMap` (four over three, the
+maintainer's choice at the look review; corrected by P11) (`NearestFilter`,
 bands at the values D's viewer used, which P07a reads from D
 `models/biscuit/src/viewer.template.html` lines 55–63 and 111–118 and records), `map` and
 `aoMap` carried, no `roughnessMap`, `normalMap` only if kept (§4.3). An inverted-hull
 outline mesh per part (`BackSide`, a solid ink material, vertices pushed along the normal
 by 0.004 × the model's scale) in the ink colour. Face lines read as coloured ink, not
 black: the ink is the platform's `--text` on the dark theme only where it borders the
-room; on her it is a warm near-black fixed in `materials.ts`. She casts no shadow map;
+room; on her it is a warm near-black fixed in `materials.ts`, `#33221f`, which in
+practice is the one ink everywhere (corrected by P11). She casts no shadow map;
 under her sits a hard-edged contact disc at 0.6 of the lit floor value (Catherine, "Contact
 shadow is a flat hard-edged shape at 0.60–0.65× the lit value").
 
 **The room (Catherine's painted ground).** `cabin.*` materials are `MeshToonMaterial`
-with a five-band ramp (softer than hers), vertex colours multiplied in, no outlines, no
+with a six-step ramp from `#3a2a22` to `#f2e2c8` (six over five, the maintainer's choice;
+the stock toon shader reads only its ramp's red channel, so the runtime patches it to read
+the full colour; corrected by P11), vertex colours multiplied in, no outlines, no
 specular. Every surface's hue sits inside a 15° wedge on the warm axis (hue 20° to 35°);
 planes are separated by value and by the ramp, never by hue; the one off-axis accent per
 phase is the window's sky (cool by night, pale by morning) at a budget of a few percent
 of the frame. Dark masses (the hearth's interior, the shelf's shadow) are pushed toward
 true black by zeroing green and blue rather than greying. A large soft gradient sits
-across the whole frame as a vignette in the post pass, never inside a shape.
+across the whole frame as a vignette drawn as a scene quad, not a post pass, never inside
+a shape (corrected by P11).
 
 **Overlays (P5 system 2).** The title card, the loading card, the photo frame and the
 wipe are DOM, not canvas: flat scarlet, black and white panels split by hard diagonals
@@ -772,8 +812,13 @@ scarlet is the game's own and is declared as a game token with its contrast reco
 
 ### 5.4 The runtime (`src/routes/scene/`)
 
-`SceneCanvas.svelte` owns a `<canvas aria-hidden="true">` and, in `onMount`, constructs
-`scene.ts`'s `createScene({ canvas, frame, preferencesAnimationsActive, assets })` which:
+`SceneCanvas.svelte` takes `state`, `animations`, `frames`, `assets`
+(`{ biscuit, cabin, clips, fire, still(state) }`), `random`, `webgl?` and the callbacks
+`onProgress`, `onReady`, `onTap`, `onContextLost`, `onError` and `onArrived` (as P07a, P07b
+and P08 built it; corrected by P11). It owns a `<canvas aria-hidden="true">` and, in
+`onMount`, constructs `scene.ts`'s `createScene`, which takes the canvas, the frame port,
+sizes and callbacks and is handed `animations` with every `apply` (corrected by P11), and
+which:
 
 - Loads `biscuit.glb` and `cabin.glb` with `GLTFLoader` and `MeshoptDecoder`
   (`three/addons/libs/meshopt_decoder.module.js`), reports progress to the loading card
@@ -786,7 +831,9 @@ scarlet is the game's own and is declared as a game token with its contrast reco
   night; flicker is `fire.ts`), a `PointLight` at `light.lamp` and small ones at
   `light.strings.*` (on by the director's light state).
 - Places the camera at the active preset (`camera.ts`), portrait framing; on resize keeps
-  the room's floor width in view by adjusting distance, never fov; DPR capped at 2.
+  all four floor corners in view in portrait by retreating along the camera's own axis,
+  never fov, and levels the horizon, because the exported presets roll (P07a hand-back;
+  P19 corrects the export); DPR capped at 2 (corrected by P11).
 - Applies a `SceneState` (§6.1) each time the page hands it one: her position and facing
   (interpolated along the path by `walk.ts`, §5.1's speed, turning in place before
   setting off), her clip (`motion.ts` crossfades on the `AnimationMixer` over 250 ms;
@@ -815,12 +862,15 @@ scarlet is the game's own and is declared as a game token with its contrast reco
   canvas's own tap is a convenience; the DOM controls (§7) are the controls.
 - Runs the loop only through the frame port and only while `animationsActive` is true;
   otherwise (`still.ts`) it renders exactly once per `SceneState` it is handed, with the
-  fire at a fixed middle frame, no particles, and lighting cuts. Before the first frame
+  fire at a fixed middle frame, no particles, and lighting cuts, and never reports
+  `arrived`: the director resolves the walk itself (§6.1, P06 4a; corrected by P11). Before
+  the first frame
   and on `webglcontextlost` the component shows the still for the current activity and
   phase (§3) as an `<img>` with the caption as alt text and reports the loss through
-  `onContextLost`; a tap on the still calls the component's exported
-  `forceContextRestore()`, which restores through the `WEBGL_lose_context` extension when
-  present and otherwise rebuilds the renderer and reloads the assets.
+  `onContextLost` (and a failed load through `onError`, P08); the still becomes a button
+  named "Retry 3D scene" whose tap calls the component's exported `forceContextRestore()`,
+  which restores through the `WEBGL_lose_context` extension when present and otherwise
+  rebuilds the renderer and reloads the assets (corrected by P11).
 - Exports two functions the page calls on the component instance: `capture(): string`
   (a synchronous render, then `toDataURL('image/png')`, §11 claim 12; the director and
   the frame loop are not touched) and `forceContextRestore(): void`. Takes `webgl:
@@ -828,7 +878,9 @@ scarlet is the game's own and is declared as a game token with its contrast reco
   story and the tests).
 - The wipe (`wipe.ts` and the `TitleCard` component): a DOM panel that sweeps a
   diagonal across the viewport over `--dur-3` (180 ms when animations are on, 0 when
-  off) on load-in and when photo mode opens.
+  off) on load-in and when photo mode opens. Today `TitleCard` runs its own CSS `sweep`
+  and `wipe.ts` is not used by it; joining the two is P20 (P08 hand-back; corrected by
+  P11).
 
 Nothing under `src/routes/scene/` reads a global: `requestAnimationFrame` comes through
 the frame port, `devicePixelRatio` and the canvas size through arguments the component
@@ -838,15 +890,18 @@ passes from `window` inside `onMount`, time through the clock port.
 
 ### 6.1 The director (`src/lib/domain/director.ts`)
 
-A pure reducer `step(state, command, deps): SceneState` where `deps` carries the random
-port and the constants in `timing.ts`. Commands: `tap(item)`, `tapBiscuit`,
+A pure reducer `step(state, command, deps): SceneState` where `deps` is the random port
+alone and the constants are imported from `timing.ts`; commands are objects keyed by
+`kind`, so `tap(item)` below reads as `{ kind: 'tap', item }` (P06, P08; corrected by
+P11). Commands: `tap(item)`, `tapBiscuit`,
 `tapFloor(point)`, `tick(ms)`, `setPhase(phase | 'auto')`, `clockPhase(phase)`,
 `setWeather(weather)`, `toggleLight('lamp' | 'strings')`, `setSound(on)`,
 `setCamera(preset)`, `motionChanged(active)`.
 
 `SceneState` (serialisable): `activity` (`idle.stand`, `idle.sit`, `walk`, `sit`, `lie`,
 `sleep`, `drink`, `eat`, `play`, `pet`, `stand` for the reversed transitions), `at` (the
-item she is at or heading to, or `floor`), `target` (a point and facing, or absent),
+item she is at or heading to, or `floor`), `target` (the named node she is heading to,
+or absent; corrected by P11),
 `lookAt` (a floor point or the item to look toward, or absent), `phase`, `phaseOverride`,
 `weather`, `lights` (`lamp`, `strings`), `fire` (0 to 1), `camera`, `sound`, `caption`
 (the sentence and a sequence number, or absent), `motion`. P06 embeds the type and the
@@ -856,29 +911,44 @@ and P07 and P08 read P06's file. `Item` in v1 is `bed`, `chair`, `water`, `food`
 `lamp`, `lights`; `jar` and `fire` ship as room anchors and the director ignores them
 until v1.1.
 
-Rules: a tap on the item she is using is ignored; a tap on the lamp or the string lights
+Rules: a tap on the item she is using, or already heading to, changes nothing, and a tap
+on a thing she is idling beside starts it again without a walk (P06 4b; corrected by
+P11); a tap on the lamp or the string lights
 toggles that light and turns her head toward it, and never walks her; a tap while she is
 busy replaces any pending target so the last tap wins once the current activity's minimum
 has elapsed; a tap on her is a reaction, not an activity: `pet` plays at once over
 `idle.stand`, `idle.sit`, `drink`, `eat` or `play`, with that activity's `elapsed` paused
 and any pending target kept, and hands her back to it after the pet duration; a tap on
-her while she walks, sits, lies, stands or is already being petted changes nothing, and
-asleep it wakes her as any tap does; `walk` is entered by turning to face the target
+her while she walks, sits, lies, stands or is already being petted changes nothing;
+asleep, a tap on a thing inside the four-second minimum waits as on any activity, a tap
+on her inside it changes nothing, and after it any tap wakes her through `stand` (the
+spec's minimum applies to sleep; P06 4d; corrected by P11); `walk` is entered by turning
+to face the target
 first; arriving at an item plays its transitions (`sit` then `lie` for the bed and the
 chair, each for its clip's length, stepped by the director) and then its activity; a
-settled activity sets `caption` once (never on the tap); lights follow phase unless
-toggled, and a toggle holds until the phase changes; `fire` is 0.35 by morning, 0.7 by
+settled activity sets `caption` once, never on the tap, except the pet's, which comes
+with the tap that starts it (P06 4e; corrected by P11); the caption clears when she sets
+off, stands, arrives or finishes drinking, eating or playing, and a pet's return keeps
+whatever is showing (P06 4c; corrected by P11); lights follow phase unless toggled, and a
+toggle holds until the phase in effect actually changes (P06 4j; corrected by P11);
+`fire` is 0.35 by morning, 0.7 by
 evening, 1.0 by night; `sleep` lasts until a tap or the sleep duration, then `stand` and
 `idle.stand`; when idle for the idle interval she chooses an item, or a sit, by
 phase-weighted random choice; idle past the interval's scaled minimum sets the
-`idle.long` caption once for that stretch; `motionChanged(false)` freezes `activity` at
-the nearest still-able state.
+`idle.long` caption once for that stretch; while `motion` is false, `step` resolves every
+movement forward after each command, as `motionChanged(false)` does: a walk arrives and
+settles with its caption, a transition finishes where it leads, a pet hands her back at
+once (P06 4a; corrected by P11); `setPhase('auto')` only clears the override, and `phase`
+follows the next `clockPhase`, which the page sends at once (P06 4i; corrected by P11).
 
 `timing.ts` constants (seconds): minimum activity 4; drink 6; eat 10; play 15; pet 2;
 transitions `sit` 1.0 and `lie` 1.2 (the clip lengths, §4.1; `stand` is their sum from
 lying and `sit` alone from sitting); sleep 90 by morning, 150 by evening, 300 by night;
-idle interval uniform 20 to 40, ×0.7 by morning, ×1.5 by night, and `idle.long` at the
-scaled 20; walking speed from the clip. Phase weights for the idle
+idle interval uniform 20 to 40 whole seconds, ×0.7 by morning, ×1.5 by night, rounded to
+the millisecond, counting idle time only and redrawn whenever an idle stretch begins, and
+`idle.long` at the scaled 20 (P06 4g, 4h; corrected by P11); walking speed from the clip;
+the director's tick 250 ms; weather drawn once a visit at five clear, three rain and two
+snow in ten (P01 figure 1; corrected by P11). Phase weights for the idle
 choice: morning play 0.4, water 0.2, sit 0.2, bed 0.1, chair 0.1; evening chair 0.3,
 bed 0.2, sit 0.2, water 0.15, play 0.15; night bed 0.5, chair 0.3, sit 0.2.
 
@@ -930,17 +1000,25 @@ twelve words, dry. The seed set (the executing agent writes the rest in this reg
 with the `Lockup` and an `IconButton` "Settings" opening `SettingsDialog` (a platform
 `Modal` holding `TimeControl`, `SoundControl`, `CameraControl`); `<main>` holding
 `SceneCanvas` (full width; height the viewport minus header and controls on a phone, a
-9:16 box centred above 60rem), `Caption` (a `Notice` fed by `state.caption`, and an
-`Announcer` that says the same sentence), and `ItemControls` (a wrapping grid of platform
-`Button`s, three per row at 320 px, each an icon from the platform's map plus the word:
-Bed, Chair, Water, Food, Toy, Lamp, Lights, Pet, Photo; Jar arrives in v1.1). Every
+9:16 box centred above 60rem), `Caption` (one platform `Notice` fed by `state.caption`;
+it is itself `role="status"` and re-announces on each new `sequence`, and an `Announcer`
+beside it would be heard twice; P08; corrected by P11), and `ItemControls` (a wrapping
+grid of platform `Button`s, three per row at 320 px, each an icon of the game's own, nine
+Lucide SVGs under `src/lib/icons/` rendered by `GameIcon.svelte` because the platform's
+map has none of them (corrected by P11), plus the word: Bed, Chair, Water, Food, Toy,
+Lamp, Lights, Pet, Photo; Jar arrives in v1.1; where she is is marked with the `Button`'s
+`current` prop, `aria-current`, and the words "she is here", and each light's button
+carries "on" or "off" in its name and as a visible word; P08; corrected by P11). Every
 port is constructed in `onMount` and the director's state lives in a `$state` in the
 page; components take state and callbacks as props (runes, callbacks not events).
 
 `TimeControl`: a `SegmentedControl` with Auto, Morning, Evening, Night; the selection
-persists through the storage port under `pawlour.time`. `SoundControl`: a `Switch`,
-off by default, persisted under `pawlour.sound`; turning it on calls `audio.enable()`
-inside the handler. `CameraControl`: a `SegmentedControl` Hearth, Window, Chair, persisted under
+persists through the storage port under `pawlour.time`, and the page follows
+`setPhase('auto')` with `clockPhase` at once (corrected by P11). `SoundControl`: a
+`Switch`, off by default and never persisted, because `SoundNeverStartsUnasked` says sound
+is off whenever the room opens (P01, P06, P08; corrected by P11); turning it on calls
+`audio.enable()` inside the handler, and only the latest request turns `sound` on.
+`CameraControl`: a `SegmentedControl` Hearth, Window, Chair, persisted under
 `pawlour.camera`.
 `PhotoButton`: asks the canvas for `capture()` (`SceneCanvas` renders once, synchronously,
 and returns `toDataURL('image/png')` at the canvas's size; the director is sent nothing
@@ -953,7 +1031,8 @@ the graphic register (§5.3), a `progress` prop, plain copy ("Loading the room",
 Accessibility, every item a spec clause (§8): every control is a platform component
 measured at 44 px; the canvas is `aria-hidden` and a visually hidden `<p>` beside it
 states the scene in words from `SceneState` ("Biscuit is asleep in the bed. It is night.
-Snow.") and updates with it; captions go through `Announcer`; the page never scrolls
+Snow.") and updates with it; captions go through the `Notice`'s status role (corrected
+by P11); the page never scrolls
 sideways at 320 px; `touch-action: manipulation` on the canvas, never `touch-action:
 none` on the page, no `user-scalable=no`; the dialog follows the platform `Modal`'s
 guarantees; nothing claims a bare key; the wipe and every transition run on `--dur-*`
@@ -968,20 +1047,26 @@ the seed states them, so `tests/platformSpecs.test.ts` keeps holding them equal)
 the platform's register (a name, then the prose that is the rule):
 
 - `EveryItemIsAControl`: every thing she can be sent to is a named control outside the
-  canvas, and the canvas's own hit-test adds nothing a control does not offer.
+  canvas, and a tap on the picture reaches nothing the controls do not, except a tap on
+  bare floor, which turns her head toward the spot and changes nothing else (as
+  `cabin.allium` states it; P01; corrected by P11).
 - `ATapIsAnInvitation`: a tap never interrupts the minimum of an activity; the last tap
   wins when it ends; a tap on the thing she is using changes nothing; a tap on her is a
-  reaction that plays over what she is doing and returns her to it with the minimum
-  unspent.
-- `ACaptionIsShownAndAnnounced`: a caption appears once an activity has settled, never on
-  the tap, is shown in words and announced in the same words, and is never repeated in a
-  session.
+  reaction that plays over idle, drink, eat or play and hands her back with the time she
+  had already spent intact and any waiting tap still waiting; asleep, a tap wakes her; a
+  light toggles at once and never walks her (P01; corrected by P11).
+- `ACaptionIsShownAndAnnounced`: a caption appears once she is doing what she was asked,
+  at the thing rather than on her way to it, or after a long idle stretch; nothing appears
+  merely because something was tapped, except the pet's caption, which comes as the pet
+  plays; it is shown in words and announced in the same words, and never repeated in a
+  visit (P01; corrected by P11).
 - `SheIsTheOnlyThingAlive`: nothing in the room moves of its own accord except the fire,
   the weather and the steam; every other movement is hers.
 - `TimeFollowsTheClockUntilOverridden`: the phase is the device's hour until the player
   chooses one, and the choice persists until cleared.
-- `SoundNeverStartsUnasked`: no audio plays before the switch is turned on, in that
-  visit, by the player.
+- `SoundNeverStartsUnasked`: sound is off whenever the room opens, on every visit, and
+  no earlier visit's choice starts it; only the player's switch does (P01; corrected by
+  P11).
 - `MotionOffIsAStillDiorama`: when animations are off or the device asks for less
   motion, the room is drawn once per change, nothing flickers or falls, and every control
   and caption still works.
@@ -1017,10 +1102,10 @@ words or more.
 | `explanation/the-director.md` | explanation | contributor, maintainer, agent | `director_model` |
 | `reference/asset-manifest.md` | reference | contributor, maintainer, agent | `asset_manifest_format` |
 | `reference/budget.md` | reference | contributor, maintainer, agent | `performance_budget` |
-| `decisions/0011-served-assets-are-blobs-and-blends-are-lfs.md` | decision | contributor, maintainer, operator, agent | `decision_large_file_storage` |
-| `decisions/0012-the-canvas-lives-outside-the-coverage-glob.md` | decision | contributor, maintainer, agent | `decision_canvas_placement` |
-| `decisions/0013-this-repository-owns-its-animated-model.md` | decision | contributor, maintainer, agent | `decision_model_ownership` |
-| `decisions/0014-three-js-is-the-renderer.md` | decision | contributor, maintainer, agent | `decision_renderer` |
+| `decisions/0012-served-assets-are-blobs-and-blends-are-lfs.md` (0012–0015 corrected by P11; 0011 was taken) | decision | contributor, maintainer, operator, agent | `decision_large_file_storage` |
+| `decisions/0013-the-canvas-lives-outside-the-coverage-glob.md` | decision | contributor, maintainer, agent | `decision_canvas_placement` |
+| `decisions/0014-this-repository-owns-its-animated-model.md` | decision | contributor, maintainer, agent | `decision_model_ownership` |
+| `decisions/0015-three-js-is-the-renderer.md` | decision | contributor, maintainer, agent | `decision_renderer` |
 
 T's managed pages are not edited; the game's own procedure for `git lfs install --local`
 and `preview-lan` lives on the game's how-to pages, not on T's `develop-locally.md`.
@@ -1097,52 +1182,82 @@ change that goes back through this document.
 
 1. prek 0.4.12 honours a per-hook `exclude:` on `check-added-large-files`, so a 6 MB
    GLB under `src/lib/assets/` passes `just lint` while a large file elsewhere is
-   refused. **P00.**
+   refused. **P00.** Held: a 1 MB probe under `src/lib/assets/` passed `just lint` and the
+   same file at the root was refused (P00 hand-back, "Large files (§11 claim 1)").
 2. `uvx copier copy gh:steven-cutting/biscuit_games_template --vcs-ref v2.1.0 .` into
    this clone, with the stub `README.md` deleted first, renders cleanly, and
    `just initialize` then `just check` are green on the first run with the network. **P00.**
+   Held for the render, failed for the first check, and corrected: the render was clean,
+   then `just check` failed on markdownlint alone, over the prose in `tickets/`, so
+   `tickets` went into the markdownlint ignores and ruff's excludes (P00 hand-back,
+   "Render and first check", item 1).
 3. Blender 5.2.1 with `export_animation_mode='NLA_TRACKS'` and `export_force_sampling=True`
    writes one glTF animation per track, named after it, with the IK-driven paws baked
-   into the deform bones. **P02.**
+   into the deform bones. **P02.** Held: ten animations named after their tracks, and
+   `just model-check-ik` measured the baked paw (P02 hand-back, "`just model-check-ik`").
 4. The same export bakes the five shape-key drivers into morph-weight channels of each
    clip (`get_sk_drivers` finds them because every part is parented to `Biscuit.Rig`).
-   **P02.**
+   **P02.** Held: morph-weight channels in every clip, `weights=True` on the proof (P02
+   hand-back, "`just model-export`"; P04 hand-back).
 5. `gltf-transform join` merges the 148 skinned primitives per material while keeping
    the skin, the morph targets on the sweater and the animations intact, and three.js
-   plays the clips on the result. **P03.**
+   plays the clips on the result. **P03.** Failed and corrected: the pinned CLI's `join`
+   skips skinned nodes and morph targets and left all 154 primitives; `scripts/join_assets.mjs`
+   joins them skin-aware to 14, and three.js plays every clip on the result (P03 hand-back,
+   "The pinned CLI's `join`").
 6. `gltf-transform webp` plus `meshopt` brings the model under 6 MB at 1024² colour and
    512² occlusion with normals removed; and iPhone 17 Pro Safari through three.js 0.186
    decodes `EXT_texture_webp` and `EXT_meshopt_compression`. **P03**, proven on the
-   device by **P10**.
+   device by **P10**. Held: 1,212,704 bytes on the proof and 2,525,000 on the core set;
+   both GLBs loaded once on the phone with no decoder error (P03 table; P10 hand-back,
+   "§11 claim 6").
 7. The joined model draws in at most 30 calls (27 materials plus outlines merged per
-   material), and with the room stays under 60. **P03** counts; **P10** measures.
+   material), and with the room stays under 60. **P03** counts; **P10** measures. Held: 28
+   calls for Biscuit alone, 53 to 54 with the room, fire and rain (P10 hand-back, "§11
+   claim 7").
 8. T's jsdom exposes no `requestAnimationFrame` and no WebGL, so the frame port is
    required and `SceneCanvas` cannot be unit-tested; the story job's headless Chromium
    does create a WebGL2 context (SwiftShader) well enough to mount the canvas. **P06**
-   for the first half, **P08** for the second.
+   for the first half, **P08** for the second. Failed and corrected, the first half:
+   Vitest's jsdom exposes `requestAnimationFrame` as a function; the frame port stays
+   because tests never stub a global, and decision 0013 says so (P06 hand-back, item 3).
+   Held, the second half: the story job's Chromium mounted the canvas with a SwiftShader
+   WebGL2 context and drew a frame (P08 hand-back, "§11 claim 8 (second half)").
 9. A Vite import of a `.glb` from `src/lib/assets/` yields a URL carrying `paths.base` in
    the prerendered build, and `GLTFLoader` fetches it under `/pawlour/`. **P07a**,
-   proven on Pages by **P12**.
+   proven on Pages by **P12**. Failed and corrected: the import needs `?url` (§1 fact 8);
+   the URL then carries the base path, `/pawlour/_app/immutable/assets/biscuit.*.glb`
+   under `BASE_PATH=/pawlour` (P08 hand-back; P07a hand-back). The Pages half is open
+   until P12 runs.
 10. `vitest.storybook.config.ts` accepting `'three'` in `optimizeDeps.include` is enough
     for a story that imports a component importing `three/addons/...` subpaths; if not,
-    the subpaths are listed too. **P08.**
+    the subpaths are listed too. **P08.** Held: two cold-cache story runs green with
+    `'three'` alone (P08 hand-back, "§11 claim 10").
 11. `MeshToonMaterial` with vertex colours and a five-band ramp reads as a painted plane
     rather than a flat cartoon, once the vignette is on. **P07a**, by the maintainer's
-    eye.
+    eye. Held, with four steps for her and six for the room in place of three and five:
+    the maintainer approved the three screenshots on 2026-09-25 (P07a hand-back).
 12. A `canvas.toDataURL` on a WebGL canvas created with `preserveDrawingBuffer: false`
     is blank; the renderer is created with `preserveDrawingBuffer: true` only for the
     frame photo mode captures, or the scene is re-rendered synchronously before the
-    capture. **P08.**
+    capture. **P08.** Held: `readPixels` on the live canvas returned zeros, and the
+    synchronous re-render in `capture()` gave a photo of 12,472 colours (P08 hand-back,
+    "§11 claim 12").
 13. Pages serves a `.glb` with a content type a browser accepts (`model/gltf-binary` or
     `application/octet-stream`; `GLTFLoader` reads either) and a long cache header for
-    hashed filenames. **P12.**
+    hashed filenames. **P12.** Not yet checked: P12 has not run.
 14. `scripts/initialize.sh` skipping `install-hooks` in a secondary worktree means the
     `full-cozy` worktree has no hooks until `just install-hooks` is run by hand. **P00.**
+    Held: the hook directories differed, `initialize.sh` refused, and `just install-hooks`
+    was run by hand; the worktree was `P00-foundation`, not `full-cozy` (P00 hand-back,
+    "Hooks (§11 claim 14)").
 15. `AnimationUtils.makeClipAdditive` on the exported `pet` (every unmoved bone a
     constant channel under `export_force_sampling` and `export_optimize_animation_size`)
     yields identity deltas on those bones, and the lean reads over `drink`, `eat` and
     `play` as well as over the idles. **P07b**, by the maintainer's eye on the recording;
-    the contact sheet cannot show it because it renders the clip alone.
+    the contact sheet cannot show it because it renders the clip alone. Held: the
+    real-mixer test proves `drink` advancing under additive `pet`, and the maintainer
+    approved the recordings on 2026-09-26 (P07b hand-back, "§11 claim 15").
 
 ## 12. Risks every ticket states where it applies
 
@@ -1159,8 +1274,9 @@ change that goes back through this document.
   `SceneCanvas` story renders the fallback still (no WebGL), and the platform components
   around it are what Chromatic compares.
 - **`copier update` will conflict** on `vitest.storybook.config.ts` (a managed file this
-  game appends to) and nowhere else; the deviation is recorded in `AGENTS.md` and the
-  conflict is resolved by re-appending.
+  game appends to) and on `eslint.config.js`, where Prettier rewrapped the `ignores`
+  array once `'blender/'` made it long (P00 hand-back item 6; corrected by P11); the
+  deviation is recorded in `AGENTS.md` and each conflict is resolved by re-appending.
 - **LFS bandwidth.** Every `.blend` change costs 12 MB of LFS; clips are scripts and
   the `.blend` is byte-identical to D's, so it changes only with a new approved model.
 - **The model's licence is unsettled** (H `character.md` lines 128–134). The manifest

@@ -92,7 +92,9 @@ queues nothing: she finishes what she is doing, then the last tap wins. A tap on
 the one exception: while she idles, drinks, eats or plays, the pet reaction plays at once
 over what she is doing, and she goes back to it afterwards, the time she had already
 spent on it intact. Mid-walk, or while sitting down, lying down or standing up, a tap on
-her changes nothing; asleep, it wakes her as any tap does.
+her changes nothing; asleep, a tap wakes her once the four-second minimum has passed, as
+any tap does, and inside it a tap on a thing waits while a tap on her changes nothing
+(P06; corrected by P11).
 
 | Tap | What she does | Caption, once she has settled |
 | --- | --- | --- |
@@ -119,9 +121,11 @@ at the player.
 
 ## Captions
 
-A caption is the narrator's one sentence, shown in the platform's `Notice` and read by
-its `Announcer`. It is shown once an activity has settled, never on the tap, and never
-twice in a session. The bank holds at least forty; each is dry, third person, present
+A caption is the narrator's one sentence, shown and announced by the platform's `Notice`,
+which is itself a status region; an `Announcer` beside it would be heard twice (P08;
+corrected by P11). It is shown once an activity has settled, never on the tap, except the
+pet's, which comes as the pet plays (P01, P06; corrected by P11), and never twice in a
+session. The bank holds at least forty; each is dry, third person, present
 perfect or present continuous, and none carries an exclamation mark. There is no caption
 log in v1.
 
@@ -169,14 +173,15 @@ room and the first frame are ready. The copy is plain interface copy.
 
 ## Performance budget
 
-Measured on an iPhone 17 Pro in Safari and recorded in the device verification ticket:
+Measured on an iPhone 17 Pro in Safari (an iPhone 17 Pro Max, in the event; corrected by
+P11) and recorded in the device verification ticket and `docs/reference/budget.md`:
 
 | Figure | Budget |
 | --- | --- |
 | Frame rate, steady, hearth camera, fire and weather on | 60 frames a second |
 | Device pixel ratio | capped at 2 |
 | Draw calls per frame | at most 60 |
-| Biscuit, triangles after processing | at most 45,000 (an unverified target; no decimation ships today) |
+| Biscuit, triangles after processing | 86,828 in the file, 173,656 drawn, because the ink outline draws her twice; 60 fps holds at that count on the device, so no decimation ships and the earlier 45,000 target is withdrawn (P10; corrected by P11) |
 | Biscuit, served file | at most 6 MB |
 | Room, served file | at most 3 MB |
 | First load: the model, the room, the first still, the fire texture and the code (audio and the other stills load on demand) | at most 12 MB |
@@ -209,4 +214,8 @@ game; sound on by default; any first-person copy anywhere, including the loading
   display and the exporter can carry both; it is a decision about her, so it is the
   maintainer's.
 - Whether forty captions is enough to feel rare. The number is a floor; the tickets
-  count what ships.
+  count what ships (42 shipped, P06).
+- Whether the cabin has a door. It has none; P05 recommends a non-interactive one on the
+  −X wall near the +Z corner as set dressing, if wanted. Recorded by P11.
+- Whether the dark ceiling plane at 2.4 m stays, or the cameras are framed so its edge
+  never shows. P05 left it in and P07a frames the floor, not the ceiling. Recorded by P11.
