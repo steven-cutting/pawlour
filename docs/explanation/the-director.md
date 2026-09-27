@@ -113,7 +113,8 @@ thing, and every control and caption behaves as it does with motion on.
 
 The director itself takes only the random port. Around it, the page uses the timer port
 (`every(ms, tick)`) for the 250 millisecond tick and the minute clock read, the clock
-port for the hour, the storage port for the time override, and the audio port for sound.
+port for the hour, the storage port for the time override and the camera choice, and
+the audio port for sound.
 The frame port drives rendering only, never the director. Each has an in-memory fake in
 the same file, and the three this game adds — timer, frame and audio — have their cases
 in `tests/ports.test.ts` after the template's.
