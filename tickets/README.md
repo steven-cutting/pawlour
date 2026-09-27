@@ -29,10 +29,16 @@ authoritative; this table is a snapshot.
 | P08 | Interface: the components, the page, the ports in `onMount`, captions, settings, photo mode, audio | `P08-interface.md` | P06, P07a | P04, P05, P07b, P09 | open |
 | P09 | Handbook: the game's pages, decisions 0011 to 0014, the manifest and the map | `P09-handbook.md` | P00 | P01, P02, P03, P04, P05, P06, P07a, P07b, P08 | open |
 | P10 | Device verification: iPhone 17 Pro against the budget | `P10-device-verification.md` | P04, P07b, P08, P09 | none | open |
-| P11 | Follow-up: what P00 to P10 handed back | `P11-follow-up.md` | P01, P02, P03, P04, P05, P06, P07a, P07b, P08, P09, P10 | none | open |
+| P11 | Follow-up: what P00 to P10 handed back | `P11-follow-up.md` | P01, P02, P03, P04, P05, P06, P07a, P07b, P08, P09, P10 | none | done |
 | P12 | Repository: create it, grant the package, enable Pages, first push, first deploy | `P12-repository.md` | P11, C01 | none | open |
 | P13 | Maintainer docs: `README.md`, `CHANGELOG.md` 0.1.0, `AGENTS.md` provenance and deviations | `P13-maintainer-docs.md` | P12 | none | open |
 | P14 | A WebGL2 test lane: the scene runtime and its page wiring proved in real Chromium, inside the gate | `P14-webgl-test-lane.md` | P07b, P08 | P09, P10 | open |
+| P15 | Second device pass: the 4G first frame, the frame-rate row retaken, and what P06 and P08 left to the phone | `P15-second-device-pass.md` | P10, P11 | P12, P13, P14, P16 | open |
+| P16 | Accessibility on the device: reduced motion, the four theme and contrast combinations, and the hard-coded theme | `P16-accessibility-on-the-device.md` | P10, P11 | P12, P13, P14, P15 | open |
+| P17 | The five audio loops need an ear: fire that reads as fire, a squeak, and lapping | `P17-the-audio-loops-need-an-ear.md` | P11 | P12, P13, P14, P15, P16 | open |
+| P18 | Stills captured from the runtime at the hearth camera, under the same eighteen names | `P18-stills-from-the-runtime.md` | P11 | P12, P13, P14, P15, P16, P17 | open |
+| P19 | Level the exported cameras: correct the roll in the room's build script and rebuild `cabin.glb` | `P19-level-the-exported-cameras.md` | P11 | P12, P13, P14, P15, P16, P17, P18 | open |
+| P20 | The title card runs on the wipe: one diagonal sweep, in one place, for load-in and photo mode | `P20-the-title-card-runs-on-the-wipe.md` | P11 | P12, P13, P14, P15, P16, P17, P18, P19 | open |
 
 Cross-repository and design tickets. Each is a recommendation written to be picked up on
 its own; C01 gates the first deploy.
@@ -41,6 +47,8 @@ its own; C01 gates the first deploy.
 | --- | --- | --- | --- | --- |
 | C01 | The hub permits a rendered scene: a hub decision, `direction.md`, `character.md`, the naming table, a handover page | `C01-hub-decision.md` | none; before P12 | open |
 | C02 | Reconcile the animated model with the studio after v1 | `C02-studio-reconciliation.md` | P13 | open |
+| C03 | Template hand-backs from Pawlour: the specs how-to's module table, the rule-38 gap, and the eslint conflict note | `C03-template-hand-backs.md` | none | open |
+| H01 | Hub hand-backs from Pawlour: item icons upstream, a four-choice `SegmentedControl`, and a pressed state on `Button` | `H01-hub-hand-backs.md` | C01 | open |
 
 ## Dependency graph
 
@@ -57,7 +65,10 @@ The graph is acyclic. P00 first; then P01, P02 and P09 in parallel; P03 after P0
 and P05 after P03; P06 after P01; P07a after P03 and P06 (it uses a stub room until P05
 lands); P07b after P07a, P05 and P04; P08 after P06 and P07a, beside P07b; P10 after
 P04, P07b, P08 and P09; then P11, P12 and P13 in sequence. C01 touches only the hub and can
-start at any time; P12 waits for it.
+start at any time; P12 waits for it. P15 to P20 are the follow-ups P11 carried: each
+depends on P11, none gates P12, and they run beside P12 to P14 in any order. C03 carries
+P00's and P01's hand-backs to the template and H01 carries P08's to the hub; neither
+gates a deploy.
 
 ## How to pick up a ticket
 
@@ -109,6 +120,6 @@ Repository paths are written as code spans, never as links, because the hook gat
 installs runs lychee offline over this directory.
 
 Ids: `P` is a build ticket executed in this repository; `C` is a cross-repository or design
-ticket. A follow-up that C01 writes for the hub is filed here with the prefix `H`, and
-one that C02 writes for the studio with the prefix `S`; each is added to the tables above
-when it is written.
+ticket. A follow-up for the hub is filed here with the prefix `H` (C01 writes them; P11
+wrote the first, H01, from P08's hand-backs), and one for the studio with the prefix `S`;
+each is added to the tables above when it is written.
