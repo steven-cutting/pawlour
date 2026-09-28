@@ -90,11 +90,11 @@ just check
 
 ## Hand-back notes
 
-Superseded, not executed. The `title-card-fixes` change moved the loading and saved card
-out of the overlay register into the platform's chrome, still and without a diagonal, so
-there is no sweep left for the card to share with `wipe.ts`. `grep -rn 'keyframes sweep'
-src/` prints nothing. `wipe.ts` stays in `src/routes/scene/` for the wipe between rooms,
-which is out of v1 (`docs/project/purpose-and-scope.md`).
+Superseded, not executed. PR #4 moved the loading and saved card out of the overlay
+register into the platform's chrome, still and without a diagonal, so there is no sweep
+left for the card to share with `wipe.ts`. `grep -rn 'keyframes sweep' src/` prints
+nothing. `wipe.ts` stays in `src/routes/scene/` for the wipe between rooms, which is out
+of v1 (`docs/project/purpose-and-scope.md`).
 
 ## Open points
 

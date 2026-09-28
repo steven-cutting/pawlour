@@ -9,9 +9,9 @@
  * and unchanged by theme, because the photo frame is painted into the PNG the
  * same whatever the page shows. This reads that file from disk the way the
  * platform's `tests/contrast.test.ts` reads `app.css`, drives every combination
- * through the root attributes anyway, and measures each pair the frame paints. The scarlet was chosen by this test: a P5
- * scarlet near #e60012 fails white text at 4.5, so the word is black on scarlet
- * and white is only ever on black.
+ * through the root attributes anyway, and measures each pair the frame paints.
+ * The scarlet was chosen by this test: a P5 scarlet near #e60012 fails white
+ * text at 4.5, so the word is black on scarlet and white is only ever on black.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

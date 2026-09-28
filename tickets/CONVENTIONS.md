@@ -84,7 +84,7 @@ Decisions, taken on 2026-09-25:
    approved rig; the exported GLB carries them (§4).
 4. **She walks between items**, within the room, along a waypoint graph the room
    declares (§5). Later rooms are joined by a Persona-style diagonal wipe; v1 has one room
-   and no wipe, and `wipe.ts` waits for a second room (corrected by title-card-fixes).
+   and no wipe, and `wipe.ts` waits for a second room (corrected by PR #4).
 5. **This repository owns its animated model.** D's `.blend` and the sixteen files of
    its `src/` are copied here byte for byte with provenance (§3, §4). Reconciling with S
    (where the platform's assets are meant to be developed and leave by ledger) is C02,
@@ -812,7 +812,7 @@ The one warm family the platform rations to the brand mark is not used here; the
 scarlet is the game's own and is declared as a game token with its contrast recorded.
 The loading and saved card is not in this register: it is the platform's chrome, the
 themed ground and ink with the lockup, and paints only platform tokens (corrected by
-title-card-fixes).
+PR #4).
 
 ### 5.4 The runtime (`src/routes/scene/`)
 
@@ -884,7 +884,7 @@ which:
   `--dur-3` (180 ms when animations are on, 0 when off), kept for the wipe between
   rooms. v1 has no wipe: the `TitleCard` is the platform's still chrome and no longer
   sweeps, which supersedes P20 (P08 hand-back; corrected by P11 and by
-  title-card-fixes).
+  PR #4).
 
 Nothing under `src/routes/scene/` reads a global: `requestAnimationFrame` comes through
 the frame port, `devicePixelRatio` and the canvas size through arguments the component
@@ -1032,7 +1032,7 @@ panel geometry and text the component draws onto an offscreen canvas), and trigg
 download named `pawlour-<phase>-<n>.png`. `TitleCard`: the loading and saved card in
 the platform's chrome (§5.3), a `progress` prop, plain copy ("Loading the room", "Saved"),
 prerendered up and held by the page until the room settles and at least a second has
-passed since hydration (corrected by title-card-fixes).
+passed since hydration (corrected by PR #4).
 
 Accessibility, every item a spec clause (§8): every control is a platform component
 measured at 44 px; the canvas is `aria-hidden` and a visually hidden `<p>` beside it
