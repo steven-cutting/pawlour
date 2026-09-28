@@ -16,7 +16,7 @@
 --   - The hour each phase begins, the least time she gives an activity before
 --     she answers another tap, and the floor under how many captions the
 --     narrator has.
---   - The Cabin surface and its eight guarantees, and the four platform
+--   - The Cabin surface and its nine guarantees, and the four platform
 --     clauses it fulfils in its own right, restated in the platform's words.
 --
 -- Excludes
@@ -280,15 +280,33 @@ surface Cabin {
         fulfils DirectManipulation
 
     @guarantee EveryItemIsAControl
-        -- Every thing in the room a tap can reach is also a control of its
-        -- own, outside the picture of the room and named in words: each thing
-        -- she can be sent to, each of the two lights, and she herself. A tap
-        -- on the picture reaches nothing those controls do not, so a player
-        -- who cannot see the picture, or cannot aim at it, loses no part of
-        -- the game. The one thing only the picture offers is a tap on bare
-        -- floor, which turns her head toward the spot and changes nothing
-        -- else. It is a gesture of attention rather than an operation, and
-        -- FullyKeyboardOperable owes it no key.
+        -- Every thing in the room a tap can reach is also reached from a
+        -- control of its own, outside the picture of the room and named in
+        -- words: each thing she can be sent to, each of the two lights, and
+        -- she herself. A tap on the picture reaches nothing those controls do
+        -- not, so a player who cannot see the picture, or cannot aim at it,
+        -- loses no part of the game. The one thing only the picture offers is
+        -- a tap on bare floor, which turns her head toward the spot and
+        -- changes nothing else. It is a gesture of attention rather than an
+        -- operation, and FullyKeyboardOperable owes it no key.
+
+    @guarantee HerControlSaysWhatSheIsDoing
+        -- The controls stand together beneath the picture, and the one that
+        -- is hers says what she is doing before it offers anything: in shape
+        -- and in words, what she is doing and, while she walks, where she is
+        -- heading. It is not a second announcement. The sentence beside the
+        -- picture is the one voice that says the room, and her control is
+        -- read when it is reached, not spoken when it changes.
+        --
+        -- The things she can be sent to are behind her control, and the two
+        -- lights behind one of their own. Each opens a dialog that carries
+        -- the platform's Dialog guarantees, and the opener says that it opens
+        -- one. Choosing a thing to send her to closes its dialog at once;
+        -- turning a light on or off leaves its dialog open, so both can be
+        -- set in one visit. Where she is is marked in the dialog by state and
+        -- by the words "she is here", never by fill alone, and each light's
+        -- control carries "on" or "off" in its name and as a visible word, on
+        -- the opener and in the dialog. A tap on her stays one tap away.
 
     @guarantee ATapIsAnInvitation
         -- A tap on a thing asks, and she decides when. She walks over when she

@@ -2,7 +2,7 @@
  * The game's own icons, for the things in the room.
  *
  * The platform's `Icon` map has no bed, bowl or paw, so this game carries the
- * nine it needs the way the platform carries its own: Lucide SVGs restroked to
+ * ten it needs the way the platform carries its own: Lucide SVGs restroked to
  * 1.5 with `stroke="currentColor"`, inlined through `?raw`, covered by the ISC
  * text beside them. They live here rather than under `src/lib/assets/` because
  * the asset manifest walks that directory and has no source form for an ISC
@@ -15,6 +15,7 @@ import camera from './camera.svg?raw';
 import glassWater from './glass-water.svg?raw';
 import hand from './hand.svg?raw';
 import lampFloor from './lamp-floor.svg?raw';
+import pawPrint from './paw-print.svg?raw';
 import sparkles from './sparkles.svg?raw';
 import toyBrick from './toy-brick.svg?raw';
 
@@ -26,6 +27,7 @@ export const ICONS = {
   'glass-water': glassWater,
   hand,
   'lamp-floor': lampFloor,
+  'paw-print': pawPrint,
   sparkles,
   'toy-brick': toyBrick
 } as const;

@@ -1,7 +1,7 @@
 /*
  * What every story at the narrowest supported width shares: the viewport pin
  * and the measurement. `stories/Lockup.stories.svelte` is the shape; this
- * keeps nine component stories from restating it.
+ * keeps ten component stories from restating it.
  *
  * The pin is what makes the measurement evidence: the story run's default
  * viewport is 1200px wide, and without it a play would measure a layout no

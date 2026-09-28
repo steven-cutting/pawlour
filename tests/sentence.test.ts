@@ -5,7 +5,7 @@ import type { Activity, SceneState } from '../src/lib/domain/director';
 import type { Item } from '../src/lib/domain/items';
 import type { Phase } from '../src/lib/domain/phases';
 import type { Weather } from '../src/lib/domain/weather';
-import { describeScene } from '../src/lib/sentence';
+import { describeScene, whatSheIsDoing } from '../src/lib/sentence';
 
 /*
  * The visually hidden sentence beside the canvas: what a reader who cannot see
@@ -85,6 +85,19 @@ describe('the hidden sentence', () => {
   it.each(WEATHERS)('ends with the %s weather as one word', (weather) => {
     const word = weather.charAt(0).toUpperCase() + weather.slice(1);
     expect(describeScene(scene({ weather }))).toMatch(new RegExp(`\\. ${word}\\.$`));
+  });
+
+  it('lends her control the phrase between "Biscuit is" and the phase', () => {
+    expect(whatSheIsDoing(scene({ activity: 'drink', at: 'water' }))).toBe(
+      'drinking at the water bowl'
+    );
+    expect(whatSheIsDoing(scene({ activity: 'walk' }))).toBe('walking');
+    for (const activity of ACTIVITIES) {
+      for (const at of PLACES) {
+        const state = scene({ activity, at });
+        expect(describeScene(state)).toMatch(`Biscuit is ${whatSheIsDoing(state)}. `);
+      }
+    }
   });
 
   it('never speaks in the first person', () => {

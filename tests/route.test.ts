@@ -19,7 +19,8 @@ import Page from '../src/routes/+page.svelte';
 
 /*
  * The page, with every port a fake. CONVENTIONS.md §7 is the layout; the
- * clauses are `cabin.allium`'s (EveryItemIsAControl, ACaptionIsShownAndAnnounced,
+ * clauses are `cabin.allium`'s (EveryItemIsAControl, HerControlSaysWhatSheIsDoing,
+ * ACaptionIsShownAndAnnounced,
  * TimeFollowsTheClockUntilOverridden, SoundNeverStartsUnasked,
  * MotionOffIsAStillDiorama) and the platform's Dialog guarantees.
  *
@@ -33,8 +34,13 @@ import Page from '../src/routes/+page.svelte';
 const NIGHT = new Date(2026, 0, 1, 23, 0).getTime();
 const MORNING = new Date(2026, 0, 1, 9, 0).getTime();
 const AFTERNOON = new Date(2026, 0, 1, 14, 0).getTime();
-// In the morning both practical lights are off, and a light's name says so.
-const ITEMS = ['Bed', 'Chair', 'Water', 'Food', 'Toy', 'Lamp, off', 'Lights, off', 'Pet'];
+// In the morning both practical lights are off, and the lights' opener says so.
+const BAR = [
+  'Biscuit, standing on the floor. Send her somewhere',
+  'Lights: lamp off, lights off',
+  'Pet'
+];
+const THINGS = ['Bed', 'Chair', 'Water', 'Food', 'Toy'];
 
 interface Fakes extends Ports {
   audio: ReturnType<typeof createFakeAudio>;
@@ -71,6 +77,27 @@ async function openSettings(): Promise<HTMLElement> {
   return screen.findByRole('dialog', { name: 'Settings' });
 }
 
+const her = () => screen.getByRole('button', { name: /^Biscuit, / });
+
+async function openSend(): Promise<HTMLElement> {
+  await userEvent.click(her());
+  return screen.findByRole('dialog', { name: 'Send Biscuit to' });
+}
+
+/** Sends her to a thing the way a thumb does: through her control's dialog. */
+async function send(name: string): Promise<void> {
+  const dialog = await openSend();
+  await userEvent.click(within(dialog).getByRole('button', { name }));
+  await waitFor(() => {
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+}
+
+async function openLights(): Promise<HTMLElement> {
+  await userEvent.click(screen.getByRole('button', { name: /^Lights: / }));
+  return screen.findByRole('dialog', { name: 'Lights' });
+}
+
 describe('the page', () => {
   it('carries the heading the platform header draws for this game', () => {
     mount();
@@ -94,11 +121,18 @@ describe('the page', () => {
 });
 
 describe('the controls', () => {
-  it('offer every thing, her, and a photo, by name', () => {
+  it('offer her, the lights, Pet and a photo by name, and the things behind her control', async () => {
     mount();
 
-    for (const name of [...ITEMS, 'Photo']) {
+    for (const name of [...BAR, 'Photo']) {
       expect(button(name)).toBeInTheDocument();
+    }
+    expect(her()).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(button('Lights: lamp off, lights off')).toHaveAttribute('aria-haspopup', 'dialog');
+
+    const dialog = await openSend();
+    for (const name of THINGS) {
+      expect(within(dialog).getByRole('button', { name })).toBeInTheDocument();
     }
   });
 
@@ -131,7 +165,7 @@ describe('the hidden sentence', () => {
   it('follows her', async () => {
     mount({ at: NIGHT });
 
-    await userEvent.click(button('Water'));
+    await send('Water');
 
     await waitFor(() => {
       expect(sentence()).toHaveTextContent('Biscuit is drinking at the water bowl.');
@@ -151,12 +185,16 @@ describe('a tap on her', () => {
     expect(screen.getByRole('img', { name: caption })).toBeInTheDocument();
   });
 
-  it('marks where she is once she has settled somewhere', async () => {
+  it('marks where she is once she has settled somewhere, and her control follows her', async () => {
     mount();
 
-    await userEvent.click(button('Chair'));
+    await send('Chair');
 
-    expect(await screen.findByRole('button', { name: 'Chair, she is here' })).toHaveAttribute(
+    await waitFor(() => {
+      expect(her()).toHaveAccessibleName(/^Biscuit, [a-z ]+ in the chair\. Send her somewhere$/);
+    });
+    const dialog = await openSend();
+    expect(within(dialog).getByRole('button', { name: 'Chair, she is here' })).toHaveAttribute(
       'aria-current',
       'true'
     );
@@ -168,7 +206,7 @@ describe('sound', () => {
     const { ports } = mount();
     const { audio, timer } = ports;
 
-    await userEvent.click(button('Water'));
+    await send('Water');
     await screen.findByText(CAPTIONS.drink[0] ?? '');
     expect(audio.calls).toEqual([]);
 
@@ -181,7 +219,7 @@ describe('sound', () => {
     await userEvent.keyboard('{Escape}');
 
     timer.advance(DURATION.drink * 1_000);
-    await userEvent.click(button('Toy'));
+    await send('Toy');
 
     await waitFor(() => {
       expect(audio.calls).toContain('play:squeak');
@@ -203,7 +241,7 @@ describe('sound', () => {
 
     await userEvent.click(toggle);
     await userEvent.keyboard('{Escape}');
-    await userEvent.click(button('Water'));
+    await send('Water');
     await screen.findByText(CAPTIONS.drink[0] ?? '');
 
     expect(audio.calls.at(-1)).toBe('disable');
@@ -337,21 +375,29 @@ describe('motion', () => {
     // states the contract the page relies on rather than exercising the walk.
     mount({ device: { prefersReducedMotion: false } });
 
-    await userEvent.click(button('Water'));
+    await send('Water');
 
     expect(sentence()).toHaveTextContent('Biscuit is walking to the water bowl.');
+    expect(her()).toHaveAccessibleName('Biscuit, walking to the water bowl. Send her somewhere');
     expect(screen.queryByText(CAPTIONS.drink[0] ?? '')).toBeNull();
   });
 });
 
 describe('the lights', () => {
-  it('name their state, and a tap flips it', async () => {
+  it('name their state on the opener and in the dialog, and a tap flips it', async () => {
     mount();
 
-    await userEvent.click(button('Lamp, off'));
+    const dialog = await openLights();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Lamp, off' }));
 
-    expect(button('Lamp, on')).toHaveTextContent('on');
-    expect(button('Lights, off')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Lamp, on' })).toHaveTextContent('on');
+    expect(within(dialog).getByRole('button', { name: 'Lights, off' })).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(button('Lights: lamp on, lights off')).toHaveTextContent('on');
   });
 });
 
