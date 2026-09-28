@@ -43,7 +43,12 @@ const PLACE: Readonly<Record<Item | 'floor', string>> = {
   floor: 'on the floor'
 };
 
-function activity(state: SceneState): string {
+/**
+ * What she is doing, as the sentence says it between "Biscuit is" and the
+ * phase: "drinking at the water bowl", "walking to the bed", "walking". Her
+ * control reuses it (HerControlSaysWhatSheIsDoing), so the two agree.
+ */
+export function whatSheIsDoing(state: Pick<SceneState, 'activity' | 'at' | 'target'>): string {
   if (state.activity !== 'walk') {
     return `${DOING[state.activity]} ${PLACE[state.at]}`;
   }
@@ -56,5 +61,5 @@ function capitalised(word: string): string {
 }
 
 export function describeScene(state: SceneState): string {
-  return `Biscuit is ${activity(state)}. It is ${state.phase}. ${capitalised(state.weather)}.`;
+  return `Biscuit is ${whatSheIsDoing(state)}. It is ${state.phase}. ${capitalised(state.weather)}.`;
 }

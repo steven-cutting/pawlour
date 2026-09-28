@@ -36,13 +36,12 @@
   import playNight from '$lib/assets/stills/play.night.webp';
   import { GAME_DESCRIPTION, GAME_TITLE } from '$lib/brand';
   import Caption from '$lib/components/Caption.svelte';
-  import ItemControls from '$lib/components/ItemControls.svelte';
+  import ControlBar from '$lib/components/ControlBar.svelte';
   import Lockup from '$lib/components/Lockup.svelte';
   import PhotoButton from '$lib/components/PhotoButton.svelte';
   import SettingsDialog from '$lib/components/SettingsDialog.svelte';
   import TitleCard from '$lib/components/TitleCard.svelte';
   import { cueFor } from '$lib/cues';
-  import { ITEM_CONTROLS } from '$lib/data/controls';
   import { drawsTheSame } from '$lib/drawn';
   import { initialState, step } from '$lib/domain/director';
   import type { Camera, Command, SceneState } from '$lib/domain/director';
@@ -73,7 +72,7 @@
   /*
    * The whole application, assembled: the platform's chrome carrying this
    * game's lockup, the room, the sentence that says it in words, the caption,
-   * the row of controls, the photo, and the settings dialog (CONVENTIONS.md §7).
+   * the control bar, the photo, and the settings dialog (CONVENTIONS.md §7).
    *
    * Everything that differs per visitor — the stored phase and camera, the
    * device's preferences, the clock, the audio — belongs after hydration,
@@ -493,9 +492,9 @@
     <p class="visually-hidden" aria-live="polite">{describeScene(scene)}</p>
     <Caption caption={scene.caption} />
     <div class="controls">
-      <ItemControls items={ITEM_CONTROLS} active={scene.at} lights={scene.lights} onselect={select}>
+      <ControlBar {scene} onselect={select}>
         <PhotoButton oncapture={photograph} {busy} />
-      </ItemControls>
+      </ControlBar>
     </div>
     <Notice message={notice} sequence={failures} />
   </main>
@@ -532,7 +531,7 @@
    * header and the controls, and above 60rem a 9:16 box centred (§7).
    */
   .room {
-    block-size: clamp(16rem, calc(100svh - 24rem), 40rem);
+    block-size: clamp(16rem, calc(100svh - 16rem), 40rem);
   }
 
   @media (min-width: 60rem) {

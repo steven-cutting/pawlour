@@ -36,6 +36,14 @@ hand-back notes and collected by P11:
    reader announces more reliably on change. "Hand-back to the platform: a `pressed?:
    boolean` on `Button`, after which the two buttons should carry `aria-pressed` and keep
    the word."
+4. The control bar (`HerControlSaysWhatSheIsDoing`, the branch that replaced the row
+   of nine with a bar of four): the platform `Button` takes no `aria-haspopup`, so the
+   two openers under the room, her control and the lights, are native buttons in
+   `src/lib/components/ControlBar.svelte` restating the secondary boundary from the
+   tokens. "Hand-back to the platform: a `popup?: 'dialog'` on `Button`, as `IconButton`
+   already has, after which the two openers become platform `Button`s."
+5. The same branch added a tenth Lucide SVG, `paw-print`, for her control. It joins the
+   nine in item 1.
 
 The hub is another repository: reading it is free, editing it is a separately authorised
 action (`CONVENTIONS.md` §10), and its own `AGENTS.md` governs how a change lands there.
@@ -51,13 +59,15 @@ px); this repository's `src/lib/components/TimeControl.svelte`, `ItemControls.sv
 ## Goal
 
 - In the hub, on a branch, with the maintainer's authorisation for each push and pull
-  request: the nine icons added to the platform's map under the platform's names and
+  request: the ten icons added to the platform's map under the platform's names and
   licence record; `SegmentedControl` fitting four choices at the narrowest width with
   every segment a comfortable target, with a story that shows four; `Button` taking
-  `pressed?: boolean` and rendering `aria-pressed` when it is given, with a test.
+  `pressed?: boolean` and rendering `aria-pressed` when it is given, and `popup?: 'dialog'`
+  rendering `aria-haspopup` as `IconButton` does, each with a test.
 - A follow-up ticket here, written by this one (`P21` or the next free id), that takes
   the game to the package version that ships them: `TimeControl` drops its `:global`,
-  `ItemControls` passes `pressed` and keeps the word, `src/lib/icons/` and `GameIcon.svelte`
+  `LightsDialog` passes `pressed` and keeps the word, `ControlBar`'s two openers become
+  platform `Button`s with `popup`, `src/lib/icons/` and `GameIcon.svelte`
   go, and `AGENTS.md`'s dependency deviation list is unchanged because the package pin
   simply moves.
 
@@ -72,9 +82,9 @@ px); this repository's `src/lib/components/TimeControl.svelte`, `ItemControls.sv
 
 | Path | Class | Change |
 | --- | --- | --- |
-| H `src/lib/components/Button.svelte` and its test and story | hub | `pressed` |
+| H `src/lib/components/Button.svelte` and its test and story | hub | `pressed`, `popup` |
 | H `src/lib/components/SegmentedControl.svelte` and its test and story | hub | the four-choice fit |
-| H the icon map and its licence record | hub | nine icons |
+| H the icon map and its licence record | hub | ten icons |
 | H `CHANGELOG.md` | hub | the entry |
 | `tickets/P21-*.md` (next free id) | tickets | new: the game's adoption |
 | `tickets/README.md` | tickets | the row |
@@ -90,7 +100,7 @@ px); this repository's `src/lib/components/TimeControl.svelte`, `ItemControls.sv
 
 ## Acceptance criteria
 
-- [ ] The three changes exist in H with tests and stories, on a branch or merged as the
+- [ ] The four changes exist in H with tests and stories, on a branch or merged as the
       maintainer authorised.
 - [ ] The follow-up ticket exists here with its index row.
 - [ ] Nothing in this repository changed except the two ticket files and the index.
