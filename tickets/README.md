@@ -39,7 +39,7 @@ authoritative; this table is a snapshot.
 | P18 | Stills captured from the runtime at the hearth camera, under the same eighteen names | `P18-stills-from-the-runtime.md` | P11 | P12, P13, P14, P15, P16, P17 | open |
 | P19 | Level the exported cameras: correct the roll in the room's build script and rebuild `cabin.glb` | `P19-level-the-exported-cameras.md` | P11 | P12, P13, P14, P15, P16, P17, P18 | open |
 | P20 | The title card runs on the wipe: one diagonal sweep, in one place, for load-in and photo mode | `P20-the-title-card-runs-on-the-wipe.md` | P11 | P12, P13, P14, P15, P16, P17, P18, P19 | superseded |
-| P21 | Fill the screen: the room takes what the viewport leaves, the camera fits its subject, and landscape gets a layout | `P21-fill-the-screen.md` | P11 | P12, P13, P16, P17, P18, P19 | open |
+| P21 | Fill the screen: the room takes what the viewport leaves, the camera fits its subject, and landscape gets a layout | `P21-fill-the-screen.md` | P11 | P12, P13, P16, P17, P18, P19 | done |
 | P22 | The camera follows her: zones, a covering set of presets, and Auto in Settings | `P22-the-camera-follows-her.md` | P19, P21 | P12, P13, P16, P17, P18 | open |
 
 Cross-repository and design tickets. Each is a recommendation written to be picked up on
@@ -51,6 +51,7 @@ its own; C01 gates the first deploy.
 | C02 | Reconcile the animated model with the studio after v1 | `C02-studio-reconciliation.md` | P13 | open |
 | C03 | Template hand-backs from Pawlour: the specs how-to's module table, the rule-38 gap, and the eslint conflict note | `C03-template-hand-backs.md` | none | open |
 | H01 | Hub hand-backs from Pawlour: item icons upstream, a four-choice `SegmentedControl`, and a pressed state on `Button` | `H01-hub-hand-backs.md` | C01 | open |
+| H02 | Hub hand-back from Pawlour: a vertical `HeaderBar` for a phone held sideways, and a collapse the caller can ask for | `H02-header-bar-orientation.md` | C01 | open |
 
 ## Dependency graph
 

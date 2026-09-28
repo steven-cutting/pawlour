@@ -215,7 +215,6 @@
     position: relative;
     inline-size: 100%;
     block-size: 100%;
-    min-block-size: 12rem;
     overflow: hidden;
     background: var(--background);
   }

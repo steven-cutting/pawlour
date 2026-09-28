@@ -1,7 +1,7 @@
 ---
 id: P21
 title: "Fill the screen: the room takes what the viewport leaves, the camera fits its subject, and landscape gets a layout"
-status: open
+status: done
 depends_on: [P11]
 parallel_with: [P12, P13, P16, P17, P18, P19]
 branch: ticket/p21-fill-the-screen
@@ -201,26 +201,26 @@ each decision), `docs/specs/`, `vite.config.ts`, `Justfile`.
 
 ## Acceptance criteria
 
-- [ ] The frame-set test fails against the shipped `camera.ts` and passes after: for
+- [x] The frame-set test fails against the shipped `camera.ts` and passes after: for
       each preset at the four sizes, every framed point inside NDC at the floor and at
       0.55 up, field of view, direction and horizon unchanged, position on the authored
       axis, and the extreme point at 0.96 ± 1e-3 whenever retreated.
-- [ ] Hearth's retreat at 390×844 under 9 m (was 15.6); the numbers in the hand-back.
-- [ ] `stories/Stage.stories.svelte` in Chromium: at 390×844 the room is the viewport's
+- [x] Hearth's retreat at 390×844 under 9 m (was 15.6); the numbers in the hand-back.
+- [x] `stories/Stage.stories.svelte` in Chromium: at 390×844 the room is the viewport's
       width and at least 60% of its height; at 844×390 at least 85% of the height and
       60% of the width with the aside to its right; at 320×568 nothing scrolls sideways
       and every control is 44 px both ways; at 1200×844 the room is the viewport's width
       while the `h1` and the control bar sit within the shell; the room's box at 390×844
       is identical with and without a caption.
-- [ ] `tests/route.test.ts` unchanged and green: one `h1` named `biscuit games /
+- [x] `tests/route.test.ts` unchanged and green: one `h1` named `biscuit games /
       pawlour`, a `main` landmark, Settings opens the dialog.
-- [ ] `grep -n 'ratio, 2)' src/routes/scene/scene.ts` prints nothing and
+- [x] `grep -n 'ratio, 2)' src/routes/scene/scene.ts` prints nothing and
       `grep -c 'MAX_PIXEL_RATIO' src/routes/scene/scene.ts` is at least 4: the
       declaration and its three uses.
-- [ ] Decision 0016 exists, is in `docs/manifest.yml` and `docs/decisions/README.md`.
-- [ ] `grep -c 'corrected by P21' tickets/CONVENTIONS.md` is at least 3.
-- [ ] Coverage over `src/lib/**` at the floor with `Stage.svelte` measured.
-- [ ] `just check` green.
+- [x] Decision 0016 exists, is in `docs/manifest.yml` and `docs/decisions/README.md`.
+- [x] `grep -c 'corrected by P21' tickets/CONVENTIONS.md` is at least 3.
+- [x] Coverage over `src/lib/**` at the floor with `Stage.svelte` measured.
+- [x] `just check` green.
 
 ## Verification
 
@@ -243,9 +243,120 @@ listed in the hand-back.
 
 ## Hand-back notes
 
-Filled in by the agent that executes this ticket: the retreats per preset and size, the
-header choice and why, whether `.scene`'s minimum height moved, the DPR outcome, and
-the capture paths.
+Executed on 2026-09-28 on the branch `fill-screen-and-auto-camera-shift` (not the
+`branch:` field's name: the worktree was created on that branch with P21 and P22 filed on
+it).
+
+**Red, the camera.** The frame-set test run against the shipped `frameCamera` (with the
+table added and the rule unchanged) failed all three presets at 844×390, the first size:
+hearth `844x390: expected 1.047061793427362 to be less than 1` (`spot.chair` at x = 1.05;
+`item.toy.approach` at y = −1.71 as the ticket says), window `expected 1.651556644324865`,
+chair `expected 1.1764993539196225` (`spot.chair` at 0.55 up, the cut head). The portrait
+sizes come after it in the loop; a probe of the shipped rule put their extreme points
+between 0.04 and 0.59, far inside 0.96, so they failed tightness too. Green: 13 of 13.
+
+**Retreats**, measured by the probe (`ai_tmp/fill/retreats.txt`), all equal to the
+design-time figures to two decimals:
+
+| Preset | 844×390 | 1200×844 | 390×844 | 320×568 |
+| --- | --- | --- | --- | --- |
+| hearth | 1.27 m | 1.50 m | 8.82 m (was 15.57) | 6.87 m (was 12.51) |
+| window | 1.25 m | 1.25 m | 3.66 m (was 23.48) | 2.70 m (was 19.11) |
+| chair | 0.22 m | 0.22 m | 0.22 m (was 30.70) | 0.22 m (was 25.13) |
+
+The floor point of each framed node is its own world position (`spot.chair` sits at
+y = 0.42), and the second point is that plus 0.55; flattening to y = 0 would not have
+reproduced the design figures.
+
+**Red, the layout.** `tests/stage.test.ts` failed on the missing import; the story run's
+dependency scan failed on it too. Green: 2 of 2, and 6 `Stage` stories (the sixth, at 320×320, from the review below). Screenshots of
+the built workshop then showed the landscape aside squeezing Pet and Photo past their
+content inside a 200 px column, which the 44 px check did not see because the column's
+scroll box hid the overflow. The `Stage` stories now also assert every button whole
+(`scrollWidth` within `clientWidth`) and on screen; that failed at 844×390, and
+`ControlBar.svelte` gained its column variant: a container query on a new wrapper turns
+the bar two by two below 17rem (the row needs about 266 px: two 44 px chips, Pet 75,
+Photo 91, three gaps). A story, "In a narrow column", holds it at 12.5rem; no test
+change, because jsdom cannot see a container query.
+
+**Measured in Chromium** (the `Stage` stories, and the built app under `just preview`):
+
+| Viewport | Room box | Share |
+| --- | --- | --- |
+| 390×844 | 390×647 at y = 56 | full width, 77% of the height |
+| 844×390 | 591×390 at x = 53 | 70% of the width, full height; aside 200 px on the right |
+| 320×568 | 320×371 | full width, 65% of the height; no sideways scroll |
+| 1200×844 | 1200×647 | full width; the `h1` at x = 344 to 537 inside the 544 px shell |
+
+The captioned story measures the same box with and without a caption.
+
+**Header choice: vertical on the left.** `HeaderBar` stands up with two reach-ins scoped
+to the landscape query in `Stage.svelte` (the header's direction with the rule moved to
+the inline end, and `.words` out of the layout with `HeaderBar`'s own collapse
+declarations, so the `h1` keeps its name). It costs 53 px of width and leaves the room's
+picture untouched; an overlay would have put the lockup on a band over the room's top,
+owing a contrast judgement no test can make. `tickets/H02-header-bar-orientation.md`
+asks the platform for `orientation` and `collapsed`.
+
+**`.scene`'s minimum height moved into `Stage`.** At the pinned sizes it never
+mattered (the smallest room box is 371 px at 320×568), but Codex's adversarial review
+of the branch found that it fights the grid on a short viewport: at 320×320, a small
+window or a zoomed one, the header (56 px) and the aside's reserve (141 px) left the
+room 123 px while `.scene` held 12rem, so the canvas ran 69 px under the caption. A
+`Stage` story on the real `SceneCanvas` at 320×320 with a caption up failed on it
+(`expected 178 to be greater than or equal to 248`); silent, the aside's bottom-up stack
+hid the overlap. The floor is now `Stage`'s, `--room-min: 12rem` on the room's row in
+both layouts, so a viewport shorter than the chrome and the room scrolls down, never
+sideways; `SceneCanvas.svelte` drops its own `min-block-size` so the figure has one
+owner. `Stage`'s room is `contain: size`, so the canvas's drawing buffer never sizes
+the grid.
+
+**DPR: held at 2.** `MAX_PIXEL_RATIO = 2` in `scene.ts` replaces the three literals. At
+390×844, hearth, evening, the capture at `deviceScaleFactor` 3 (a 780×1294 buffer
+upscaled) and at 2 read the same on a 3× crop of the fireplace and Biscuit
+(`ai_tmp/fill/crop-dpr2.png`, `crop-dpr3.png`): flat cel bands and ink outlines, nothing
+soft. `PRD.md`, `budget.md` and `rendering.md`'s cap are unchanged, and no P23 is filed.
+
+**Captures**, all under `ai_tmp/fill/`: `app-{hearth,window,chair}-{390x844,844x390,1200x844}.png`,
+`app-hearth-390x844-dpr2.png`, `app-hearth-390x844-dpr3.png`, the two crops, and the
+`Stage` stories at each pin in both themes, `stage-*.png`. The probe scripts are there as
+`.txt`.
+
+**Outside the file table.** `tickets/README.md` gained H02's index row, which that
+page's own rule asks of every `H` ticket when it is written, and P21's row there now says
+`done` to match this file. Nothing else outside the
+table changed; `tests/route.test.ts` is unchanged and green.
+
+**For whoever merges second of P14, P15 and this ticket.** This ticket edited three rows
+of `docs/reference/testing.md` (`scene-assets.test.ts`, a new `stage.test.ts`, and
+`stories/`) and none of `docs/reference/budget.md`.
+
+**Verification**, run on 2026-09-28:
+
+```text
+just frontend-unit        Test Files 31 passed (31), Tests 397 passed (397)
+just storybook-test       Test Files 14 passed (14), Tests 51 passed (51)
+grep -n 'ratio, 2)' src/routes/scene/scene.ts | wc -l          0
+grep -c 'MAX_PIXEL_RATIO' src/routes/scene/scene.ts            4
+grep -c 'corrected by P21' tickets/CONVENTIONS.md              3
+grep -c '0016' docs/manifest.yml docs/decisions/README.md      1 and 1
+git diff main --stat -- AGENTS.md docs/README.md docs/specs/   (nothing)
+just check-docs           Validated 54 pages and 55 canonical topics.
+just check                All checks passed and the worktree is unchanged.
+```
+
+Coverage over `src/lib/**`: 100% statements, 97.4% branches, 100% functions, 100% lines;
+`Stage.svelte` is measured at 100%.
+
+**Open points, answered or carried.** The ceiling plane: in portrait the hearth camera
+now ends at y = 3.36 m, above the 2.4 m plane, and the captures show black above the
+wall tops rather than the plane's edge; left to P22 as the PRD's open question says.
+The frame sets are a table in `camera.ts`, for P22 to replace. The header is vertical,
+with H02 written. Desktop at 2:1 or wider: at 1200×844 the room box is 1200×647 and the
+hearth view shows the side walls whole; wider windows are P22's guarantee. P18: its
+stills at the hearth camera were framed by the old retreat and are retaken through this
+fit whenever it runs. Pushing and the pull request were not done; each is a separately
+authorised action.
 
 ## Open points
 

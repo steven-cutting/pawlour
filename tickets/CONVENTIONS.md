@@ -75,7 +75,9 @@ Decisions, taken on 2026-09-25:
 2. **A Biscuit Games game**, rendered from T at `v2.1.0`, consuming
    `@steven-cutting/biscuit-games` at exactly `1.1.0` (T's `hub_package_version`). The
    platform's dark shell, header, lockup, type and controls surround the scene; the warm
-   room exists inside the play surface and nowhere else. Because H `docs/design/direction.md`
+   room exists inside the play surface and nowhere else. The header and the controls
+   stay in the shell's column, and the room breaks out of it to the viewport's width, its
+   edge where the warmth stops (decision 0016; corrected by P21). Because H `docs/design/direction.md`
    and `docs/design/character.md` forbid, as written, most of what this game is (§1 fact
    12), **ticket C01 writes a hub decision record and narrows both pages**, and nothing
    deploys before it lands (P12 depends on it). The game is built regardless.
@@ -834,10 +836,13 @@ which:
   night), a `PointLight` at `light.fire` (weak by morning, medium by evening, the key at
   night; flicker is `fire.ts`), a `PointLight` at `light.lamp` and small ones at
   `light.strings.*` (on by the director's light state).
-- Places the camera at the active preset (`camera.ts`), portrait framing; on resize keeps
-  all four floor corners in view in portrait by retreating along the camera's own axis,
-  never fov, and levels the horizon, because the exported presets roll (P07a hand-back;
-  P19 corrects the export); DPR capped at 2 (corrected by P11).
+- Places the camera at the active preset (`camera.ts`); on resize fits the preset's frame
+  set, the places she settles that it looks at (`framedFor`: hearth all six, window
+  `spot.chair`, `item.toy.approach` and `nav.0`, chair `spot.chair`), each at the floor
+  and at 0.55 up inside a 0.96 margin, by the least retreat along the camera's own axis
+  in either orientation, never fov, and levels the horizon, because the exported presets
+  roll (P07a hand-back; P19 corrects the export); DPR capped at 2, `MAX_PIXEL_RATIO` in
+  `scene.ts` (corrected by P11; corrected by P21).
 - Applies a `SceneState` (§6.1) each time the page hands it one: her position and facing
   (interpolated along the path by `walk.ts`, §5.1's speed, turning in place before
   setting off), her clip (`motion.ts` crossfades on the `AnimationMixer` over 250 ms;
@@ -1003,8 +1008,10 @@ twelve words, dry. The seed set (the executing agent writes the rest in this reg
 `src/routes/+page.svelte` replaces T's seed: `<svelte:head>` from `brand.ts`; `HeaderBar`
 with the `Lockup` and an `IconButton` "Settings" opening `SettingsDialog` (a platform
 `Modal` holding `TimeControl`, `SoundControl`, `CameraControl`); `<main>` holding
-`SceneCanvas` (full width; height the viewport minus header and controls on a phone, a
-9:16 box centred above 60rem), `Caption` (one platform `Notice` fed by `state.caption`;
+`SceneCanvas` (laid out by `Stage.svelte`: the viewport's width outside the shell and
+the height the header and the controls leave at every width; on a phone held sideways
+the header on the left, the room at the full height and the caption, the controls and
+the notice in a column on its right; decision 0016; corrected by P21), `Caption` (one platform `Notice` fed by `state.caption`;
 it is itself `role="status"` and re-announces on each new `sequence`, and an `Announcer`
 beside it would be heard twice; P08; corrected by P11), and `ItemControls` (a wrapping
 grid of platform `Button`s, three per row at 320 px, each an icon of the game's own, nine

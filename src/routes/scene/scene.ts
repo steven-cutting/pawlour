@@ -21,7 +21,7 @@ import { requireBiscuit } from './biscuit';
 import type { Biscuit, ClipTable } from './biscuit';
 import { isMesh, requireCabin } from './cabin';
 import type { Cabin } from './cabin';
-import { frameCamera } from './camera';
+import { frameCamera, framedFor } from './camera';
 import type { Size } from './camera';
 import { hitAt } from './hit';
 import type { Hit } from './hit';
@@ -32,6 +32,12 @@ import { createFrameLoop, createMotion } from './motion';
 import { createIdle } from './idle';
 import { createFire } from './fire';
 import { createWeather } from './weather';
+
+/**
+ * The device pixel ratio the renderer draws at, at most (PRD.md, the budget
+ * row; `docs/reference/budget.md`). P21 held it at 2 through the bigger room.
+ */
+export const MAX_PIXEL_RATIO = 2;
 
 export interface SceneAssets {
   biscuit: string;
@@ -137,7 +143,7 @@ export function createScene(
     const next = rendererFactory(canvas);
     next.outputColorSpace = SRGBColorSpace;
     next.toneMapping = NoToneMapping;
-    next.setPixelRatio(Math.min(ratio, 2));
+    next.setPixelRatio(Math.min(ratio, MAX_PIXEL_RATIO));
     next.setSize(Math.max(1, size.width), Math.max(1, size.height), false);
     // getExtension returns null once a context is lost; retain the live handle.
     contextRecovery = next.getContext().getExtension('WEBGL_lose_context');
@@ -208,7 +214,7 @@ export function createScene(
   };
   const update = (): void => {
     if (!state || !cabin || !biscuit || !lights || !contact) return;
-    frameCamera(camera, cabin.cameras[state.camera], size);
+    frameCamera(camera, cabin.cameras[state.camera], size, framedFor(cabin, state.camera));
     idle?.clear();
     if (animations) {
       if (!live) {
@@ -400,7 +406,7 @@ export function createScene(
   };
   const contextRestored = (): void => {
     if (disposed) return;
-    renderer.setPixelRatio(Math.min(ratio, 2));
+    renderer.setPixelRatio(Math.min(ratio, MAX_PIXEL_RATIO));
     renderer.setSize(Math.max(1, size.width), Math.max(1, size.height), false);
     // three.js reinitializes its caches before this listener. Recompile the
     // custom materials and redraw the current state before removing the still.
@@ -423,7 +429,7 @@ export function createScene(
       size = next;
       ratio = pixelRatio;
       if (lost) return;
-      renderer.setPixelRatio(Math.min(ratio, 2));
+      renderer.setPixelRatio(Math.min(ratio, MAX_PIXEL_RATIO));
       renderer.setSize(Math.max(1, size.width), Math.max(1, size.height), false);
       update();
       if (draw() && canAnimate()) loop.start();
