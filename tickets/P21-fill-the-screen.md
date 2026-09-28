@@ -314,7 +314,8 @@ soft. `PRD.md`, `budget.md` and `rendering.md`'s cap are unchanged, and no P23 i
 `.txt`.
 
 **Outside the file table.** `tickets/README.md` gained H02's index row, which that
-page's own rule asks of every `H` ticket when it is written. Nothing else outside the
+page's own rule asks of every `H` ticket when it is written, and P21's row there now says
+`done` to match this file. Nothing else outside the
 table changed; `tests/route.test.ts` is unchanged and green.
 
 **For whoever merges second of P14, P15 and this ticket.** This ticket edited three rows
