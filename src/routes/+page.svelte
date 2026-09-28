@@ -40,6 +40,7 @@
   import Lockup from '$lib/components/Lockup.svelte';
   import PhotoButton from '$lib/components/PhotoButton.svelte';
   import SettingsDialog from '$lib/components/SettingsDialog.svelte';
+  import Stage from '$lib/components/Stage.svelte';
   import TitleCard from '$lib/components/TitleCard.svelte';
   // The photo frame's register: `photograph` reads these tokens back to paint the PNG.
   import '$lib/components/overlay.css';
@@ -74,7 +75,9 @@
   /*
    * The whole application, assembled: the platform's chrome carrying this
    * game's lockup, the room, the sentence that says it in words, the caption,
-   * the control bar, the photo, and the settings dialog (CONVENTIONS.md §7).
+   * the control bar, the photo, and the settings dialog (CONVENTIONS.md §7),
+   * laid out by `Stage`, which puts the chrome in the shell and the room out
+   * of it (decision 0016).
    *
    * Everything that differs per visitor — the stored phase and camera, the
    * device's preferences, the clock, the audio — belongs after hydration,
@@ -90,9 +93,8 @@
    * hands back a tap, an `arrived` when a walk reaches its target (P07b), and
    * whether it could be drawn at all.
    *
-   * Every selector below names an element or a class this markup carries,
-   * because `svelte-check --fail-on-warnings` turns an unused selector into a
-   * failed gate.
+   * The page has no styles of its own: the layout is `Stage`'s, and the
+   * canvas sizes itself to the box `Stage` gives it.
    */
 
   // eslint-disable-next-line svelte/valid-prop-names-in-kit-pages -- the route test injects the fakes here; SvelteKit passes nothing, so the real ports are built in onMount
@@ -471,66 +473,67 @@
   <meta name="description" content={GAME_DESCRIPTION} />
 </svelte:head>
 
-<div class="shell">
-  <HeaderBar actions={ACTIONS}>
-    {#snippet brand()}
-      <Lockup />
-    {/snippet}
-  </HeaderBar>
+<Stage>
+  {#snippet header()}
+    <HeaderBar actions={ACTIONS}>
+      {#snippet brand()}
+        <Lockup />
+      {/snippet}
+    </HeaderBar>
+  {/snippet}
 
-  <main>
-    <div class="room">
-      <SceneCanvas
-        bind:this={canvas}
-        state={picture}
-        animations={motion}
-        {frames}
-        {random}
-        assets={ASSETS}
-        onProgress={(fraction: number) => {
-          progress = fraction;
-          // The card is for the first load only: a restore after a context
-          // loss reloads and reports progress again, but never `onReady`.
-          if (card === 'hidden' && !everReady) card = 'loading';
-        }}
-        onReady={() => {
-          debug?.markFirstFrame();
-          progress = 1;
-          everReady = true;
-          settled = true;
-          settle();
-        }}
-        onStill={() => {
-          // The canvas mounts before the page, so this only notes it; the hold decides.
-          settled = true;
-          settle();
-        }}
-        onError={() => {
-          // AContextLossLeavesAStill: the canvas shows its still and its retry
-          // button; the card would sit over both, so it goes, and the notice
-          // says why (AChangeNobodyIsLookingAtIsAnnounced).
-          if (card === 'loading') card = 'hidden';
-          failures += 1;
-          notice = 'The room could not be drawn.';
-        }}
-        onTap={tapped}
-        onArrived={() => {
-          dispatch({ kind: 'arrived' });
-        }}
-        onContextLost={() => undefined}
-      />
-    </div>
+  {#snippet room()}
+    <SceneCanvas
+      bind:this={canvas}
+      state={picture}
+      animations={motion}
+      {frames}
+      {random}
+      assets={ASSETS}
+      onProgress={(fraction: number) => {
+        progress = fraction;
+        // The card is for the first load only: a restore after a context
+        // loss reloads and reports progress again, but never `onReady`.
+        if (card === 'hidden' && !everReady) card = 'loading';
+      }}
+      onReady={() => {
+        debug?.markFirstFrame();
+        progress = 1;
+        everReady = true;
+        settled = true;
+        settle();
+      }}
+      onStill={() => {
+        // The canvas mounts before the page, so this only notes it; the hold decides.
+        settled = true;
+        settle();
+      }}
+      onError={() => {
+        // AContextLossLeavesAStill: the canvas shows its still and its retry
+        // button; the card would sit over both, so it goes, and the notice
+        // says why (AChangeNobodyIsLookingAtIsAnnounced).
+        if (card === 'loading') card = 'hidden';
+        failures += 1;
+        notice = 'The room could not be drawn.';
+      }}
+      onTap={tapped}
+      onArrived={() => {
+        dispatch({ kind: 'arrived' });
+      }}
+      onContextLost={() => undefined}
+    />
     <!-- The canvas is aria-hidden; this is the room in words, and it changes with it. -->
     <p class="visually-hidden" aria-live="polite">{describeScene(scene)}</p>
+  {/snippet}
+
+  {#snippet aside()}
     <Caption caption={scene.caption} />
-    <div class="controls">
-      <ControlBar {scene} onselect={select}>
-        <PhotoButton oncapture={photograph} {busy} />
-      </ControlBar>
-    </div>
+    <ControlBar {scene} onselect={select}>
+      <PhotoButton oncapture={photograph} {busy} />
+    </ControlBar>
     <Notice message={notice} sequence={failures} />
-  </main>
-</div>
+  {/snippet}
+</Stage>
 
 <TitleCard mode={card} {progress} caption={scene.caption?.text} phase={scene.phase} />
 <SettingsDialog
@@ -546,36 +549,3 @@
   camera={scene.camera}
   oncamera={chooseCamera}
 />
-
-<style>
-  .shell {
-    max-inline-size: var(--shell-max);
-    margin-inline: auto;
-    padding: 0 var(--shell-pad) var(--s-11);
-  }
-
-  main {
-    padding-block-start: var(--s-6);
-  }
-
-  /*
-   * Full width; on a phone the height is what the viewport leaves after the
-   * header and the controls, and above 60rem a 9:16 box centred (§7).
-   */
-  .room {
-    block-size: clamp(16rem, calc(100svh - 16rem), 40rem);
-  }
-
-  @media (min-width: 60rem) {
-    .room {
-      block-size: auto;
-      aspect-ratio: 9 / 16;
-      max-inline-size: 22.5rem;
-      margin-inline: auto;
-    }
-  }
-
-  .controls {
-    margin-block-start: var(--s-6);
-  }
-</style>

@@ -27,7 +27,7 @@ becomes the other.
 | `biscuit.ts` | Refuses a model missing a bone of the rig, scales her to 0.55 units, stands her on the floor, adds her outlines and places her at the thing she is at. |
 | `materials.ts` | The toon ramps, the ink, the contact disc, the still fire and the vignette. |
 | `lighting.ts` | The three phase rigs and the window glass tint. |
-| `camera.ts` | Places the camera at the preset and fits the floor into a portrait screen. |
+| `camera.ts` | Places the camera at the preset and fits the places she settles that the preset looks at, in either orientation. |
 | `hit.ts` | Turns a tap into an item, Biscuit or a floor point. |
 | `still.ts` | Names the still for a state and draws a single frame. |
 
@@ -61,9 +61,22 @@ Each phase is a fixed rig built once, and a phase change switches rigs:
 
 The floor lamp and each string light are small point lights, shown when the director's
 `lights` say so. The camera sits at the preset named by the state's `camera`, looking
-along the preset's −Z with its vertical field of view and the horizon held level. On a
-portrait screen it backs away along its own axis until all four corners of the floor are
-in view; it never changes the field of view. The device pixel ratio is capped at 2.
+along the preset's −Z with its vertical field of view and the horizon held level.
+
+Each preset frames its own subject: the places she settles that it looks at. She settles
+at six points, the spot of each of the five things she walks to and `nav.0`, where she
+opens. The hearth frames all six; the window frames the chair, the toy and `nav.0`; the
+chair frames only itself. In either orientation the camera backs away along its own axis
+by the least distance that puts every framed point, at the floor and at her height of
+0.55, inside 96% of the frame, and it never moves forward of the preset or changes the
+field of view. She can walk out of the window's and the chair's frames while they are
+chosen. The room's box is as big as the page can make it
+([decision 0016](../decisions/0016-the-room-breaks-out-of-the-shell.md)), so the camera
+retreats far less than it once did: from the hearth, 8.8 m on a phone held upright
+rather than 15.6 m.
+
+The device pixel ratio is capped at 2, one constant in `scene.ts`; a check in Chromium
+at a ratio of 3 on the bigger room found nothing sharper worth the cost.
 
 ## When it draws
 

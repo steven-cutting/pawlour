@@ -32,6 +32,11 @@
    * the secondary button's boundary from the same tokens; the minimum size,
    * the focus ring and the pressed ring are the platform stylesheet's and
    * reach a bare button unasked (FocusIsVisibleWhereverItLands).
+   *
+   * In a column too narrow for the four in a row, the right-hand stack a
+   * phone held sideways gets (`Stage.svelte`), the bar is two by two. The
+   * bar asks its own width rather than the viewport's, through a container
+   * query on the wrapper, so it needs nothing from the page to know.
    */
   let {
     scene,
@@ -58,51 +63,53 @@
   );
 </script>
 
-<div class="bar">
-  <button
-    type="button"
-    class="chip"
-    aria-haspopup="dialog"
-    onclick={() => {
-      sendOpen = true;
-    }}
-  >
-    <span class="visually-hidden">{describeDoing(scene)}</span>
-    <GameIcon name="paw-print" />
-    {#if doing.kind === 'at'}
-      <GameIcon name={iconFor(doing.item)} size={16} />
-    {:else if doing.kind === 'pet'}
-      <GameIcon name="hand" size={16} />
-    {:else if doing.kind === 'heading'}
-      <Icon name="arrow-right" size={16} />
-      <GameIcon name={iconFor(doing.item)} size={16} />
-    {/if}
-  </button>
-  <button
-    type="button"
-    class="chip"
-    aria-haspopup="dialog"
-    onclick={() => {
-      lightsOpen = true;
-    }}
-  >
-    <span class="visually-hidden">{lightsName}</span>
-    {#each LIGHT_CONTROLS as light (light.id)}
-      <span class="light" aria-hidden="true">
-        <GameIcon name={light.icon} size={16} />
-        <span class="state">{lit(light.id)}</span>
-      </span>
-    {/each}
-  </button>
-  <Button
-    onclick={() => {
-      onselect('biscuit');
-    }}
-  >
-    <GameIcon name="hand" />
-    Pet
-  </Button>
-  {@render children?.()}
+<div class="fit">
+  <div class="bar">
+    <button
+      type="button"
+      class="chip"
+      aria-haspopup="dialog"
+      onclick={() => {
+        sendOpen = true;
+      }}
+    >
+      <span class="visually-hidden">{describeDoing(scene)}</span>
+      <GameIcon name="paw-print" />
+      {#if doing.kind === 'at'}
+        <GameIcon name={iconFor(doing.item)} size={16} />
+      {:else if doing.kind === 'pet'}
+        <GameIcon name="hand" size={16} />
+      {:else if doing.kind === 'heading'}
+        <Icon name="arrow-right" size={16} />
+        <GameIcon name={iconFor(doing.item)} size={16} />
+      {/if}
+    </button>
+    <button
+      type="button"
+      class="chip"
+      aria-haspopup="dialog"
+      onclick={() => {
+        lightsOpen = true;
+      }}
+    >
+      <span class="visually-hidden">{lightsName}</span>
+      {#each LIGHT_CONTROLS as light (light.id)}
+        <span class="light" aria-hidden="true">
+          <GameIcon name={light.icon} size={16} />
+          <span class="state">{lit(light.id)}</span>
+        </span>
+      {/each}
+    </button>
+    <Button
+      onclick={() => {
+        onselect('biscuit');
+      }}
+    >
+      <GameIcon name="hand" />
+      Pet
+    </Button>
+    {@render children?.()}
+  </div>
 </div>
 
 {#if sendOpen}
@@ -127,10 +134,26 @@
 {/if}
 
 <style>
+  .fit {
+    container-type: inline-size;
+  }
+
   .bar {
     display: flex;
     gap: var(--s-2);
     align-items: stretch;
+  }
+
+  /*
+   * The row needs about 266px at its narrowest (P21, measured in Chromium):
+   * two 44px chips, Pet at 75 and Photo at 91, and three gaps. Below 17rem
+   * the four go two by two, which needs about 170px.
+   */
+  @container (width < 17rem) {
+    .bar {
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+    }
   }
 
   .bar > :global(*) {

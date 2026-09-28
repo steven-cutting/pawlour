@@ -61,6 +61,7 @@
     {"path": "decisions/0012-served-assets-are-blobs-and-blends-are-lfs.md", "title": "Decision 0012: Served assets are blobs, and blends are LFS", "kind": "decision", "audience": ["contributor", "maintainer", "operator", "agent"], "canonical_for": ["decision_large_file_storage"], "requires": []},
     {"path": "decisions/0013-the-canvas-lives-outside-the-coverage-glob.md", "title": "Decision 0013: The canvas lives outside the coverage glob", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_canvas_placement"], "requires": []},
     {"path": "decisions/0014-this-repository-owns-its-animated-model.md", "title": "Decision 0014: This repository owns its animated model", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_model_ownership"], "requires": []},
-    {"path": "decisions/0015-three-js-is-the-renderer.md", "title": "Decision 0015: three.js is the renderer", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_renderer"], "requires": []}
+    {"path": "decisions/0015-three-js-is-the-renderer.md", "title": "Decision 0015: three.js is the renderer", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_renderer"], "requires": []},
+    {"path": "decisions/0016-the-room-breaks-out-of-the-shell.md", "title": "Decision 0016: The room breaks out of the shell", "kind": "decision", "audience": ["contributor", "maintainer", "agent"], "canonical_for": ["decision_room_layout"], "requires": []}
   ]
 }

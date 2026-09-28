@@ -51,6 +51,7 @@ its own; C01 gates the first deploy.
 | C02 | Reconcile the animated model with the studio after v1 | `C02-studio-reconciliation.md` | P13 | open |
 | C03 | Template hand-backs from Pawlour: the specs how-to's module table, the rule-38 gap, and the eslint conflict note | `C03-template-hand-backs.md` | none | open |
 | H01 | Hub hand-backs from Pawlour: item icons upstream, a four-choice `SegmentedControl`, and a pressed state on `Button` | `H01-hub-hand-backs.md` | C01 | open |
+| H02 | Hub hand-back from Pawlour: a vertical `HeaderBar` for a phone held sideways, and a collapse the caller can ask for | `H02-header-bar-orientation.md` | C01 | open |
 
 ## Dependency graph
 

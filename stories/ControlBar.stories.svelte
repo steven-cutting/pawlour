@@ -168,3 +168,33 @@
     </div>
   {/snippet}
 </Story>
+
+<Story
+  name="In a narrow column"
+  args={{ scene: scene({ activity: 'walk', target: WALKING_TO_WATER }) }}
+  parameters={NARROWEST_PARAMETERS}
+  play={async ({ canvasElement }) => {
+    // The right-hand stack of a phone held sideways (`Stage`): too narrow for
+    // four in a row, so two by two, each control whole and 44px both ways.
+    await expectNothingScrollsSideways(canvasElement);
+    await expectComfortableTargets(canvasElement);
+    const buttons = within(canvasElement).getAllByRole('button');
+    for (const button of buttons)
+      await expect(button.scrollWidth).toBeLessThanOrEqual(button.clientWidth);
+    const [her, lights, pet, photo] = buttons.map((button) => button.getBoundingClientRect());
+    await expect(lights?.top).toBe(her?.top);
+    await expect(photo?.top).toBe(pet?.top);
+    await expect(pet?.top).toBeGreaterThan(her?.bottom ?? Infinity);
+  }}
+>
+  {#snippet template(args)}
+    <div
+      data-frame
+      style="inline-size: 12.5rem; padding-inline: var(--s-4); box-sizing: border-box"
+    >
+      <ControlBar {...args}>
+        <PhotoButton oncapture={fn(async () => {})} busy={false} />
+      </ControlBar>
+    </div>
+  {/snippet}
+</Story>
