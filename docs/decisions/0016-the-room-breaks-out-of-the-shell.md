@@ -32,7 +32,9 @@ and its root: a grid the height of the viewport with the header, then `main`, wh
 holds the room and, under it, the caption, the controls and the notice. The header and
 that aside each sit in a shell of their own, `--shell-max` wide with `--shell-pad`
 gutters. The room sits in no shell, so it is the viewport's width at every size and
-takes the height the header and the aside leave. The aside reserves room for two lines
+takes the height the header and the aside leave, but never less than 12rem: a viewport
+too short for that and the chrome, a small window or a zoomed one, scrolls down rather
+than run the scene under the caption. The aside reserves room for two lines
 of caption, so the room's box, and with it the camera's framing, does not move when a
 caption appears.
 

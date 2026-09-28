@@ -22,7 +22,8 @@
    * stacks from the bottom, so a caption fills the reserve rather than
    * pushing the room. `contain: size` keeps the canvas's own drawing-buffer
    * size out of the grid's arithmetic, so the room is sized by the page and
-   * never by what it draws.
+   * never by what it draws; the least it is sized to is `--room-min`, and a
+   * viewport too short for that and the chrome scrolls down instead.
    *
    * On a phone held sideways (landscape, at most 30rem tall) the grid turns
    * into columns: the header on the left, the room in the middle at the full
@@ -65,6 +66,13 @@
       2 * 1.5 * var(--fs-small) + 2 * var(--s-2) + 2 * var(--rule-w) + 2 * var(--s-6)
     );
 
+    /*
+     * The least room worth drawing. Below it the page scrolls down rather
+     * than the scene running under the caption and the controls; nothing
+     * scrolls sideways. The canvas fills whatever box this leaves it.
+     */
+    --room-min: 12rem;
+
     display: grid;
     grid-template: auto minmax(0, 1fr) / minmax(0, 1fr);
     min-block-size: 100svh;
@@ -81,7 +89,7 @@
 
   main {
     display: grid;
-    grid-template: minmax(0, 1fr) auto / minmax(0, 1fr);
+    grid-template: minmax(var(--room-min), 1fr) auto / minmax(0, 1fr);
     min-block-size: 0;
   }
 
@@ -102,7 +110,7 @@
 
   @media (orientation: landscape) and (max-height: 30rem) {
     .stage {
-      grid-template: minmax(0, 1fr) / auto minmax(0, 1fr);
+      grid-template: minmax(var(--room-min), 1fr) / auto minmax(0, 1fr);
     }
 
     main {

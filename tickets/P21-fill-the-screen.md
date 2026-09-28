@@ -269,7 +269,7 @@ y = 0.42), and the second point is that plus 0.55; flattening to y = 0 would not
 reproduced the design figures.
 
 **Red, the layout.** `tests/stage.test.ts` failed on the missing import; the story run's
-dependency scan failed on it too. Green: 2 of 2, and 5 `Stage` stories. Screenshots of
+dependency scan failed on it too. Green: 2 of 2, and 6 `Stage` stories (the sixth, at 320×320, from the review below). Screenshots of
 the built workshop then showed the landscape aside squeezing Pet and Photo past their
 content inside a 200 px column, which the 44 px check did not see because the column's
 scroll box hid the overflow. The `Stage` stories now also assert every button whole
@@ -298,9 +298,18 @@ picture untouched; an overlay would have put the lockup on a band over the room'
 owing a contrast judgement no test can make. `tickets/H02-header-bar-orientation.md`
 asks the platform for `orientation` and `collapsed`.
 
-**`.scene`'s minimum height did not move.** `SceneCanvas.svelte` is unchanged: the
-smallest room box is 371 px at 320×568, well above 12rem, and `Stage`'s room is
-`contain: size`, so the canvas's drawing buffer never sizes the grid.
+**`.scene`'s minimum height moved into `Stage`.** At the pinned sizes it never
+mattered (the smallest room box is 371 px at 320×568), but Codex's adversarial review
+of the branch found that it fights the grid on a short viewport: at 320×320, a small
+window or a zoomed one, the header (56 px) and the aside's reserve (141 px) left the
+room 123 px while `.scene` held 12rem, so the canvas ran 69 px under the caption. A
+`Stage` story on the real `SceneCanvas` at 320×320 with a caption up failed on it
+(`expected 178 to be greater than or equal to 248`); silent, the aside's bottom-up stack
+hid the overlap. The floor is now `Stage`'s, `--room-min: 12rem` on the room's row in
+both layouts, so a viewport shorter than the chrome and the room scrolls down, never
+sideways; `SceneCanvas.svelte` drops its own `min-block-size` so the figure has one
+owner. `Stage`'s room is `contain: size`, so the canvas's drawing buffer never sizes
+the grid.
 
 **DPR: held at 2.** `MAX_PIXEL_RATIO = 2` in `scene.ts` replaces the three literals. At
 390×844, hearth, evening, the capture at `deviceScaleFactor` 3 (a 780×1294 buffer
@@ -326,7 +335,7 @@ of `docs/reference/testing.md` (`scene-assets.test.ts`, a new `stage.test.ts`, a
 
 ```text
 just frontend-unit        Test Files 31 passed (31), Tests 397 passed (397)
-just storybook-test       Test Files 14 passed (14), Tests 50 passed (50)
+just storybook-test       Test Files 14 passed (14), Tests 51 passed (51)
 grep -n 'ratio, 2)' src/routes/scene/scene.ts | wc -l          0
 grep -c 'MAX_PIXEL_RATIO' src/routes/scene/scene.ts            4
 grep -c 'corrected by P21' tickets/CONVENTIONS.md              3

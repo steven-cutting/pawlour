@@ -10,7 +10,11 @@
   import Lockup from '../src/lib/components/Lockup.svelte';
   import PhotoButton from '../src/lib/components/PhotoButton.svelte';
   import Stage from '../src/lib/components/Stage.svelte';
+  import clips from '../src/lib/assets/biscuit.clips.json';
   import { initialState } from '../src/lib/domain/director';
+  import { createFakeFrames } from '../src/lib/ports/frame';
+  import { createFakeRandom } from '../src/lib/ports/random';
+  import SceneCanvas from '../src/routes/scene/SceneCanvas.svelte';
   import { expectComfortableTargets, expectNothingScrollsSideways } from './narrowest';
 
   const OVERVIEW = [
@@ -70,7 +74,7 @@
   let caption: { text: string; sequence: number } | undefined = $state();
 
   /** The room's box, after the pin is checked: a play measuring a layout no phone renders proves nothing. */
-  async function measure(root: HTMLElement, width: number, height: number) {
+  async function measure(root: HTMLElement, width: number, height: number, name = 'The room') {
     await expect(window.innerWidth).toBe(width);
     await expect(window.innerHeight).toBe(height);
     await expectNothingScrollsSideways(root);
@@ -83,7 +87,7 @@
       await expect(box.left).toBeGreaterThanOrEqual(0);
       await expect(box.right).toBeLessThanOrEqual(width);
     }
-    return within(root).getByRole('img', { name: 'The room' }).getBoundingClientRect();
+    return within(root).getByRole('img', { name }).getBoundingClientRect();
   }
 
   /** Where the shell's column sits at this width. */
@@ -97,31 +101,51 @@
   }
 </script>
 
+{#snippet chrome()}
+  <HeaderBar actions={ACTIONS}>
+    {#snippet brand()}
+      <Lockup />
+    {/snippet}
+  </HeaderBar>
+{/snippet}
+
+{#snippet picture()}
+  <img
+    alt="The room"
+    src={still}
+    style="display: block; inline-size: 100%; block-size: 100%; object-fit: cover"
+  />
+{/snippet}
+
+<!-- The real canvas, with no WebGL: its still, sized the way the page sizes it. -->
+{#snippet canvas()}
+  <SceneCanvas
+    state={SCENE}
+    animations={false}
+    webgl={false}
+    frames={createFakeFrames()}
+    random={createFakeRandom()}
+    assets={{ biscuit: '', cabin: '', fire: '', clips, still: () => still }}
+    onProgress={fn()}
+    onReady={fn()}
+    onTap={fn()}
+    onArrived={fn()}
+    onContextLost={fn()}
+    onError={fn()}
+  />
+{/snippet}
+
+{#snippet stack()}
+  <Caption {caption} />
+  <ControlBar scene={SCENE} onselect={fn()}>
+    <PhotoButton oncapture={fn(async () => {})} busy={false} />
+  </ControlBar>
+  <Notice message={null} />
+{/snippet}
+
 {#snippet template()}
   <div data-frame>
-    <Stage>
-      {#snippet header()}
-        <HeaderBar actions={ACTIONS}>
-          {#snippet brand()}
-            <Lockup />
-          {/snippet}
-        </HeaderBar>
-      {/snippet}
-      {#snippet room()}
-        <img
-          alt="The room"
-          src={still}
-          style="display: block; inline-size: 100%; block-size: 100%; object-fit: cover"
-        />
-      {/snippet}
-      {#snippet aside()}
-        <Caption {caption} />
-        <ControlBar scene={SCENE} onselect={fn()}>
-          <PhotoButton oncapture={fn(async () => {})} busy={false} />
-        </ControlBar>
-        <Notice message={null} />
-      {/snippet}
-    </Stage>
+    <Stage header={chrome} room={picture} aside={stack} />
   </div>
 {/snippet}
 
@@ -205,3 +229,41 @@
     await tick();
   }}
 />
+
+<!--
+  Shorter than the chrome and a usable room together: a small window, or a
+  large one zoomed in. The room keeps its floor and the page scrolls down,
+  never sideways, rather than the scene running under the caption and the
+  controls. Measured on the real canvas, whose still fills whatever box the
+  page gives it.
+-->
+<Story
+  name="Shorter than the room and its controls"
+  parameters={pinned(320, 320)}
+  play={async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // With a caption up: silent, the aside stacks from the bottom and hides an overlap.
+    caption = { text: 'Biscuit has found the toy and has opinions about it.', sequence: 1 };
+    await tick();
+    try {
+      const room = await measure(canvasElement, 320, 320, 'Biscuit in the cabin');
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      await expect(room.height).toBeGreaterThanOrEqual(12 * rem);
+      // Everything in the aside starts below the room: the caption, the notice, the controls.
+      const main = within(canvas.getByRole('main'));
+      for (const below of [...main.getAllByRole('status'), ...main.getAllByRole('button')])
+        await expect(below.getBoundingClientRect().top).toBeGreaterThanOrEqual(room.bottom);
+      // The page scrolls down to reach them, and never sideways (measured above).
+      await expect(document.documentElement.scrollHeight).toBeGreaterThan(320);
+    } finally {
+      caption = undefined;
+      await tick();
+    }
+  }}
+>
+  {#snippet template()}
+    <div data-frame>
+      <Stage header={chrome} room={canvas} aside={stack} />
+    </div>
+  {/snippet}
+</Story>
