@@ -106,8 +106,8 @@ where f is the preset's facing. This is the notion of level that
 `tests/scene-assets.test.ts` asserts of the runtime camera. The fifteenth self-test case
 is the rotation P05 shipped on `camera.hearth`: the right facing, rolled.
 
-**Up vectors (world, local +Y), before → after.** −Z and `extras.fov` are identical to
-six places:
+**Up vectors (world, local +Y), before → after.** `extras.fov` is identical, and −Z agrees
+within 1e-6 (window's z rounds to −0.562225 after, −0.562226 before):
 
 | Camera | Before | After | −Z |
 | --- | --- | --- | --- |
@@ -139,9 +139,10 @@ just check                    All checks passed and the worktree is unchanged.
 ```
 
 **Also touched.** `camera.ts` got a comment-only change: the levelling stays, and the
-comment no longer says the presets roll. `CONVENTIONS.md` §5.4 now reads "(corrected by
-P19)". `docs/design/the-room.md` names the roll in the contract row and the checker row,
-and "fifteen" in the self-test row. The review renders in `build.py` are Blender cameras
+comment no longer says the presets roll. `CONVENTIONS.md` says the presets are level in
+the §5.2 camera row and reads "(corrected by P19)" in §5.4. `docs/design/the-room.md`
+names the roll in the contract row and the checker row, and "fifteen" in the self-test
+row. The review renders in `build.py` are Blender cameras
 tracked in Blender space; they were already level and are unchanged. Pushing and the pull
 request were not done; each is a separately authorised action.
 
