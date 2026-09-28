@@ -840,9 +840,9 @@ which:
   set, the places she settles that it looks at (`framedFor`: hearth all six, window
   `spot.chair`, `item.toy.approach` and `nav.0`, chair `spot.chair`), each at the floor
   and at 0.55 up inside a 0.96 margin, by the least retreat along the camera's own axis
-  in either orientation, never fov, and levels the horizon, because the exported presets
-  roll (P07a hand-back; P19 corrects the export); DPR capped at 2, `MAX_PIXEL_RATIO` in
-  `scene.ts` (corrected by P11; corrected by P21).
+  in either orientation, never fov, and levels the horizon, which the exported presets
+  once rolled and now hold level themselves (P07a hand-back; corrected by P19); DPR capped
+  at 2, `MAX_PIXEL_RATIO` in `scene.ts` (corrected by P11; corrected by P21).
 - Applies a `SceneState` (§6.1) each time the page hands it one: her position and facing
   (interpolated along the path by `walk.ts`, §5.1's speed, turning in place before
   setting off), her clip (`motion.ts` crossfades on the `AnimationMixer` over 250 ms;

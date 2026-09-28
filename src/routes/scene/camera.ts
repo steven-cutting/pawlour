@@ -56,8 +56,8 @@ export function frameCamera(
   const direction = new Vector3(0, 0, -1).applyQuaternion(
     preset.node.getWorldQuaternion(new Quaternion())
   );
-  // The shipped presets contain roll. Keep their aim and level the cabin's Y-up
-  // horizon (maintainer-approved P07a correction; P05 owns the asset follow-up).
+  // Keep the preset's aim and level the cabin's Y-up horizon (maintainer-approved
+  // P07a correction). The presets export level since P19; this guards the next export.
   camera.up.set(0, 1, 0);
   camera.lookAt(camera.position.clone().add(direction));
   camera.fov = preset.fov;

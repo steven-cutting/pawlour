@@ -35,7 +35,7 @@ of them and names every one that is missing.
 | `item.<name>.approach` for `bed`, `chair`, `water`, `food`, `toy`, `jar`, `lamp`, `lights` | where she stands to use it, facing −Z toward it; carries `extras.nav` naming its nearest waypoint |
 | `spot.bed`, `spot.chair` | where she lies, with facing; `spot.chair` is on the seat |
 | `nav.0` to `nav.<n>` | waypoints on the floor; each carries `extras.edges`, a list of neighbouring waypoint names; the graph is connected and undirected |
-| `camera.hearth`, `camera.window`, `camera.chair` | the three presets; position and −Z view direction; `extras.fov` vertical degrees |
+| `camera.hearth`, `camera.window`, `camera.chair` | the three presets; position and −Z view direction, level (local +Y up, no roll); `extras.fov` vertical degrees |
 | `light.window`, `light.fire`, `light.lamp`, `light.strings.0` to `light.strings.<n>` | positions the lighting rigs place lights at |
 | `glass.window`, `glass.window.left`, `glass.window.hearth` | three pane meshes under `item.window`; weather particles live in the box behind each (`extras.depth` units) |
 | `fire.anchor` | where the flame planes and embers sit |
@@ -100,8 +100,8 @@ and `light.lamp` at the floor lamp's shade.
 | Check | Holds | When |
 | --- | --- | --- |
 | `requireCabin` in `src/routes/scene/cabin.ts` | every required name; each `item.*.approach` naming a real waypoint; edges that exist, run both ways and connect every waypoint; a numeric `extras.fov` on each camera; each pane a mesh under `item.window` with a numeric depth | every load, in the browser and in `tests/scene-assets.test.ts` |
-| `just check-cabin` (`scripts/check_cabin.py`) | all of that, plus every position within a centimetre, every facing, the exact edge set and fields of view, empties carrying no mesh, every item owning a mesh, the pane depth and glass material, `cabin.*` names, `COLOR_0` on every primitive, at most 40,000 triangles and at most 30 primitives | on the raw file by hand after `just cabin-export`, and on the served file at the end of `just assets-build cabin`; it is not part of `just check` |
-| `just check-cabin-self-test` | that the checker refuses fourteen deliberate violations | by hand |
+| `just check-cabin` (`scripts/check_cabin.py`) | all of that, plus every position within a centimetre, every facing, no camera rolled more than a degree, the exact edge set and fields of view, empties carrying no mesh, every item owning a mesh, the pane depth and glass material, `cabin.*` names, `COLOR_0` on every primitive, at most 40,000 triangles and at most 30 primitives | on the raw file by hand after `just cabin-export`, and on the served file at the end of `just assets-build cabin`; it is not part of `just check` |
+| `just check-cabin-self-test` | that the checker refuses fifteen deliberate violations | by hand |
 
 `just scene-stub` writes a small room of boxes that satisfies the runtime's half of the
 contract to `ai_tmp/stub-cabin/cabin.glb`, for working on the scene without Blender.

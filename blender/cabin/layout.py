@@ -3,7 +3,7 @@
 import math
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Vector
 
 ITEMS = {
     "fire": ((-0.6, 0.30, -1.85), "+Z"),
@@ -99,11 +99,11 @@ def build():
     for index, position in enumerate(WAYPOINTS):
         neighbours = sorted(b if a == index else a for a, b in EDGES if index in (a, b))
         empty(f"nav.{index}", position, edges=[f"nav.{other}" for other in neighbours])
-    basis = Matrix.Rotation(math.pi / 2, 4, "X")
     for name, (position, target, fov) in CAMERAS.items():
         obj = empty(f"camera.{name}", position, fov=float(fov))
-        direction = Vector(target) - Vector(position)
-        gltf_rotation = direction.to_track_quat("-Z", "Y").to_matrix().to_4x4()
-        obj.rotation_euler = (basis @ gltf_rotation @ basis.inverted()).to_euler()
+        # Track in Blender space, where Z is up: an empty's local +Y exports as its
+        # glTF -Z and its local +Z as glTF +Y, so the preset looks along -Z, level.
+        direction = to_blender(target) - to_blender(position)
+        obj.rotation_euler = direction.to_track_quat("Y", "Z").to_euler()
     bpy.context.view_layer.update()
     return items
