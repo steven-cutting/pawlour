@@ -1,7 +1,7 @@
 ---
 id: P20
 title: "The title card runs on the wipe: one diagonal sweep, in one place, for load-in and photo mode"
-status: open
+status: superseded
 depends_on: [P11]
 parallel_with: [P12, P13, P14, P15, P16, P17, P18, P19]
 branch: ticket/p20-the-title-card-runs-on-the-wipe
@@ -90,7 +90,11 @@ just check
 
 ## Hand-back notes
 
-Filled in by the agent that executes this ticket: which direction was taken and why.
+Superseded, not executed. PR #4 moved the loading and saved card out of the overlay
+register into the platform's chrome, still and without a diagonal, so there is no sweep
+left for the card to share with `wipe.ts`. `grep -rn 'keyframes sweep' src/` prints
+nothing. `wipe.ts` stays in `src/routes/scene/` for the wipe between rooms, which is out
+of v1 (`docs/project/purpose-and-scope.md`).
 
 ## Open points
 

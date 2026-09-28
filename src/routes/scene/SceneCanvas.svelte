@@ -20,6 +20,8 @@
     onArrived: () => void;
     onContextLost: () => void;
     onError: () => void;
+    /** No 3D room is coming (WebGL2 is absent or turned off), and the still has loaded or failed. */
+    onStill?: () => void;
     webgl?: boolean;
   }
   let {
@@ -34,6 +36,7 @@
     onArrived,
     onContextLost,
     onError,
+    onStill = () => undefined,
     webgl = true
   }: Props = $props();
   let ready = $state(false);
@@ -41,6 +44,14 @@
   let failed = $state(false);
   let capable = $state(false);
   let canvas: HTMLCanvasElement | undefined = $state();
+  /*
+   * Whether the still has loaded or failed, and whether `capable` has been
+   * read. The prerendered still can arrive before hydration, when `capable`
+   * still reads false on every device, so its arrival is noted here and
+   * reported only once the mount has said whether a room is coming.
+   */
+  let stillArrived = false;
+  let mounted = false;
   let container: HTMLDivElement | undefined = $state();
   let scene: SceneHandle | undefined;
   let boot: (() => void) | undefined;
@@ -113,6 +124,8 @@
       }
     };
     capable = typeof window.WebGL2RenderingContext !== 'undefined';
+    mounted = true;
+    if (stillArrived || container?.querySelector('img')?.complete) arrived();
     void tick().then(() => {
       if (alive) boot?.();
     });
@@ -151,6 +164,11 @@
     });
   });
 
+  function arrived(): void {
+    stillArrived = true;
+    if (mounted && (!capable || !webgl)) onStill();
+  }
+
   function tapped(event: PointerEvent): void {
     if (!gesture.up(event) || !canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -183,11 +201,11 @@
   {#if !ready || lost || !webgl}
     {#if lost || failed}
       <button type="button" onclick={forceContextRestore} aria-label="Retry 3D scene">
-        <img {alt} src={assets.still(sceneState)} />
+        <img {alt} src={assets.still(sceneState)} onload={arrived} onerror={arrived} />
         <span>The room is still. Tap to try drawing it again.</span>
       </button>
     {:else}
-      <img {alt} src={assets.still(sceneState)} />
+      <img {alt} src={assets.still(sceneState)} onload={arrived} onerror={arrived} />
     {/if}
   {/if}
 </div>

@@ -41,6 +41,8 @@
   import PhotoButton from '$lib/components/PhotoButton.svelte';
   import SettingsDialog from '$lib/components/SettingsDialog.svelte';
   import TitleCard from '$lib/components/TitleCard.svelte';
+  // The photo frame's register: `photograph` reads these tokens back to paint the PNG.
+  import '$lib/components/overlay.css';
   import { cueFor } from '$lib/cues';
   import { drawsTheSame } from '$lib/drawn';
   import { initialState, step } from '$lib/domain/director';
@@ -96,8 +98,14 @@
   // eslint-disable-next-line svelte/valid-prop-names-in-kit-pages -- the route test injects the fakes here; SvelteKit passes nothing, so the real ports are built in onMount
   let { ports }: { ports?: Ports } = $props();
 
-  /** How long "Saved" holds over the room; the sweep itself runs on `--dur-3`. */
+  /** How long "Saved" holds over the room. */
   const SAVED_MS = 1_500;
+  /**
+   * The least the loading card is up (PRD.md, "Loading"), counted from
+   * hydration; the prerendered page shows it before that, so it is seen for
+   * longer, never shorter.
+   */
+  const LOADING_MS = 1_000;
   const PHASES: readonly Phase[] = ['morning', 'evening', 'night'];
   const CAMERAS: readonly Camera[] = ['hearth', 'window', 'chair'];
   const ITEMS: readonly Item[] = ['bed', 'chair', 'water', 'food', 'toy', 'lamp', 'lights'];
@@ -140,9 +148,13 @@
   let live: Ports | undefined = $state.raw();
   let scene: SceneState = $state.raw(initialState('morning', 'clear', false));
   let settingsOpen = $state(false);
-  let card: 'hidden' | 'loading' | 'photo' = $state('hidden');
+  // Prerendered up: the card is the first thing painted, and goes once the
+  // room has settled and the hold has run, whichever is later (`settle`).
+  let card: 'hidden' | 'loading' | 'photo' = $state('loading');
   let progress = $state(0);
   let everReady = false;
+  let held = false;
+  let settled = false;
   let busy = $state(false);
   let photos = $state(0);
   /** The one page notice: a photo that failed, or a room that could not be drawn. */
@@ -160,6 +172,7 @@
   /** The `?debug` measurement hook (P10), only while the address asks for it. */
   let debug: DebugHook | undefined;
   let stopSaved: (() => void) | undefined;
+  let stopHold: (() => void) | undefined;
 
   const frames = $derived(live?.frames ?? IDLE_FRAMES);
   // A derived, so the canvas's effect tracks the boolean and not `scene`
@@ -263,6 +276,10 @@
     soundRequest += 1;
     live?.audio.disable();
     dispatch({ kind: 'setSound', on: false });
+  }
+
+  function settle(): void {
+    if (held && settled && card === 'loading') card = 'hidden';
   }
 
   function token(name: string): string {
@@ -379,6 +396,13 @@
     }
     scene = opening;
 
+    stopHold = p.timer.every(LOADING_MS, () => {
+      stopHold?.();
+      stopHold = undefined;
+      held = true;
+      settle();
+    });
+
     // `data-animations` is the only selector under which the platform's
     // `--dur-*` tokens are anything but 0ms, and the device's reduced-motion
     // preference wins over it whatever the game sets.
@@ -432,6 +456,8 @@
       debug = undefined;
       stopSaved?.();
       stopSaved = undefined;
+      stopHold?.();
+      stopHold = undefined;
       soundRequest += 1;
       p.audio.disable();
       document.documentElement.removeAttribute('data-animations');
@@ -471,7 +497,13 @@
           debug?.markFirstFrame();
           progress = 1;
           everReady = true;
-          if (card === 'loading') card = 'hidden';
+          settled = true;
+          settle();
+        }}
+        onStill={() => {
+          // The canvas mounts before the page, so this only notes it; the hold decides.
+          settled = true;
+          settle();
         }}
         onError={() => {
           // AContextLossLeavesAStill: the canvas shows its still and its retry

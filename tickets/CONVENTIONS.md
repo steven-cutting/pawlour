@@ -84,7 +84,7 @@ Decisions, taken on 2026-09-25:
    approved rig; the exported GLB carries them (§4).
 4. **She walks between items**, within the room, along a waypoint graph the room
    declares (§5). Later rooms are joined by a Persona-style diagonal wipe; v1 has one room
-   and uses the wipe for load-in and photo mode only, so the mechanism exists.
+   and no wipe, and `wipe.ts` waits for a second room (corrected by PR #4).
 5. **This repository owns its animated model.** D's `.blend` and the sixteen files of
    its `src/` are copied here byte for byte with provenance (§3, §4). Reconciling with S
    (where the platform's assets are meant to be developed and leave by ledger) is C02,
@@ -800,15 +800,19 @@ true black by zeroing green and blue rather than greying. A large soft gradient 
 across the whole frame as a vignette drawn as a scene quad, not a post pass, never inside
 a shape (corrected by P11).
 
-**Overlays (P5 system 2).** The title card, the loading card, the photo frame and the
-wipe are DOM, not canvas: flat scarlet, black and white panels split by hard diagonals
-(`clip-path` polygons), type in Bricolage Grotesque at the platform's display sizes,
+**Overlays (P5 system 2).** The photo frame and the wipe between rooms: flat scarlet,
+black and white panels split by hard diagonals, never drawn in the 3D scene. The wipe is
+DOM (`clip-path` polygons); the photo frame is composed by `src/lib/photo.ts` and painted
+onto an offscreen 2D canvas over the captured frame, reading the same tokens. Type in Bricolage Grotesque at the platform's display sizes,
 white on black and black on white alternating, no halftone, no gradient, no rotation of
 letters (ransom lettering is out: it reads as noise beside the platform's type). Colour
 values are tokens the game states once in `src/lib/components/overlay.css`, measured
-against the platform floors in all four combinations because the card carries words.
+against the platform floors in all four combinations because the frame carries words.
 The one warm family the platform rations to the brand mark is not used here; the
 scarlet is the game's own and is declared as a game token with its contrast recorded.
+The loading and saved card is not in this register: it is the platform's chrome, the
+themed ground and ink with the lockup, and paints only platform tokens (corrected by
+PR #4).
 
 ### 5.4 The runtime (`src/routes/scene/`)
 
@@ -876,11 +880,11 @@ which:
   the frame loop are not touched) and `forceContextRestore(): void`. Takes `webgl:
   boolean` (default `true`; `false` constructs no scene and shows the still, for the
   story and the tests).
-- The wipe (`wipe.ts` and the `TitleCard` component): a DOM panel that sweeps a
-  diagonal across the viewport over `--dur-3` (180 ms when animations are on, 0 when
-  off) on load-in and when photo mode opens. Today `TitleCard` runs its own CSS `sweep`
-  and `wipe.ts` is not used by it; joining the two is P20 (P08 hand-back; corrected by
-  P11).
+- The wipe (`wipe.ts`): a DOM panel that sweeps a diagonal across the viewport over
+  `--dur-3` (180 ms when animations are on, 0 when off), kept for the wipe between
+  rooms. v1 has no wipe: the `TitleCard` is the platform's still chrome and no longer
+  sweeps, which supersedes P20 (P08 hand-back; corrected by P11 and by
+  PR #4).
 
 Nothing under `src/routes/scene/` reads a global: `requestAnimationFrame` comes through
 the frame port, `devicePixelRatio` and the canvas size through arguments the component
@@ -1025,8 +1029,10 @@ and returns `toDataURL('image/png')` at the canvas's size; the director is sent 
 and the state does not change), composes the card in
 `src/lib/photo.ts` (pure: given the image size, the caption and the phase, returns the
 panel geometry and text the component draws onto an offscreen canvas), and triggers a
-download named `pawlour-<phase>-<n>.png`. `TitleCard`: the loading and photo overlay in
-the graphic register (§5.3), a `progress` prop, plain copy ("Loading the room", "Saved").
+download named `pawlour-<phase>-<n>.png`. `TitleCard`: the loading and saved card in
+the platform's chrome (§5.3), a `progress` prop, plain copy ("Loading the room", "Saved"),
+prerendered up and held by the page until the room settles and at least a second has
+passed since hydration (corrected by PR #4).
 
 Accessibility, every item a spec clause (§8): every control is a platform component
 measured at 44 px; the canvas is `aria-hidden` and a visually hidden `<p>` beside it

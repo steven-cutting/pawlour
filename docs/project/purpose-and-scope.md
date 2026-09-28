@@ -57,9 +57,9 @@ where this page is looser; see [Specifications](../explanation/specifications.md
    the day, the weather changes with the visit, the tea steams. She is the one thing that
    is alive; everything else moves only because fire and weather do.
 3. **Atlus, not Animal Crossing.** Hard-edged cel Biscuit with ink outlines, a painted
-   cabin held to one warm hue axis, overlays in red, black and white with hard diagonals.
-   No bounce, no bloom, no sparkles. [Art direction](../design/art-direction.md) says
-   how.
+   cabin held to one warm hue axis, the photo frame in red, black and white with hard
+   diagonals. No bounce, no bloom, no sparkles. [Art direction](../design/art-direction.md)
+   says how.
 4. **Everything reachable.** Every tappable thing is also a real control with a name. A
    thumb, a keyboard and a screen reader reach the same commands, at the size the
    platform requires, down to 320 pixels wide.
@@ -70,8 +70,8 @@ where this page is looser; see [Specifications](../explanation/specifications.md
   Nothing the player does or fails to do has a consequence beyond the next minute.
 - **No accounts, no sync, no server, no telemetry.** The few settings it remembers belong
   to one browser on one device. See [Security model](../explanation/security-model.md).
-- **One room.** Later rooms, and the diagonal wipe that joins them, are for later; the
-  wipe exists in v1 only for loading and photo mode.
+- **One room.** Later rooms, and the diagonal wipe that joins them, are for later; v1
+  has no wipe.
 - **No face break.** The rig has no facial bones, so her face does not change.
 - **No first-person copy anywhere,** including the loading card. She never speaks.
 - **Not in v1:** a caption log, stoking the fire, the treat jar's interaction, free orbit

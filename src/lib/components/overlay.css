@@ -1,10 +1,11 @@
 /*
  * The overlay register: CONVENTIONS.md §5.3, P5 system 2. Flat scarlet, black
- * and white panels split by hard diagonals, for the title card, the loading
- * card and the photo frame. Declared once under `:root` and never redefined
- * for a theme, because the card covers the page and is the same in every
- * combination; `tests/overlay-contrast.test.ts` measures every pair below
- * against the platform floors in all four anyway.
+ * and white panels split by hard diagonals, for the photo frame drawn into the
+ * PNG; the loading and saved card moved to the platform's chrome. The page
+ * imports this, because `photograph` reads these tokens back to paint. Declared
+ * once under `:root` and never redefined for a theme, because the frame is the
+ * same in every combination; `tests/overlay-contrast.test.ts` measures every
+ * pair below against the platform floors in all four anyway.
  *
  * The scarlet is the game's own, not the platform's warm family. Black type
  * on it reads at 5.15 and it stands off black at 5.15 and off white at 4.08;
