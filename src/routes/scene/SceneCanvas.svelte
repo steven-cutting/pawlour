@@ -20,6 +20,8 @@
     onArrived: () => void;
     onContextLost: () => void;
     onError: () => void;
+    /** No 3D room is coming: WebGL2 is absent or turned off, and the still is all there is. */
+    onStill?: () => void;
     webgl?: boolean;
   }
   let {
@@ -34,6 +36,7 @@
     onArrived,
     onContextLost,
     onError,
+    onStill = () => undefined,
     webgl = true
   }: Props = $props();
   let ready = $state(false);
@@ -113,6 +116,7 @@
       }
     };
     capable = typeof window.WebGL2RenderingContext !== 'undefined';
+    if (!capable) onStill();
     void tick().then(() => {
       if (alive) boot?.();
     });
@@ -138,6 +142,7 @@
         scene = undefined;
         ready = lost = failed = false;
         gesture.cancel();
+        onStill();
       } else if (target) boot?.();
     });
   });

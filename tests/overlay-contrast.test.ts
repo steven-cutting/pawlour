@@ -6,10 +6,10 @@
  *
  * The overlay register (CONVENTIONS.md §5.3) is the game's own: scarlet, black
  * and white, declared once in `src/lib/components/overlay.css` under `:root`
- * and unchanged by theme, because the card covers the page. This reads that
- * file from disk the way the platform's `tests/contrast.test.ts` reads
- * `app.css`, drives every combination through the root attributes anyway, and
- * measures each pair the card paints. The scarlet was chosen by this test: a P5
+ * and unchanged by theme, because the photo frame is painted into the PNG the
+ * same whatever the page shows. This reads that file from disk the way the
+ * platform's `tests/contrast.test.ts` reads `app.css`, drives every combination
+ * through the root attributes anyway, and measures each pair the frame paints. The scarlet was chosen by this test: a P5
  * scarlet near #e60012 fails white text at 4.5, so the word is black on scarlet
  * and white is only ever on black.
  */
@@ -93,7 +93,7 @@ function apply(combination: Combination): void {
   }
 }
 
-/** The text pairs the card paints: ink on its ground. */
+/** The text pairs the photo frame paints: ink on its ground. */
 const TEXT_PAIRS: readonly [ink: string, ground: string][] = [
   ['--overlay-ink-on-scarlet', '--overlay-scarlet'],
   ['--overlay-ink-on-black', '--overlay-black'],

@@ -48,7 +48,7 @@ not a game. Everything else on both hub pages stands.
    is alive; everything else moves only because fire and weather do.
 3. **Atlus, not Animal Crossing.** Hard-edged cel Biscuit with ink outlines. A painted
    cabin held to one warm hue axis, its planes separated by value rather than by hue.
-   Overlays in red, black and white with hard diagonals. No bounce, no bloom, no
+   The photo frame in red, black and white with hard diagonals. No bounce, no bloom, no
    sparkles, no rounded friendliness anywhere.
 4. **Everything reachable.** Every tappable thing is also a real control with a name. A
    thumb, a keyboard and a screen reader reach the same commands, at the same size the
@@ -164,12 +164,15 @@ on motion.
 Freezes the scene and frames it with a title card in the graphic register: the word
 PAWLOUR, the current caption if there is one, the time of day. Saved as a PNG through a
 plain download in v1; the share sheet is the v1.1 route. The card carries no first-person
-copy.
+copy. The "Saved" card shown over the room afterwards is the platform's chrome, like the
+loading card.
 
 ## Loading
 
-A title card in the graphic register with a progress rule, shown until the model, the
-room and the first frame are ready. The copy is plain interface copy.
+A card in the platform's own chrome, with the lockup and a progress rule, shown from
+the first paint until the model, the room and the first frame are ready, and never for
+less than one second, even when everything is already downloaded. A room that cannot
+be drawn dismisses it at once. The copy is plain interface copy.
 
 ## Performance budget
 

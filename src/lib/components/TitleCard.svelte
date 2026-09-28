@@ -1,19 +1,21 @@
 <script lang="ts">
   import type { Phase } from '$lib/domain/phases';
-  import './overlay.css';
+  import Lockup from './Lockup.svelte';
 
   /**
-   * The loading card and the photo card, in the overlay register.
+   * The loading card and the photo card, in the platform's own chrome.
    *
-   * CONVENTIONS.md §5.3: flat scarlet, black and white panels split by a hard
-   * diagonal, the word in the display face, no gradient, no rotated letters.
-   * DOM over the canvas rather than drawn on it. The copy is plain and in the
-   * third person (PRD.md), inside a polite live region so a reader hears the
-   * room arrive and the photo save. Hidden, it is nothing at all, so the
-   * page's tree carries no empty overlay.
+   * The page it covers is the platform's, so the card is too: the themed
+   * ground and ink, the lockup the header carries, the display face for the
+   * one line it says. Every token is the platform's, so the card follows the
+   * theme and high contrast, and each pair it paints is one the platform
+   * measures in all four combinations. The PNG's photo frame keeps the
+   * overlay register (`overlay.css`); this card does not.
    *
-   * The sweep runs on `--dur-3`, which the platform holds at 0ms unless
-   * animations are on, so MotionOffIsAStillDiorama costs nothing here.
+   * DOM over the canvas, and still: nothing sweeps or fades. The copy is plain
+   * and in the third person (PRD.md), inside a polite live region so a reader
+   * hears the room arrive and the photo save. Hidden, it is nothing at all, so
+   * the page's tree carries no empty overlay. How long it stays is the page's.
    */
   let {
     mode,
@@ -33,10 +35,8 @@
 
 {#if mode !== 'hidden'}
   <div class="card" data-phase={phase}>
-    <div class="scarlet">
-      <p class="word">PAWLOUR</p>
-    </div>
-    <div class="black">
+    <div class="column">
+      <Lockup />
       <p class="copy" aria-live="polite">{copy}</p>
       {#if mode === 'loading'}
         <div
@@ -62,74 +62,44 @@
     inset: 0;
     z-index: 10;
     display: grid;
-    grid-template-rows: 1fr 1fr;
-    font-family: var(--font-display);
-    /* The ground under the diagonal: the scarlet's cut corner shows black, never the page. */
-    background: var(--overlay-black);
-    animation: sweep var(--dur-3) var(--ease);
+    align-content: center;
+    justify-items: center;
+    padding: var(--s-9) var(--shell-pad);
+    color: var(--text);
+    background: var(--background);
   }
 
-  .scarlet,
-  .black {
+  .column {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: var(--s-5);
-    padding: var(--s-9) var(--shell-pad);
-  }
-
-  .scarlet {
-    color: var(--overlay-ink-on-scarlet);
-    background: var(--overlay-scarlet);
-    clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%);
-    padding-block-end: var(--s-13);
-  }
-
-  .black {
-    color: var(--overlay-ink-on-black);
-    background: var(--overlay-black);
-    margin-block-start: calc(-1 * var(--s-11));
-    padding-block-start: var(--s-13);
-  }
-
-  .word {
-    margin: 0;
-    font-size: var(--fs-display-1);
-    font-weight: 700;
-    letter-spacing: var(--track-display);
-    line-height: 1;
+    gap: var(--s-6);
+    inline-size: 100%;
+    max-inline-size: var(--shell-max);
   }
 
   .copy {
     margin: 0;
-    font-size: var(--fs-title-1);
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-size: var(--fs-display-2);
+    font-weight: 700;
+    letter-spacing: var(--track-display);
+    line-height: 1.1;
   }
 
   .caption {
     margin: 0;
+    color: var(--text-2);
     font-family: var(--font-ui);
     font-size: var(--fs-body);
   }
 
   .rule {
-    block-size: var(--s-3);
-    background: var(--overlay-white);
-    clip-path: polygon(0 0, 100% 0, calc(100% - var(--s-3)) 100%, 0 100%);
+    block-size: var(--s-2);
+    background: var(--rule-strong);
   }
 
   .done {
     block-size: 100%;
-    background: var(--overlay-scarlet);
-  }
-
-  @keyframes sweep {
-    from {
-      clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
-    }
-
-    to {
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    }
+    background: var(--text);
   }
 </style>

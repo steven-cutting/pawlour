@@ -3,6 +3,7 @@ import { createFakePreferences } from '@steven-cutting/biscuit-games';
 import type { DeviceAnswers } from '@steven-cutting/biscuit-games';
 import { render, screen, waitFor, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
+import { tick } from 'svelte';
 import { describe, expect, it } from 'vitest';
 
 import { GAME_NAME, GAME_TITLE } from '../src/lib/brand';
@@ -117,6 +118,36 @@ describe('the page', () => {
     mount();
 
     expect(screen.getByRole('main')).toBeInTheDocument();
+  });
+});
+
+/*
+ * The PRD's loading card: in the prerendered page, so it is the first thing
+ * painted, and up until the room has settled and a second has passed since
+ * hydration, whichever is later. jsdom has no WebGL2, so the canvas settles at
+ * once on its still and the second is the whole of the wait.
+ */
+describe('the loading card', () => {
+  /** PRD.md, "Loading": never less than a second. Stated here, not imported, so the test holds the PRD. */
+  const LOADING_MS = 1_000;
+  const loading = () => screen.queryByRole('progressbar', { name: 'Loading the room' });
+
+  it('is up from the start', () => {
+    mount();
+
+    expect(loading()).toBeInTheDocument();
+  });
+
+  it('holds for a second even when the room has nothing left to load', async () => {
+    const { ports } = mount();
+
+    ports.timer.advance(LOADING_MS - 1);
+    await tick();
+    expect(loading()).toBeInTheDocument();
+
+    ports.timer.advance(1);
+    await tick();
+    expect(loading()).toBeNull();
   });
 });
 

@@ -27,7 +27,8 @@ function props() {
     onTap: vi.fn(),
     onArrived: vi.fn(),
     onContextLost: vi.fn(),
-    onError: vi.fn()
+    onError: vi.fn(),
+    onStill: vi.fn()
   };
 }
 
@@ -43,6 +44,8 @@ describe('SceneCanvas fallback', () => {
     expect(fixture.each).not.toHaveBeenCalled();
     expect(fixture.onReady).not.toHaveBeenCalled();
     expect(fixture.onProgress).not.toHaveBeenCalled();
+    // No room is coming, so the page's loading card must hear that the still is all there is.
+    expect(fixture.onStill).toHaveBeenCalled();
   });
 
   it('keeps the still in sync with state and captions when WebGL is explicitly off', async () => {
@@ -65,6 +68,7 @@ describe('SceneCanvas fallback', () => {
     fixture.frames.step(1000);
     expect(fixture.each).not.toHaveBeenCalled();
     expect(fixture.onTap).not.toHaveBeenCalled();
+    expect(fixture.onStill).toHaveBeenCalled();
   });
 
   it('fails capture clearly when there is no drawable frame', () => {

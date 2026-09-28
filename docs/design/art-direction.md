@@ -63,14 +63,19 @@ the whole frame and never inside a shape.
 
 ## Overlays: red, black and white
 
-Persona 5's second system: the title card, the loading card, the photo frame and the
-wipe between rooms are flat scarlet, black and white panels split by hard diagonals.
+Persona 5's second system: the photo frame drawn into the saved PNG and the wipe
+between rooms are flat scarlet, black and white panels split by hard diagonals.
 They are drawn in the DOM, not on the canvas, set in the platform's display type,
 alternating white on black and black on white. No halftone, no gradient, no rotated or
 ransom lettering, which would read as noise beside the platform's type. The scarlet is
 this game's own token, declared once with its contrast measured against the platform's
-floors, because the card carries words. The warm family the platform rations to its mark
+floors, because the frame carries words. The warm family the platform rations to its mark
 is not used.
+
+The loading card and the "Saved" card are not overlays in this sense. They cover the
+platform's page, so they are the platform's chrome: the themed ground and ink, the
+lockup the header carries and one line in the display face. They follow the theme and
+high contrast, and are still.
 
 ## What is out
 

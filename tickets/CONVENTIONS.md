@@ -800,8 +800,8 @@ true black by zeroing green and blue rather than greying. A large soft gradient 
 across the whole frame as a vignette drawn as a scene quad, not a post pass, never inside
 a shape (corrected by P11).
 
-**Overlays (P5 system 2).** The title card, the loading card, the photo frame and the
-wipe are DOM, not canvas: flat scarlet, black and white panels split by hard diagonals
+**Overlays (P5 system 2).** The photo frame and the wipe between rooms are DOM, not
+canvas: flat scarlet, black and white panels split by hard diagonals
 (`clip-path` polygons), type in Bricolage Grotesque at the platform's display sizes,
 white on black and black on white alternating, no halftone, no gradient, no rotation of
 letters (ransom lettering is out: it reads as noise beside the platform's type). Colour
@@ -809,6 +809,9 @@ values are tokens the game states once in `src/lib/components/overlay.css`, meas
 against the platform floors in all four combinations because the card carries words.
 The one warm family the platform rations to the brand mark is not used here; the
 scarlet is the game's own and is declared as a game token with its contrast recorded.
+The loading and saved card is not in this register: it is the platform's chrome, the
+themed ground and ink with the lockup, and paints only platform tokens (corrected by
+title-card-fixes).
 
 ### 5.4 The runtime (`src/routes/scene/`)
 
@@ -876,11 +879,11 @@ which:
   the frame loop are not touched) and `forceContextRestore(): void`. Takes `webgl:
   boolean` (default `true`; `false` constructs no scene and shows the still, for the
   story and the tests).
-- The wipe (`wipe.ts` and the `TitleCard` component): a DOM panel that sweeps a
-  diagonal across the viewport over `--dur-3` (180 ms when animations are on, 0 when
-  off) on load-in and when photo mode opens. Today `TitleCard` runs its own CSS `sweep`
-  and `wipe.ts` is not used by it; joining the two is P20 (P08 hand-back; corrected by
-  P11).
+- The wipe (`wipe.ts`): a DOM panel that sweeps a diagonal across the viewport over
+  `--dur-3` (180 ms when animations are on, 0 when off), kept for the wipe between
+  rooms. v1 has no wipe: the `TitleCard` is the platform's still chrome and no longer
+  sweeps, which supersedes P20 (P08 hand-back; corrected by P11 and by
+  title-card-fixes).
 
 Nothing under `src/routes/scene/` reads a global: `requestAnimationFrame` comes through
 the frame port, `devicePixelRatio` and the canvas size through arguments the component
@@ -1025,8 +1028,10 @@ and returns `toDataURL('image/png')` at the canvas's size; the director is sent 
 and the state does not change), composes the card in
 `src/lib/photo.ts` (pure: given the image size, the caption and the phase, returns the
 panel geometry and text the component draws onto an offscreen canvas), and triggers a
-download named `pawlour-<phase>-<n>.png`. `TitleCard`: the loading and photo overlay in
-the graphic register (§5.3), a `progress` prop, plain copy ("Loading the room", "Saved").
+download named `pawlour-<phase>-<n>.png`. `TitleCard`: the loading and saved card in
+the platform's chrome (§5.3), a `progress` prop, plain copy ("Loading the room", "Saved"),
+prerendered up and held by the page until the room settles and at least a second has
+passed since hydration (corrected by title-card-fixes).
 
 Accessibility, every item a spec clause (§8): every control is a platform component
 measured at 44 px; the canvas is `aria-hidden` and a visually hidden `<p>` beside it

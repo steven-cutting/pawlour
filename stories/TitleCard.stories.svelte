@@ -2,19 +2,20 @@
   import { defineMeta } from '@storybook/addon-svelte-csf';
   import { expect, within } from 'storybook/test';
 
+  import { GAME_NAME } from '../src/lib/brand';
   import TitleCard from '../src/lib/components/TitleCard.svelte';
   import { expectNothingScrollsSideways, FRAME_WIDTH, NARROWEST_PARAMETERS } from './narrowest';
 
   const OVERVIEW = [
-    'The loading card and the photo card, in the overlay register (CONVENTIONS.md §5.3):',
-    'flat scarlet, black and white panels split by a hard diagonal, the word in the display',
-    'face, plain third-person copy (PRD.md). DOM over the canvas, hidden when there is',
-    'nothing to say.',
+    'The loading card and the photo card, in the platform’s own chrome: the themed ground',
+    'and ink, the lockup the header carries, one line in the display face, plain',
+    'third-person copy (PRD.md). DOM over the canvas, still, and hidden when there is',
+    'nothing to say. The PNG’s photo frame keeps the overlay register; this card does not.',
     '',
     'No Cabin guarantee governs the card (`cabin.allium` excludes it). What holds is the',
-    'platform’s: the tokens are measured against the legibility floors in all four',
-    'combinations by `tests/overlay-contrast.test.ts`, the copy is in a polite live region,',
-    'and the sweep runs on `--dur-3`, so MotionOffIsAStillDiorama costs nothing here.',
+    'platform’s: every token is one it declares, so the card follows theme and high',
+    'contrast and each pair it paints is measured by the platform, and the copy is in a',
+    'polite live region. The page, not the card, holds it up for at least a second.',
     '',
     'The card is fixed to the viewport, so every story here is shown in its own frame.'
   ].join('\n');
@@ -35,7 +36,7 @@
   name="Loading the room"
   play={async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText('PAWLOUR')).toBeVisible();
+    await expect(canvas.getByText(`biscuit games / ${GAME_NAME}`)).toBeVisible();
     await expect(canvas.getByRole('progressbar', { name: 'Loading the room' })).toHaveAttribute(
       'aria-valuenow',
       '40'
