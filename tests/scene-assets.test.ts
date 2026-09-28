@@ -17,10 +17,12 @@ import rig from '../blender/model/rig.json';
 import clips from '../src/lib/assets/biscuit.clips.json';
 import { stubCabin } from '../scripts/stub_cabin.mjs';
 import { initialState } from '../src/lib/domain/director';
+import { activityFor, isWalkItem } from '../src/lib/domain/items';
+import type { Item } from '../src/lib/domain/items';
 import { BONE_NAMES, requireBiscuit } from '../src/routes/scene/biscuit';
-import { assetName, CAMERA_NAMES, requireCabin } from '../src/routes/scene/cabin';
+import { assetName, CAMERA_NAMES, ITEM_NAMES, requireCabin } from '../src/routes/scene/cabin';
 import type { Cabin } from '../src/routes/scene/cabin';
-import { FLOOR_CORNERS, frameCamera } from '../src/routes/scene/camera';
+import { FRAMED, frameCamera, framedFor, SETTLE_HEIGHT } from '../src/routes/scene/camera';
 import { hitAt, tapGesture } from '../src/routes/scene/hit';
 import { disposeObjects } from '../src/routes/scene/scene';
 import { renderOnce, stillFor } from '../src/routes/scene/still';
@@ -117,27 +119,92 @@ describe('the scene asset boundary', () => {
     disposeObjects([model.scene]);
   });
 
+  /*
+   * Where she settles is six points: the spot of each thing she walks to, from
+   * the director's own table, and `nav.0`, where she opens. Each preset frames
+   * the ones its table names, at the floor and at her height, at the two
+   * phone orientations, a desktop and the narrowest width, and backs away no
+   * further than the farthest point needs: whenever it has moved at all, that
+   * point sits on the 0.96 margin.
+   */
+  const SIZES = [
+    { width: 844, height: 390 },
+    { width: 1200, height: 844 },
+    { width: 390, height: 844 },
+    { width: 320, height: 568 }
+  ] as const;
+  const WALK_ITEMS = ITEM_NAMES.flatMap((name) => {
+    const item = name as Item;
+    return isWalkItem(item) ? [item] : [];
+  });
+  const SETTLES = [...WALK_ITEMS.map((item) => activityFor(item).spot), 'nav.0'];
+
+  function worldPoint(root: Object3D, name: string): Vector3 {
+    let found: Object3D | undefined;
+    root.traverse((node) => {
+      if (assetName(node) === name) found = node;
+    });
+    if (!found) throw new Error(`The room has no ${name}`);
+    return found.getWorldPosition(new Vector3());
+  }
+
+  it('frames only the places she settles, and every one of them from the hearth', () => {
+    expect(SETTLES).toHaveLength(6);
+    for (const name of CAMERA_NAMES) {
+      expect(FRAMED[name].length).toBeGreaterThan(0);
+      for (const spot of FRAMED[name]) expect(SETTLES).toContain(spot);
+    }
+    expect([...FRAMED.hearth].sort()).toEqual([...SETTLES].sort());
+  });
+
   for (const name of CAMERA_NAMES)
-    it(`frames the entire floor from ${name} at 320 and 390 pixels without FOV drift`, () => {
-      const camera = new PerspectiveCamera();
+    it(`fits ${name}'s settle points at four sizes by the least retreat, without FOV drift`, () => {
       const preset = cabin.cameras[name];
-      frameCamera(camera, preset, { width: 1200, height: 844 });
-      expect(camera.position.distanceTo(preset.node.getWorldPosition(new Vector3()))).toBe(0);
+      const origin = preset.node.getWorldPosition(new Vector3());
       const direction = new Vector3(0, 0, -1).applyQuaternion(
         preset.node.getWorldQuaternion(new Quaternion())
       );
-      for (const width of [320, 390, 320]) {
-        frameCamera(camera, cabin.cameras[name], { width, height: 844 });
-        expect(camera.fov).toBe(cabin.cameras[name].fov);
+      const points = SETTLES.filter((spot) => FRAMED[name].includes(spot)).map((spot) =>
+        worldPoint(cabin.root, spot)
+      );
+      expect(framedFor(cabin, name).map((point) => point.toArray())).toEqual(
+        points.map((point) => point.toArray())
+      );
+      // One camera across every size: each fit starts again from the authored preset.
+      const camera = new PerspectiveCamera();
+      for (const size of SIZES) {
+        frameCamera(camera, preset, size, points);
+        expect(camera.fov).toBe(preset.fov);
         expect(camera.getWorldDirection(new Vector3()).distanceTo(direction)).toBeLessThan(1e-6);
         expect(new Vector3(1, 0, 0).applyQuaternion(camera.quaternion).y).toBeCloseTo(0, 6);
         expect(new Vector3(0, 1, 0).applyQuaternion(camera.quaternion).y).toBeGreaterThan(0);
-        for (const corner of FLOOR_CORNERS) {
-          const point = corner.clone().project(camera);
-          expect(Math.abs(point.x)).toBeLessThan(1);
-          expect(Math.abs(point.y)).toBeLessThan(1);
-          expect(Math.abs(point.z)).toBeLessThan(1);
-        }
+        // On the authored axis, behind the preset or at it, never in front.
+        const offset = camera.position.clone().sub(origin);
+        expect(offset.clone().cross(direction).length()).toBeLessThan(1e-6);
+        expect(offset.dot(direction)).toBeLessThanOrEqual(1e-9);
+        let extreme = 0;
+        for (const point of points)
+          for (const height of [0, SETTLE_HEIGHT]) {
+            const projected = point
+              .clone()
+              .setY(point.y + height)
+              .project(camera);
+            expect(
+              Math.abs(projected.x),
+              `${String(size.width)}x${String(size.height)}`
+            ).toBeLessThan(1);
+            expect(
+              Math.abs(projected.y),
+              `${String(size.width)}x${String(size.height)}`
+            ).toBeLessThan(1);
+            expect(Math.abs(projected.z)).toBeLessThan(1);
+            extreme = Math.max(extreme, Math.abs(projected.x), Math.abs(projected.y));
+          }
+        if (offset.length() > 1e-6)
+          expect(
+            Math.abs(extreme - 0.96),
+            `${name} at ${String(size.width)}x${String(size.height)} retreated ${offset.length().toFixed(2)} m`
+          ).toBeLessThanOrEqual(1e-3);
       }
     });
 });
