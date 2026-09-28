@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { initialState } from '../src/lib/domain/director';
 import { createFakeFrames } from '../src/lib/ports/frame';
@@ -44,7 +44,24 @@ describe('SceneCanvas fallback', () => {
     expect(fixture.each).not.toHaveBeenCalled();
     expect(fixture.onReady).not.toHaveBeenCalled();
     expect(fixture.onProgress).not.toHaveBeenCalled();
-    // No room is coming, so the page's loading card must hear that the still is all there is.
+  });
+
+  // No room is coming, so the page's loading card hears that the still is all
+  // there is — once the still has arrived, not the moment WebGL2 is missed.
+  it('reports the still only once it has loaded', async () => {
+    const fixture = props();
+    render(SceneCanvas, fixture);
+
+    expect(fixture.onStill).not.toHaveBeenCalled();
+    await fireEvent.load(screen.getByRole('img', { name: 'Biscuit in the cabin' }));
+    expect(fixture.onStill).toHaveBeenCalled();
+  });
+
+  it('reports the still when it cannot load, so nothing waits on it forever', async () => {
+    const fixture = props();
+    render(SceneCanvas, fixture);
+
+    await fireEvent.error(screen.getByRole('img', { name: 'Biscuit in the cabin' }));
     expect(fixture.onStill).toHaveBeenCalled();
   });
 
@@ -59,6 +76,7 @@ describe('SceneCanvas fallback', () => {
       caption: { text: 'The chair has been claimed.', sequence: 1 }
     };
     await rerender({ state });
+    await fireEvent.load(screen.getByRole('img', { name: state.caption.text }));
     expect(screen.getByRole('img', { name: state.caption.text })).toHaveAttribute(
       'src',
       '/stills/sleep.chair.night.webp'

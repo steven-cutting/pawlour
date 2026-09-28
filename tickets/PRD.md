@@ -81,8 +81,8 @@ What is in it:
 | Floor lamp | a practical light, on at evening and night, tappable |
 | String lights | a practical light, on at night, tappable |
 
-Later rooms are joined by a Persona-style diagonal wipe. v1 has one room and uses the wipe
-only for load-in and photo mode, so the mechanism exists when a second room does.
+Later rooms are joined by a Persona-style diagonal wipe. v1 has one room and no wipe: the
+loading and saved card is still, and `wipe.ts` waits for a second room.
 
 ## What she does
 

@@ -84,7 +84,7 @@ Decisions, taken on 2026-09-25:
    approved rig; the exported GLB carries them (§4).
 4. **She walks between items**, within the room, along a waypoint graph the room
    declares (§5). Later rooms are joined by a Persona-style diagonal wipe; v1 has one room
-   and uses the wipe for load-in and photo mode only, so the mechanism exists.
+   and no wipe, and `wipe.ts` waits for a second room (corrected by title-card-fixes).
 5. **This repository owns its animated model.** D's `.blend` and the sixteen files of
    its `src/` are copied here byte for byte with provenance (§3, §4). Reconciling with S
    (where the platform's assets are meant to be developed and leave by ledger) is C02,
@@ -800,13 +800,14 @@ true black by zeroing green and blue rather than greying. A large soft gradient 
 across the whole frame as a vignette drawn as a scene quad, not a post pass, never inside
 a shape (corrected by P11).
 
-**Overlays (P5 system 2).** The photo frame and the wipe between rooms are DOM, not
-canvas: flat scarlet, black and white panels split by hard diagonals
-(`clip-path` polygons), type in Bricolage Grotesque at the platform's display sizes,
+**Overlays (P5 system 2).** The photo frame and the wipe between rooms: flat scarlet,
+black and white panels split by hard diagonals, never drawn in the 3D scene. The wipe is
+DOM (`clip-path` polygons); the photo frame is composed by `src/lib/photo.ts` and painted
+onto an offscreen 2D canvas over the captured frame, reading the same tokens. Type in Bricolage Grotesque at the platform's display sizes,
 white on black and black on white alternating, no halftone, no gradient, no rotation of
 letters (ransom lettering is out: it reads as noise beside the platform's type). Colour
 values are tokens the game states once in `src/lib/components/overlay.css`, measured
-against the platform floors in all four combinations because the card carries words.
+against the platform floors in all four combinations because the frame carries words.
 The one warm family the platform rations to the brand mark is not used here; the
 scarlet is the game's own and is declared as a game token with its contrast recorded.
 The loading and saved card is not in this register: it is the platform's chrome, the

@@ -20,7 +20,7 @@
     onArrived: () => void;
     onContextLost: () => void;
     onError: () => void;
-    /** No 3D room is coming: WebGL2 is absent or turned off, and the still is all there is. */
+    /** No 3D room is coming (WebGL2 is absent or turned off), and the still has loaded or failed. */
     onStill?: () => void;
     webgl?: boolean;
   }
@@ -44,6 +44,14 @@
   let failed = $state(false);
   let capable = $state(false);
   let canvas: HTMLCanvasElement | undefined = $state();
+  /*
+   * Whether the still has loaded or failed, and whether `capable` has been
+   * read. The prerendered still can arrive before hydration, when `capable`
+   * still reads false on every device, so its arrival is noted here and
+   * reported only once the mount has said whether a room is coming.
+   */
+  let stillArrived = false;
+  let mounted = false;
   let container: HTMLDivElement | undefined = $state();
   let scene: SceneHandle | undefined;
   let boot: (() => void) | undefined;
@@ -116,7 +124,8 @@
       }
     };
     capable = typeof window.WebGL2RenderingContext !== 'undefined';
-    if (!capable) onStill();
+    mounted = true;
+    if (stillArrived || container?.querySelector('img')?.complete) arrived();
     void tick().then(() => {
       if (alive) boot?.();
     });
@@ -142,7 +151,6 @@
         scene = undefined;
         ready = lost = failed = false;
         gesture.cancel();
-        onStill();
       } else if (target) boot?.();
     });
   });
@@ -155,6 +163,11 @@
       scene?.apply(next, active);
     });
   });
+
+  function arrived(): void {
+    stillArrived = true;
+    if (mounted && (!capable || !webgl)) onStill();
+  }
 
   function tapped(event: PointerEvent): void {
     if (!gesture.up(event) || !canvas) return;
@@ -188,11 +201,11 @@
   {#if !ready || lost || !webgl}
     {#if lost || failed}
       <button type="button" onclick={forceContextRestore} aria-label="Retry 3D scene">
-        <img {alt} src={assets.still(sceneState)} />
+        <img {alt} src={assets.still(sceneState)} onload={arrived} onerror={arrived} />
         <span>The room is still. Tap to try drawing it again.</span>
       </button>
     {:else}
-      <img {alt} src={assets.still(sceneState)} />
+      <img {alt} src={assets.still(sceneState)} onload={arrived} onerror={arrived} />
     {/if}
   {/if}
 </div>

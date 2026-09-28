@@ -65,8 +65,9 @@ the whole frame and never inside a shape.
 
 Persona 5's second system: the photo frame drawn into the saved PNG and the wipe
 between rooms are flat scarlet, black and white panels split by hard diagonals.
-They are drawn in the DOM, not on the canvas, set in the platform's display type,
-alternating white on black and black on white. No halftone, no gradient, no rotated or
+Neither is drawn in the 3D scene: the wipe is DOM, and the frame is painted onto a 2D
+canvas over the captured picture, from the same tokens. Both are set in the platform's
+display type, alternating white on black and black on white. No halftone, no gradient, no rotated or
 ransom lettering, which would read as noise beside the platform's type. The scarlet is
 this game's own token, declared once with its contrast measured against the platform's
 floors, because the frame carries words. The warm family the platform rations to its mark
