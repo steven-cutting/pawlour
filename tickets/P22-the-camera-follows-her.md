@@ -84,11 +84,14 @@ stored-value guard, `time` derived beside `phase`); `src/lib/components/TimeCont
   `nav.*`, `item.*.approach` and `spot.*` node names it owns, each named exactly once)
   and `zoneOf(node)`. Tested to the floor.
 - The director keeps `camera` as the preset shown and adds `cameraOverride?: Camera`
-  as the pin, mirroring `phase` and `phaseOverride`. When nothing is pinned, `camera`
-  follows her: on a new `reached` command carrying the node she has just passed, on
-  arrival, and when Auto is chosen. `setCamera` takes `Camera | 'auto'`. A `tick`
-  never changes it. With motion off, `still()` arrives at once and the camera is the
-  destination's zone.
+  as the pin, mirroring `phase` and `phaseOverride`, and a bookkeeping field `passed`
+  (the name of the last node she passed or settled at, as `standFrom` is bookkeeping)
+  that every `reached` command and every arrival records whether or not a preset is
+  pinned. When nothing is pinned, `camera` follows her: on a new `reached` command
+  carrying the node she has just passed, on arrival, and when Auto is chosen, which
+  follows the recorded node, never the destination of a walk in progress.
+  `setCamera` takes `Camera | 'auto'`. A `tick` never changes it. With motion off,
+  `still()` arrives at once and the camera is the destination's zone.
 - The walker reports every point it passes by name; the scene carries it up as
   `onReached` beside `onArrived`; the page dispatches `{ kind: 'reached', node }`.
 - `cabin.glb` carries `camera.bowls` and whatever the zone map needs; every `camera.*`
@@ -100,9 +103,9 @@ stored-value guard, `time` derived beside `phase`); `src/lib/components/TimeCont
 - `tests/scene-assets.test.ts` proves on the real room that the zone map names every
   reachable node exactly once; that from every preset, framed at P21's four sizes,
   every node in its zone and one edge beyond it is inside the frustum at the floor and
-  at 0.55 up; that the framed camera has not retreated behind a wall or above the
-  plane; and that a ray from the framed camera's position to every reachable node at
-  0.55 up hits no mesh under the cabin root.
+  at 0.55 up; and that a ray from the framed camera's position to every node in that
+  same set hits no mesh under the cabin root, which is also what holds a retreat that
+  would carry the camera behind a wall.
 - `CameraControl` offers Auto first and one segment per preset; Auto is the default;
   choosing Auto removes `pawlour.camera`; a stored name that is not a preset falls
   back to Auto.
@@ -130,7 +133,7 @@ stored-value guard, `time` derived beside `phase`); `src/lib/components/TimeCont
 | --- | --- | --- |
 | `docs/specs/cabin.allium` | spec | the tenth guarantee; the Includes count; the Excludes sentence |
 | `src/lib/domain/zones.ts`, `tests/zones.test.ts` | repo, new | the table and `zoneOf` |
-| `src/lib/domain/director.ts`, `tests/director.test.ts` | repo | `Camera` from `zones.ts`; `cameraOverride`; `setCamera(Camera \| 'auto')`; `reached`; the follow on arrival |
+| `src/lib/domain/director.ts`, `tests/director.test.ts` | repo | `Camera` from `zones.ts`; `cameraOverride` and the `passed` bookkeeping field; `setCamera(Camera \| 'auto')`; the `reached` command; the follow on arrival |
 | `src/routes/scene/walk.ts`, `motion.ts`, `scene.ts`, `SceneCanvas.svelte`, `cabin.ts`, `camera.ts` | repo | named path points; `onReached` threaded; `CAMERA_NAMES` from `zones.ts`; `framedFor` reads the zones and P21's table goes |
 | `src/routes/+page.svelte` | repo | `onReached` dispatch; Auto clears the key; the guard reads `CAMERAS`; `cameraChoice` derived beside `time` |
 | `src/lib/components/CameraControl.svelte`, `SettingsDialog.svelte` | repo | `Camera \| 'auto'`; Auto first; labels as `Record<Camera, string>`; the four-plus-segment padding as `TimeControl` |
@@ -181,14 +184,19 @@ the scene files are outside the glob (decision 0013) and are proved by
    `nav.4`, `nav.6`, `item.chair.approach`, `item.lamp.approach`, `item.toy.approach`;
    `chair`: `spot.chair`. `director.ts` re-exports `Camera`; `cabin.ts` imports
    `CAMERAS`.
-3. **The director, red.** Cases: `reached nav.3` while walking in Auto sets `bowls`;
-   the same with `cameraOverride` set returns the state unchanged; `reached` when not
-   walking, or with an unknown node, changes nothing; `arrived` at
-   `item.water.approach` sets `bowls`; motion off, `tap('water')` from the opening state
-   yields `bowls` in one `step`; `setCamera('auto')` while idle at the bed sets `hearth`
-   and clears the pin; `setCamera('chair')` sets both; a `tick` never changes `camera`.
-   Green: one helper `follow(state, node)` used by `arrive()`, `reached` and
-   `setCamera('auto')` (which follows `nav.0` on the floor, else the activity's spot).
+3. **The director, red.** Cases: `reached nav.3` while walking in Auto sets `bowls`
+   and records `passed: 'nav.3'`; the same with `cameraOverride` set records the node
+   and leaves `camera` alone; `reached` when not walking, or with an unknown node,
+   changes nothing; `arrived` at `item.water.approach` sets `bowls` and records the
+   spot; motion off, `tap('water')` from the opening state yields `bowls` in one
+   `step`; `setCamera('auto')` while idle at the bed sets `hearth` and clears the pin;
+   pinned on `chair`, walking to the water and past `nav.3`, `setCamera('auto')` sets
+   `bowls` (the recorded node), not the destination and not `nav.0`; pinned, walking
+   to the water and not yet past `nav.3`, `setCamera('auto')` keeps the zone of the
+   node last recorded; `setCamera('chair')` sets both; a `tick` never changes
+   `camera`. Green: one helper `follow(state, node)` used by `arrive()`, `reached` and
+   `setCamera('auto')`, which follows `state.passed`; the opening state records
+   `nav.0`, so a visit that never walked follows `hearth`.
 4. **The walker, red.** `tests/scene-motion.test.ts`: a walk from the opening position
    to `item.water.approach` reports `nav.0`, `nav.3`, `item.water.approach` in order
    through `onReached`, then one `arrived`. Green: `pathTo` returns named points;
@@ -213,15 +221,19 @@ the scene files are outside the glob (decision 0013) and are proved by
    each preset, `frameCamera` at P21's four sizes, then a `Frustum` from the projection
    and inverse world matrices must contain every node in the zone and one edge beyond
    it, at the floor and at 0.55 up; convexity then covers every segment she walks
-   before a cut); placement (the framed camera's position has |x| < 2.5, z > −2 and
-   0 < y < 2.4, so a retreat never carries it behind a wall); raycast (from the framed
-   camera's position to every `nav.*` and `item.*.approach` node at 0.3 and at 0.55 up,
-   so a rim or an arm at knee height cannot hide her body, and to the two `spot.*`
-   nodes at 0.55 up only, because she is on the furniture there and a ray to the seat
-   would graze the cushion; `intersectObject(cabin.root, true)` returns nothing; the
-   cabin root holds only `cabin.*` meshes). Expect `chair` at 36° to retreat past its close crop to hold
-   `nav.2`; resolve as open point 1 says. Tune `ZONES` and `layout.py` until green,
-   re-exporting as in step 5.
+   before a cut); raycast (from the framed camera's position, wherever the retreat
+   put it, to every node in the same set, the zone and one step beyond: each `nav.*`
+   and `item.*.approach` node at 0.3 and at 0.55 up, so a rim or an arm at knee height
+   cannot hide her body, and each `spot.*` node at 0.55 up only, because she is on the
+   furniture there and a ray to the seat would graze the cushion;
+   `intersectObject(cabin.root, true)` returns nothing; the cabin root holds only
+   `cabin.*` meshes). The raycast is what holds a retreat that would carry the camera
+   behind a wall, so no bound on the framed position is asserted: hearth's portrait
+   retreat under P21 ends above the 2.4 m plane, beyond its edge on the open side,
+   and is clear. The bound on the authored empties stays in the checker (step 5).
+   Expect `chair` at 36° to retreat past its close crop to hold `nav.2`; resolve as
+   open point 1 says. Tune `ZONES` and `layout.py` until green, re-exporting as in
+   step 5.
 7. **The control, red.** `tests/camera-control.test.ts`: the group offers Auto, Hearth,
    Window, Chair, Bowls; Auto checked for `auto`; reports by value.
    `tests/route.test.ts`: nothing stored → Auto; a stored `chair` pins Chair; a stored
@@ -248,9 +260,9 @@ the scene files are outside the glob (decision 0013) and are proved by
 - [ ] `just check-cabin` refuses the pre-P22 file (no `camera.bowls`) and the checker's
       self-test refuses a camera behind a wall; the rebuilt file passes.
 - [ ] `tests/scene-assets.test.ts`: zone coverage exact; frustum true for every preset's
-      zone and neighbours at the floor and at 0.55 at P21's four sizes; the framed
-      camera inside the walls at every size; raycast clear from it to every waypoint
-      and approach at 0.3 and 0.55 up and to both spots at 0.55.
+      zone and neighbours at the floor and at 0.55 at P21's four sizes; raycast clear
+      from the framed camera to the same zone and neighbours, waypoints and approaches
+      at 0.3 and 0.55 up and spots at 0.55.
 - [ ] Settings: Auto first and checked with nothing stored; stored nonsense → Auto; a
       stored `chair` → Chair; choosing Auto removes `pawlour.camera`.
 - [ ] The narrowest-width story passes with five segments: no sideways scroll, every

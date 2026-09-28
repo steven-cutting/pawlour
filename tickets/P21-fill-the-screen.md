@@ -113,7 +113,7 @@ room sized by the remaining height would re-frame every time a caption appears.
 | `src/routes/scene/scene.ts` | repo | the `frameCamera` call passes `framedFor(cabin, state.camera)`; the three `Math.min(ratio, 2)` read one `MAX_PIXEL_RATIO` |
 | `tests/scene-assets.test.ts` | tests | the framing test replaced by the frame-set test |
 | `src/lib/components/Stage.svelte`, `tests/stage.test.ts`, `stories/Stage.stories.svelte` | repo, new | the layout: three snippets (`header`, `room`, `aside`), the orientation query, the breakout |
-| `src/routes/+page.svelte` | repo | composes `Stage`; loses `.room` sizing and the 60rem block; keeps `<main>` and the hidden sentence |
+| `src/routes/+page.svelte` | repo | `Stage` becomes the page's root: the outer `.shell` wrapper and its style go with the `.room` sizing and the 60rem block; the page keeps `<main>` and the hidden sentence inside `Stage`'s slots |
 | `src/routes/scene/SceneCanvas.svelte` | repo | `.scene`'s `min-block-size: 12rem` only if it fights the grid; say so in the hand-back |
 | `src/lib/components/ControlBar.svelte` and its test and story | repo | only if the bar needs a column variant for the right-hand stack |
 | `docs/decisions/0016-the-room-breaks-out-of-the-shell.md`, `docs/decisions/README.md` | docs | new, in 0013's shape; one row |
@@ -166,8 +166,12 @@ each decision), `docs/specs/`, `vite.config.ts`, `Justfile`.
    (max-height: 30rem)` turns the grid into columns, room `1fr`, aside
    `minmax(12.5rem, max-content)` on the right (four 44 px controls in a row are
    200 px), header on the left or overlaid; the aside reserves the caption row (two
-   lines plus `Notice`'s margin). The page composes it and keeps `<main>` and the
-   hidden sentence. Every selector must be used (`svelte-check --fail-on-warnings`).
+   lines plus `Notice`'s margin). Today the page wraps `HeaderBar` and `<main>` in one
+   `.shell` div, and a `Stage` mounted inside it could never escape that ancestor's
+   `max-inline-size`, so `Stage` becomes the page's root element and that wrapper and
+   its `.shell` rule go: `Stage` owns the two shells, `<main>` wraps the room and the
+   aside slots so the landmark survives, and the hidden sentence stays beside the
+   room. Every selector must be used (`svelte-check --fail-on-warnings`).
    Header choice: `HeaderBar` as shipped in a left column keeps its words, so vertical
    needs two scoped reach-ins (the header's direction, the words hidden); an overlay
    over the room's top needs none, but it sits on a solid ground of the platform's own
@@ -210,7 +214,9 @@ each decision), `docs/specs/`, `vite.config.ts`, `Justfile`.
       is identical with and without a caption.
 - [ ] `tests/route.test.ts` unchanged and green: one `h1` named `biscuit games /
       pawlour`, a `main` landmark, Settings opens the dialog.
-- [ ] `grep -n 'Math.min(ratio' src/routes/scene/scene.ts` prints nothing.
+- [ ] `grep -n 'ratio, 2)' src/routes/scene/scene.ts` prints nothing and
+      `grep -c 'MAX_PIXEL_RATIO' src/routes/scene/scene.ts` is at least 4: the
+      declaration and its three uses.
 - [ ] Decision 0016 exists, is in `docs/manifest.yml` and `docs/decisions/README.md`.
 - [ ] `grep -c 'corrected by P21' tickets/CONVENTIONS.md` is at least 3.
 - [ ] Coverage over `src/lib/**` at the floor with `Stage.svelte` measured.
@@ -221,7 +227,8 @@ each decision), `docs/specs/`, `vite.config.ts`, `Justfile`.
 ```sh
 just frontend-unit
 just storybook-test
-grep -n 'Math.min(ratio' src/routes/scene/scene.ts | wc -l
+grep -n 'ratio, 2)' src/routes/scene/scene.ts | wc -l
+grep -c 'MAX_PIXEL_RATIO' src/routes/scene/scene.ts
 grep -c 'corrected by P21' tickets/CONVENTIONS.md
 grep -c '0016' docs/manifest.yml docs/decisions/README.md
 git diff main --stat -- AGENTS.md docs/README.md docs/specs/
@@ -229,10 +236,10 @@ just check-docs
 just check
 ```
 
-Expected: the unit and story runs green with the new cases named; `0`; `3` or more;
-`1` and `1`; no diff on the three paths; green. Plus the capture set under `ai_tmp/fill/`
-(390×844, 844×390, 1200×844 at each preset; DPR 2 and 3 at 390×844) listed in the
-hand-back.
+Expected: the unit and story runs green with the new cases named; `0`; `4` or more;
+`3` or more; `1` and `1`; no diff on the three paths; green. Plus the capture set under
+`ai_tmp/fill/` (390×844, 844×390, 1200×844 at each preset; DPR 2 and 3 at 390×844)
+listed in the hand-back.
 
 ## Hand-back notes
 
