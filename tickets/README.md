@@ -39,7 +39,7 @@ authoritative; this table is a snapshot.
 | P18 | Stills captured from the runtime at the hearth camera, under the same eighteen names | `P18-stills-from-the-runtime.md` | P11 | P12, P13, P14, P15, P16, P17 | open |
 | P19 | Level the exported cameras: correct the roll in the room's build script and rebuild `cabin.glb` | `P19-level-the-exported-cameras.md` | P11 | P12, P13, P14, P15, P16, P17, P18 | open |
 | P20 | The title card runs on the wipe: one diagonal sweep, in one place, for load-in and photo mode | `P20-the-title-card-runs-on-the-wipe.md` | P11 | P12, P13, P14, P15, P16, P17, P18, P19 | superseded |
-| P21 | Fill the screen: the room takes what the viewport leaves, the camera fits its subject, and landscape gets a layout | `P21-fill-the-screen.md` | P11 | P12, P13, P16, P17, P18, P19 | | done |
+| P21 | Fill the screen: the room takes what the viewport leaves, the camera fits its subject, and landscape gets a layout | `P21-fill-the-screen.md` | P11 | P12, P13, P16, P17, P18, P19 | done |
 | P22 | The camera follows her: zones, a covering set of presets, and Auto in Settings | `P22-the-camera-follows-her.md` | P19, P21 | P12, P13, P16, P17, P18 | open |
 
 Cross-repository and design tickets. Each is a recommendation written to be picked up on
