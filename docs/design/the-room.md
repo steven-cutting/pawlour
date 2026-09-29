@@ -101,7 +101,7 @@ and `light.lamp` at the floor lamp's shade.
 | --- | --- | --- |
 | `requireCabin` in `src/routes/scene/cabin.ts` | every required name; each `item.*.approach` naming a real waypoint; edges that exist, run both ways and connect every waypoint; a numeric `extras.fov` on each camera; each pane a mesh under `item.window` with a numeric depth | every load, in the browser and in `tests/scene-assets.test.ts` |
 | `just check-cabin` (`scripts/check_cabin.py`) | all of that, plus every position within a centimetre, every facing, no camera rolled more than a degree, the exact edge set and fields of view, empties carrying no mesh, every item owning a mesh, the pane depth and glass material, `cabin.*` names, `COLOR_0` on every primitive, at most 40,000 triangles and at most 30 primitives | on the raw file by hand after `just cabin-export`, and on the served file at the end of `just assets-build cabin`; it is not part of `just check` |
-| `just check-cabin-self-test` | that the checker refuses fifteen deliberate violations | by hand |
+| `just check-cabin-self-test` | that the checker refuses sixteen deliberate violations | by hand |
 
 `just scene-stub` writes a small room of boxes that satisfies the runtime's half of the
 contract to `ai_tmp/stub-cabin/cabin.glb`, for working on the scene without Blender.

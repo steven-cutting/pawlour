@@ -33,10 +33,12 @@ stays); `docs/design/the-room.md` "What checks what"; `docs/how-to/build-assets.
 
 ## Goal
 
-- The three camera empties export with local +Y up (world Y-up after export) and their
+- The three camera empties export level, local +Y as their up with no roll, and their
   −Z unchanged, so a viewer that does not level them shows a level room.
-- `scripts/check_cabin.py` refuses a rolled camera (the up vector within a degree of
-  world +Y), and its self-test has a fifteenth broken contract for it.
+- `scripts/check_cabin.py` refuses a rolled camera: local +Y more than a degree from
+  world +Y with the camera's own −Z taken out, so the preset's pitch is allowed (revised
+  with the maintainer on 2026-09-28 from "within a degree of world +Y", which a pitched
+  camera cannot meet). Its self-test has a broken contract for it.
 - `src/lib/assets/cabin.glb` rebuilt through `just cabin-export` and
   `just assets-build cabin` (which now ends with the checker), the manifest updated, and
   the runtime's own levelling left in place as a belt beside the braces.
@@ -102,9 +104,10 @@ first export.
 **The check, as agreed with the maintainer.** "Within a degree of world +Y" would refuse
 a correct camera, because all three presets pitch down (about 9°, 13° and 23°). The
 checker therefore holds the roll: local +Y within a degree of `normalise(Y − (Y·f)f)`,
-where f is the preset's facing. This is the notion of level that
+where f is the camera's own −Z. This is the notion of level that
 `tests/scene-assets.test.ts` asserts of the runtime camera. The fifteenth self-test case
-is the rotation P05 shipped on `camera.hearth`: the right facing, rolled.
+is the rotation P05 shipped on `camera.hearth`: the right facing, rolled. The sixteenth
+came from review: see below.
 
 **Up vectors (world, local +Y), before → after.** `extras.fov` is identical, and −Z agrees
 within 1e-6 (window's z rounds to −0.562225 after, −0.562226 before):
@@ -116,9 +119,8 @@ within 1e-6 (window's z rounds to −0.562225 after, −0.562226 before):
 | chair | (0.585346, −0.365841, 0.723554) | (0.254772, 0.923548, −0.286618) | (0.613572, −0.383483, −0.690268) |
 
 **What changed in the file.** The rebuild is deterministic. A node-by-node comparison of
-the old and new `cabin.glb` found identical binary chunks and identical top-level JSON.
-The only differences are the three camera nodes' `rotation`, so no position, mesh or
-extra moved.
+the old and new `cabin.glb` found identical binary chunks. The JSON differs
+only in the three camera nodes' `rotation`, so no position, mesh or extra moved.
 
 **Manifest diff** (the `cabin.glb` entry only):
 
@@ -132,7 +134,7 @@ extra moved.
 ```text
 just check-cabin (old file)   camera.hearth / camera.window / camera.chair: rolled; rc=1
 just check-cabin blender/out/cabin-raw.glb   contract valid; 25,634 triangles, 25 primitives, all 47 positions within 0.01 m
-just check-cabin-self-test    valid input accepted, 15 broken contracts refused
+just check-cabin-self-test    valid input accepted, 16 broken contracts refused
 just assets-build cabin       src/lib/assets/cabin.glb: cabin contract valid (same line)
 tests/scene-assets.test.ts    13 passed, the three camera fits among them, tests/ unchanged
 just check                    All checks passed and the worktree is unchanged.
@@ -141,10 +143,21 @@ just check                    All checks passed and the worktree is unchanged.
 **Also touched.** `camera.ts` got a comment-only change: the levelling stays, and the
 comment no longer says the presets roll. `CONVENTIONS.md` says the presets are level in
 the §5.2 camera row and reads "(corrected by P19)" in §5.4. `docs/design/the-room.md`
-names the roll in the contract row and the checker row, and "fifteen" in the self-test
+names the roll in the contract row and the checker row, and "sixteen" in the self-test
 row. The review renders in `build.py` are Blender cameras
 tracked in Blender space; they were already level and are unchanged. Pushing and the pull
-request were not done; each is a separately authorised action.
+request were not done; each is a separately authorised action. (Both were later
+authorised: pull request #7.)
+
+**Review of pull request #7.** Codex found nothing. Copilot made three points, all taken:
+
+- The roll reference was first taken from the preset's intended facing. The facing check
+  allows about 0.8° of aim error, and that could shift the reference and hide roll. With
+  0.74° of yaw on `camera.chair`, 1.2° of roll read as 0.89° and passed. The reference now comes from the camera's own −Z. That
+  rotation is the sixteenth self-test case, refused.
+- The Goal still said "within a degree of world +Y"; it now states the rule as revised.
+- The node-diff paragraph said "identical top-level JSON", which contradicted the next
+  sentence; it now says the JSON differs only in the three rotations.
 
 ## Open points
 
