@@ -61,16 +61,20 @@ Each phase is a fixed rig built once, and a phase change switches rigs:
 
 The floor lamp and each string light are small point lights, shown when the director's
 `lights` say so. The camera sits at the preset named by the state's `camera`, looking
-along the preset's −Z with its vertical field of view and the horizon held level.
+along the preset's −Z with its vertical field of view and the horizon held level. Which
+preset that is, the director decides: under Auto it follows her from zone to zone, and a
+preset the player pins holds ([The director](the-director.md)). A change of preset is a
+cut; nothing pans.
 
-Each preset frames its own subject: the places she settles that it looks at. She settles
-at six points, the spot of each of the five things she walks to and `nav.0`, where she
-opens. The hearth frames all six; the window frames the chair, the toy and `nav.0`; the
-chair frames only itself. In either orientation the camera backs away along its own axis
-by the least distance that puts every framed point, at the floor and at her height of
-0.55, inside 96% of the frame, and it never moves forward of the preset or changes the
-field of view. She can walk out of the window's and the chair's frames while they are
-chosen. The room's box is as big as the page can make it
+Each preset frames its zone and one step beyond it (`framedFor` in `camera.ts`): every
+node the zone owns and every node one edge from one of them, the edges being the
+waypoint graph, each approach's `extras.nav` and each spot's nearest waypoint, taken both
+ways. Under Auto the picture cuts as she reaches a node of another zone, so she walks
+every segment before a cut between two framed nodes, and a frustum is convex. In either
+orientation the camera backs away along its own axis by the least distance that puts
+every framed point, at the floor and at her height of 0.55, inside 96% of the frame, and
+it never moves forward of the preset or changes the field of view. While a preset is
+pinned she can walk out of its frame. The room's box is as big as the page can make it
 ([decision 0016](../decisions/0016-the-room-breaks-out-of-the-shell.md)), so the camera
 retreats far less than it once did: from the hearth, 8.8 m on a phone held upright
 rather than 15.6 m.

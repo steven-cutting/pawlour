@@ -17,7 +17,14 @@ function scene(overrides: Partial<SceneState> = {}): SceneState {
 describe('drawsTheSame', () => {
   it('is true when only the bookkeeping moved', () => {
     const before = scene();
-    const after = scene({ elapsed: 0.25, untilIdleChoice: 20, shown: ['a'] });
+    const after = scene({
+      elapsed: 0.25,
+      untilIdleChoice: 20,
+      shown: ['a'],
+      // The pin and the place she passed draw nothing: `camera` is what is shown.
+      passed: 'nav.3',
+      cameraOverride: 'hearth'
+    });
 
     expect(drawsTheSame(before, after)).toBe(true);
   });

@@ -20,7 +20,7 @@ function props(overrides: Partial<Parameters<typeof render<typeof SettingsDialog
     sound: false,
     onenable: vi.fn().mockResolvedValue(undefined),
     ondisable: vi.fn(),
-    camera: 'hearth' as const,
+    camera: 'auto' as const,
     oncamera: vi.fn(),
     ...overrides
   };
@@ -73,6 +73,23 @@ describe('SettingsDialog', () => {
     expect(ontime).toHaveBeenCalledWith('night');
     expect(oncamera).toHaveBeenCalledWith('window');
     expect(onenable).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the two Autos apart, each in its own group', async () => {
+    const ontime = vi.fn();
+    const oncamera = vi.fn();
+    render(SettingsDialog, props({ time: 'night', camera: 'chair', ontime, oncamera }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Settings' });
+    const time = within(dialog).getByRole('group', { name: 'Time of day' });
+    const camera = within(dialog).getByRole('group', { name: 'Camera' });
+    expect(within(camera).getByRole('radio', { name: 'Chair' })).toBeChecked();
+
+    await userEvent.click(within(camera).getByRole('radio', { name: 'Auto' }));
+
+    expect(oncamera).toHaveBeenCalledWith('auto');
+    expect(ontime).not.toHaveBeenCalled();
+    expect(within(time).getByRole('radio', { name: 'Night' })).toBeChecked();
   });
 
   it('returns focus to the opener when it closes', async () => {

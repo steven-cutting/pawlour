@@ -27,8 +27,9 @@ to hold attention: the game is finished the moment the player looks away.
 
 ## What it does
 
-One room, the main room of a log cabin, seen as a diorama from three fixed camera
-positions — hearth, window and chair — that the player cuts between in Settings. In it
+One room, the main room of a log cabin, seen as a diorama from a few fixed camera
+positions — hearth, window, chair and bowls — that the picture cuts between as she walks
+from one part of the room to another, unless the player pins one in Settings. In it
 are a fireplace, a window with the weather behind it, a dog bed, a leather armchair, two
 bowls, a rope toy, a treat jar, a side table with a mug of tea, a bookshelf with records,
 a floor lamp and string lights.

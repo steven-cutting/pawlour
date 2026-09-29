@@ -12,8 +12,10 @@
   } from './narrowest';
 
   const OVERVIEW = [
-    'Which of the three fixed presets the room is seen from: a diorama cut between',
-    'positions, never panned (CONVENTIONS.md §1 decision 6). In v1 this is the only route.',
+    'Which fixed preset the room is seen from. Auto, the default, cuts to the preset whose',
+    'part of the room she walks into; a preset pins the picture until Auto hands it back',
+    '(`cabin.allium` TheCameraFollowsHerUntilPinned). A diorama cut between positions, never',
+    'panned (CONVENTIONS.md §1 decision 6).',
     '',
     'H `operation.allium` — FullyKeyboardOperable and EveryControlIsAComfortableTarget,',
     'answered by the platform `SegmentedControl`: one tab stop, arrows within, each segment',
@@ -25,22 +27,33 @@
     component: CameraControl,
     tags: ['autodocs'],
     parameters: { docs: { description: { component: OVERVIEW } } },
-    args: { value: 'hearth', onchange: fn() }
+    args: { value: 'auto', onchange: fn() }
   });
 </script>
 
 <Story
-  name="From the hearth"
+  name="Following her"
   play={async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole('radio', { name: 'Hearth' })).toBeChecked();
-    await userEvent.click(canvas.getByRole('radio', { name: 'Window' }));
-    await expect(args.onchange).toHaveBeenCalledWith('window');
+    await expect(canvas.getByRole('radio', { name: 'Auto' })).toBeChecked();
+    await userEvent.click(canvas.getByRole('radio', { name: 'Bowls' }));
+    await expect(args.onchange).toHaveBeenCalledWith('bowls');
   }}
 />
 
 <Story
-  name="From the chair"
+  name="Pinned on the hearth"
+  args={{ value: 'hearth' }}
+  play={async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole('radio', { name: 'Hearth' })).toBeChecked();
+    await userEvent.click(canvas.getByRole('radio', { name: 'Auto' }));
+    await expect(args.onchange).toHaveBeenCalledWith('auto');
+  }}
+/>
+
+<Story
+  name="Pinned on the chair"
   args={{ value: 'chair' }}
   play={async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole('radio', { name: 'Chair' })).toBeChecked();

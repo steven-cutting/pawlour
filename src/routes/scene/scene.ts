@@ -60,6 +60,7 @@ export interface SceneOptions {
   onRestored(): void;
   onError(error: unknown): void;
   onArrived: () => void;
+  onReached: (node: string) => void;
 }
 /** What the `?debug` hook reads and pulls (P10); nothing else calls these. */
 export interface SceneDiagnostics {
@@ -382,7 +383,8 @@ export function createScene(
       clips: model.value.animations,
       table: assets.clips,
       cabin,
-      onArrived: options.onArrived
+      onArrived: options.onArrived,
+      onReached: options.onReached
     });
     idle = createIdle(biscuit, cabin, random);
     fire = createFire(cabin, texture.value, random);

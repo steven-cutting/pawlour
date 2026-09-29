@@ -48,6 +48,7 @@ POSITIONS = {
     "camera.hearth": (0.6, 1.40, 2.30),
     "camera.window": (-0.8, 1.30, 1.60),
     "camera.chair": (0.9, 1.00, 0.90),
+    "camera.bowls": (0.5, 1.10, 1.30),
     **{f"light.strings.{i}": (-2.3 + i * 0.58, 2.2, -1.95) for i in range(6)},
     **{
         f"nav.{i}": position
@@ -79,7 +80,11 @@ CAMERAS = {
     "hearth": ((-0.5, 0.5, -1.5), 42),
     "window": ((1.8, 0.8, -0.2), 40),
     "chair": ((1.7, 0.5, 0.0), 36),
+    "bowls": ((-1.9, 0.4, 0.8), 40),
 }
+# Inside the three walls: the logs at x = +-2.5 and z = -2, the plane at y = 2.405,
+# with the +Z side open. A camera outside them would see a wall's back, not the room.
+INSIDE = {"x": 2.5, "z": -2.0, "y": 2.4}
 FACINGS = {
     **dict.fromkeys(
         ("item.fire", "fire.anchor", "item.bed", "item.lights", "item.jar.approach"), (0, 0, 1)
@@ -224,6 +229,9 @@ def check_nodes(document, findings):
             findings.append(f"{name}: item has no mesh descendant")
         facing = FACINGS.get(name)
         if name.startswith("camera."):
+            x, y, z = position
+            if not (abs(x) < INSIDE["x"] and z > INSIDE["z"] and 0 < y < INSIDE["y"]):
+                findings.append(f"{name}: world position {position} is outside the walls")
             target, fov = CAMERAS[name.removeprefix("camera.")]
             if node.get("extras", {}).get("fov") != fov:
                 findings.append(f"{name}: extras.fov must be {fov}")
@@ -373,6 +381,14 @@ def self_test(path):
         ),
         ("one-way edge", "nav.7", "extras", {"edges": ["nav.0"]}, "not reciprocal"),
         ("missing fov", "camera.hearth", "extras", {}, "camera.hearth"),
+        # Behind the hearth wall; the position check trips too, so the phrase is what counts.
+        (
+            "camera behind a wall",
+            "camera.hearth",
+            "translation",
+            [0.6, 1.4, -2.3],
+            "outside the walls",
+        ),
         ("missing depth", "glass.window", "extras", {}, "glass.window"),
         ("missing added pane", "glass.window.left", "name", "wrong.pane", "glass.window.left"),
         ("added pane depth", "glass.window.hearth", "extras", {}, "glass.window.hearth"),

@@ -16,7 +16,8 @@ function spotNode(cabin: Cabin, name: string): Object3D {
   return found;
 }
 
-function nearest(cabin: Cabin, point: Vector3): string {
+/** The waypoint nearest a point: where a walk from there starts, and where a spot without `extras.nav` is reached from. */
+export function nearest(cabin: Cabin, point: Vector3): string {
   let distance = Infinity;
   let closest = '';
   for (const [name, waypoint] of cabin.nav) {
@@ -29,8 +30,14 @@ function nearest(cabin: Cabin, point: Vector3): string {
   return closest;
 }
 
+/** A point on a walk, by the name of the room's node it is at. */
+export interface PathPoint {
+  name: string;
+  point: Vector3;
+}
+
 /** The graph is validated by requireCabin; retain its authored edge order for ties. */
-export function pathTo(cabin: Cabin, from: Vector3, spot: string): Vector3[] {
+export function pathTo(cabin: Cabin, from: Vector3, spot: string): PathPoint[] {
   const target = spotNode(cabin, spot);
   const end = target.getWorldPosition(new Vector3());
   const source = nearest(cabin, from);
@@ -47,12 +54,12 @@ export function pathTo(cabin: Cabin, from: Vector3, spot: string): Vector3[] {
     }
   }
   if (!parents.has(destination)) throw new Error(`No path to ${spot}`);
-  const points = [end];
+  const points: PathPoint[] = [{ name: spot, point: end }];
   let name: string | undefined = destination;
   while (name !== undefined) {
     const waypoint = cabin.nav.get(name);
     if (!waypoint) throw new Error(`Missing waypoint ${name}`);
-    points.unshift(waypoint.node.getWorldPosition(new Vector3()));
+    points.unshift({ name, point: waypoint.node.getWorldPosition(new Vector3()) });
     name = parents.get(name);
   }
   return points;
@@ -64,8 +71,19 @@ export function walkingSpeed(table: ClipTable, scale: number): number {
   return (walk.stride / walk.seconds) * scale;
 }
 
-export function createWalk(model: Object3D, cabin: Cabin, speed: number) {
-  let points: Vector3[] = [];
+/**
+ * Walks the model along the path to a spot. `onReached` names each point as
+ * she gets to it, the waypoints and then the spot itself, so the camera can
+ * follow her into another part of the room; the arrival is the caller's to
+ * report, once she has also turned into the spot's facing.
+ */
+export function createWalk(
+  model: Object3D,
+  cabin: Cabin,
+  speed: number,
+  onReached: (node: string) => void
+) {
+  let points: PathPoint[] = [];
   let index = 0;
   let target: string | undefined;
   const facing = new Quaternion();
@@ -86,11 +104,12 @@ export function createWalk(model: Object3D, cabin: Cabin, speed: number) {
     update(dt: number): boolean {
       if (!target) return false;
       while (index < points.length) {
-        const point = points[index] as Vector3;
+        const { name, point } = points[index] as PathPoint;
         const delta = point.clone().sub(model.position);
         const distance = delta.length();
         if (distance < EPSILON) {
           index += 1;
+          onReached(name);
           continue;
         }
         if (Math.hypot(delta.x, delta.z) > EPSILON) {
@@ -107,6 +126,7 @@ export function createWalk(model: Object3D, cabin: Cabin, speed: number) {
         if (travel < distance) return false;
         model.position.copy(point);
         index += 1;
+        onReached(name);
       }
       // Finish the facing in place as well; arrival must not spin her into a pose.
       model.quaternion.rotateTowards(facing, Math.PI * dt);

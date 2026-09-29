@@ -78,6 +78,8 @@ async function openSettings(): Promise<HTMLElement> {
   return screen.findByRole('dialog', { name: 'Settings' });
 }
 
+/** A named group of radios inside a dialog: Time of day and Camera both offer an Auto. */
+const group = (dialog: HTMLElement, name: string) => within(dialog).getByRole('group', { name });
 const her = () => screen.getByRole('button', { name: /^Biscuit, / });
 
 async function openSend(): Promise<HTMLElement> {
@@ -340,7 +342,10 @@ describe('time', () => {
     });
     expect(ports.storage.read('pawlour.time')).toBe('night');
 
-    await userEvent.click(within(dialog).getByRole('radio', { name: 'Auto' }));
+    // Time and Camera each have an Auto; each is found inside its own group.
+    await userEvent.click(
+      within(group(dialog, 'Time of day')).getByRole('radio', { name: 'Auto' })
+    );
     await waitFor(() => {
       expect(sentence()).toHaveTextContent('It is morning.');
     });
@@ -355,6 +360,7 @@ describe('time', () => {
     });
     const dialog = await openSettings();
     expect(within(dialog).getByRole('radio', { name: 'Evening' })).toBeChecked();
+    // A stored preset is a pin (P22: an earlier visit's choice is honoured).
     expect(within(dialog).getByRole('radio', { name: 'Chair' })).toBeChecked();
   });
 
@@ -365,8 +371,8 @@ describe('time', () => {
       expect(sentence()).toHaveTextContent('It is morning.');
     });
     const dialog = await openSettings();
-    expect(within(dialog).getByRole('radio', { name: 'Auto' })).toBeChecked();
-    expect(within(dialog).getByRole('radio', { name: 'Hearth' })).toBeChecked();
+    expect(within(group(dialog, 'Time of day')).getByRole('radio', { name: 'Auto' })).toBeChecked();
+    expect(within(group(dialog, 'Camera')).getByRole('radio', { name: 'Auto' })).toBeChecked();
   });
 
   it('reads the clock once a minute', async () => {
@@ -385,14 +391,27 @@ describe('time', () => {
 });
 
 describe('the camera', () => {
-  it('persists the chosen preset', async () => {
-    const { ports } = mount();
+  it('follows her unless a preset is pinned: Auto with nothing stored', async () => {
+    mount();
     const dialog = await openSettings();
 
-    await userEvent.click(within(dialog).getByRole('radio', { name: 'Window' }));
+    expect(within(group(dialog, 'Camera')).getByRole('radio', { name: 'Auto' })).toBeChecked();
+  });
+
+  it('persists a pinned preset, and Auto forgets it', async () => {
+    const { ports } = mount();
+    const dialog = await openSettings();
+    const camera = group(dialog, 'Camera');
+
+    await userEvent.click(within(camera).getByRole('radio', { name: 'Window' }));
 
     expect(ports.storage.read('pawlour.camera')).toBe('window');
-    expect(within(dialog).getByRole('radio', { name: 'Window' })).toBeChecked();
+    expect(within(camera).getByRole('radio', { name: 'Window' })).toBeChecked();
+
+    await userEvent.click(within(camera).getByRole('radio', { name: 'Auto' }));
+
+    expect(ports.storage.read('pawlour.camera')).toBeNull();
+    expect(within(camera).getByRole('radio', { name: 'Auto' })).toBeChecked();
   });
 });
 

@@ -18,6 +18,8 @@
     onReady: () => void;
     onTap: (hit: Hit) => void;
     onArrived: () => void;
+    /** Each place a walk passes, by name, as she gets to it. */
+    onReached: (node: string) => void;
     onContextLost: () => void;
     onError: () => void;
     /** No 3D room is coming (WebGL2 is absent or turned off), and the still has loaded or failed. */
@@ -34,6 +36,7 @@
     onReady,
     onTap,
     onArrived,
+    onReached,
     onContextLost,
     onError,
     onStill = () => undefined,
@@ -92,6 +95,9 @@
           assets,
           onArrived: () => {
             onArrived();
+          },
+          onReached: (node) => {
+            onReached(node);
           },
           onProgress: (fraction) => {
             onProgress(fraction);

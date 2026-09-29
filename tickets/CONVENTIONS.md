@@ -91,9 +91,11 @@ Decisions, taken on 2026-09-25:
    its `src/` are copied here byte for byte with provenance (§3, §4). Reconciling with S
    (where the platform's assets are meant to be developed and leave by ledger) is C02,
    after v1. Until then nothing here is promoted anywhere and S's ledger is untouched.
-6. **Camera: a fixed diorama** with three preset positions (§5), cut between, never
-   panned. No orbit, no scene zoom; the page itself still pinch-zooms as the platform
-   requires.
+6. **Camera: a fixed diorama** with four preset positions (§5), cut between, never
+   panned: under Auto the picture cuts to the preset whose part of the room she walks
+   into, and a preset the player pins holds (`cabin.allium`,
+   TheCameraFollowsHerUntilPinned; corrected by P22). No orbit, no scene zoom; the page
+   itself still pinch-zooms as the platform requires.
 7. **Time of day from the device's clock** through T's clock port, three phases, a
    visible override that persists through T's storage port (§6).
 8. **Sound: ambient, off by default**, a visible switch, never autoplays; every file
@@ -741,7 +743,7 @@ Required empties (glTF nodes with no mesh), by exact name:
 | `item.<name>.approach` for `bed`, `chair`, `water`, `food`, `toy`, `jar`, `lamp`, `lights` | where she stands to use it, facing −Z toward it; carries `extras.nav` naming its nearest waypoint |
 | `spot.bed`, `spot.chair` | where she lies, with facing; `spot.chair` is on the seat |
 | `nav.0` to `nav.<n>` | waypoints on the floor; each carries `extras.edges`, a list of neighbouring waypoint names; the graph is connected and undirected |
-| `camera.hearth`, `camera.window`, `camera.chair` | the three presets; position and −Z view direction, level (local +Y up, no roll; corrected by P19); `extras.fov` vertical degrees |
+| `camera.hearth`, `camera.window`, `camera.chair`, `camera.bowls` | the presets, one per name in `CAMERAS` (`src/lib/domain/zones.ts`); position and −Z view direction, level (local +Y up, no roll; corrected by P19), inside the three walls, x between −2.5 and 2.5, z above −2 and y between 0 and 2.4 (corrected by P22); `extras.fov` vertical degrees |
 | `light.window`, `light.fire`, `light.lamp`, `light.strings.0` to `light.strings.<n>` | positions the lighting rigs place lights at |
 | `glass.window`, `glass.window.left`, `glass.window.hearth` | three pane meshes under `item.window`; weather particles live in the box behind each (`extras.depth` units) |
 | `fire.anchor` | where the flame planes and embers sit |
@@ -837,9 +839,10 @@ which:
   night; flicker is `fire.ts`), a `PointLight` at `light.lamp` and small ones at
   `light.strings.*` (on by the director's light state).
 - Places the camera at the active preset (`camera.ts`); on resize fits the preset's frame
-  set, the places she settles that it looks at (`framedFor`: hearth all six, window
-  `spot.chair`, `item.toy.approach` and `nav.0`, chair `spot.chair`), each at the floor
-  and at 0.55 up inside a 0.96 margin, by the least retreat along the camera's own axis
+  set, its zone and every node one step beyond it (`framedFor`, reading `zones.ts`; the
+  steps are the waypoint edges, each approach's `extras.nav` and each spot's nearest
+  waypoint, both ways; corrected by P22), each at the floor and at 0.55 up inside a 0.96
+  margin, by the least retreat along the camera's own axis
   in either orientation, never fov, and levels the horizon, which the exported presets
   once rolled and now hold level themselves (P07a hand-back; corrected by P19); DPR capped
   at 2, `MAX_PIXEL_RATIO` in `scene.ts` (corrected by P11; corrected by P21).
@@ -872,7 +875,9 @@ which:
 - Runs the loop only through the frame port and only while `animationsActive` is true;
   otherwise (`still.ts`) it renders exactly once per `SceneState` it is handed, with the
   fire at a fixed middle frame, no particles, and lighting cuts, and never reports
-  `arrived`: the director resolves the walk itself (§6.1, P06 4a; corrected by P11). Before
+  `arrived`: the director resolves the walk itself (§6.1, P06 4a; corrected by P11).
+  While motion is on, the walk names each point it reaches, the waypoints and then the
+  spot, through `onReached`, and the page dispatches `reached` (corrected by P22). Before
   the first frame
   and on `webglcontextlost` the component shows the still for the current activity and
   phase (§3) as an `<img>` with the caption as alt text and reports the loss through
@@ -905,17 +910,20 @@ alone and the constants are imported from `timing.ts`; commands are objects keye
 P11). Commands: `tap(item)`, `tapBiscuit`,
 `tapFloor(point)`, `tick(ms)`, `setPhase(phase | 'auto')`, `clockPhase(phase)`,
 `setWeather(weather)`, `toggleLight('lamp' | 'strings')`, `setSound(on)`,
-`setCamera(preset)`, `motionChanged(active)`.
+`setCamera(preset | 'auto')`, `reached(node)`, `motionChanged(active)` (corrected by
+P22).
 
 `SceneState` (serialisable): `activity` (`idle.stand`, `idle.sit`, `walk`, `sit`, `lie`,
 `sleep`, `drink`, `eat`, `play`, `pet`, `stand` for the reversed transitions), `at` (the
 item she is at or heading to, or `floor`), `target` (the named node she is heading to,
 or absent; corrected by P11),
 `lookAt` (a floor point or the item to look toward, or absent), `phase`, `phaseOverride`,
-`weather`, `lights` (`lamp`, `strings`), `fire` (0 to 1), `camera`, `sound`, `caption`
+`weather`, `lights` (`lamp`, `strings`), `fire` (0 to 1), `camera`, `cameraOverride`
+(the pinned preset, or absent; corrected by P22), `sound`, `caption`
 (the sentence and a sequence number, or absent), `motion`. P06 embeds the type and the
 command union in its ticket and that text is canonical: it may add bookkeeping fields
-(`elapsed`, `untilIdleChoice`, `shown`, `resume`, `standFrom`) and an `arrived` command,
+(`elapsed`, `untilIdleChoice`, `shown`, `resume`, `standFrom`, and `passed`, the last
+node she passed or settled at, which P22 added) and an `arrived` command,
 and P07 and P08 read P06's file. `Item` in v1 is `bed`, `chair`, `water`, `food`, `toy`,
 `lamp`, `lights`; `jar` and `fire` ship as room anchors and the director ignores them
 until v1.1.
@@ -1029,8 +1037,10 @@ persists through the storage port under `pawlour.time`, and the page follows
 `Switch`, off by default and never persisted, because `SoundNeverStartsUnasked` says sound
 is off whenever the room opens (P01, P06, P08; corrected by P11); turning it on calls
 `audio.enable()` inside the handler, and only the latest request turns `sound` on.
-`CameraControl`: a `SegmentedControl` Hearth, Window, Chair, persisted under
-`pawlour.camera`.
+`CameraControl`: a `SegmentedControl` Auto, Hearth, Window, Chair, Bowls; Auto is the
+default and follows her, a preset pins the picture and persists under `pawlour.camera`,
+Auto removes the key, and a stored name that is no preset reads as Auto (corrected by
+P22).
 `PhotoButton`: asks the canvas for `capture()` (`SceneCanvas` renders once, synchronously,
 and returns `toDataURL('image/png')` at the canvas's size; the director is sent nothing
 and the state does not change), composes the card in

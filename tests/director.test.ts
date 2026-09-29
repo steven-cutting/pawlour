@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { CAPTIONS } from '../src/lib/data/captions';
 import { initialState, step } from '../src/lib/domain/director';
-import type { Command, Deps, SceneState } from '../src/lib/domain/director';
+import type { Camera, Command, Deps, SceneState } from '../src/lib/domain/director';
 import { activityFor, isWalkItem, lightFor } from '../src/lib/domain/items';
 import type { Item } from '../src/lib/domain/items';
 import type { Phase } from '../src/lib/domain/phases';
@@ -133,6 +133,7 @@ describe('the room when it opens', () => {
       lights: { lamp: true, strings: false },
       fire: 0.7,
       camera: 'hearth',
+      passed: 'nav.0',
       sound: false,
       motion: true,
       elapsed: 0,
@@ -829,6 +830,119 @@ describe('MotionOffIsAStillDiorama', () => {
   });
 });
 
+describe('TheCameraFollowsHerUntilPinned', () => {
+  function reached(node: string): Command {
+    return { kind: 'reached', node };
+  }
+  function pin(camera: Camera | 'auto'): Command {
+    return { kind: 'setCamera', camera };
+  }
+
+  it('While she walks, the picture cuts as she reaches a place in another part of the room', () => {
+    const walking = run(room(), tap('water'));
+
+    expect(walking.activity).toBe('walk');
+
+    const middle = run(walking, reached('nav.0'), reached('nav.3'));
+
+    expect(middle.camera).toBe('hearth');
+    expect(middle.passed).toBe('nav.3');
+
+    const bowl = step(middle, reached('item.water.approach'), deps);
+
+    expect(bowl.camera).toBe('bowls');
+    expect(bowl.passed).toBe('item.water.approach');
+    expect(bowl.activity).toBe('walk');
+  });
+
+  it('A pinned preset holds while she walks, and where she has been is still recorded', () => {
+    const state = run(room(), pin('chair'), tap('water'), reached('item.water.approach'));
+
+    expect(state.camera).toBe('chair');
+    expect(state.cameraOverride).toBe('chair');
+    expect(state.passed).toBe('item.water.approach');
+  });
+
+  it('A place reported while she is not walking, or one the room does not name, changes nothing', () => {
+    const idle = room();
+
+    expect(step(idle, reached('item.water.approach'), deps)).toBe(idle);
+
+    const walking = run(room(), tap('water'));
+
+    expect(step(walking, reached('nowhere'), deps)).toBe(walking);
+  });
+
+  it('Arriving at a thing cuts to the preset its place belongs to', () => {
+    const state = run(room(), tap('water'), arrived);
+
+    expect(state.camera).toBe('bowls');
+    expect(state.passed).toBe('item.water.approach');
+    expect(run(room(), tap('chair'), arrived).camera).toBe('chair');
+  });
+
+  it('With motion off, the still is drawn from the preset her destination belongs to', () => {
+    const state = step(room('evening', false), tap('water'), deps);
+
+    expect(state.activity).toBe('drink');
+    expect(state.camera).toBe('bowls');
+  });
+
+  it('Handing the choice back follows her from where she is', () => {
+    const state = run(asleep(), pin('window'));
+
+    expect(state.camera).toBe('window');
+
+    const auto = step(state, pin('auto'), deps);
+
+    expect(auto.camera).toBe('hearth');
+    expect(auto.cameraOverride).toBeUndefined();
+  });
+
+  it('Handing the choice back mid-walk follows the last place she passed, not where she is going', () => {
+    const walking = run(room(), pin('chair'), tap('chair'), reached('nav.0'), reached('nav.2'));
+
+    expect(walking.activity).toBe('walk');
+    expect(walking.camera).toBe('chair');
+    expect(step(walking, pin('auto'), deps).camera).toBe('window');
+  });
+
+  it('Handing the choice back before she passes anything follows where she last was', () => {
+    const setOff = run(
+      room(),
+      tap('water'),
+      arrived,
+      pin('hearth'),
+      ...seconds(MINIMUM_ACTIVITY),
+      tap('chair')
+    );
+
+    expect(setOff.activity).toBe('walk');
+    expect(setOff.camera).toBe('hearth');
+    expect(step(setOff, pin('auto'), deps).camera).toBe('bowls');
+  });
+
+  it('Choosing a preset pins it and shows it', () => {
+    const state = step(room(), pin('chair'), deps);
+
+    expect(state.camera).toBe('chair');
+    expect(state.cameraOverride).toBe('chair');
+  });
+
+  it('With motion on, time passing never moves the picture', () => {
+    const walking = run(room(), tap('water'), reached('nav.3'));
+    const later = run(walking, ...seconds(60));
+
+    expect(later.activity).toBe('walk');
+    expect(later.camera).toBe(walking.camera);
+
+    const bowl = run(room(), tap('water'), arrived);
+
+    for (const state of [bowl, ...[5, 20, 60].map((count) => run(bowl, ...seconds(count)))])
+      expect(state.camera).toBe('bowls');
+  });
+});
+
 describe('what she does on her own', () => {
   it('Once she has idled long enough she chooses a thing and goes to it', () => {
     const opened = room('morning');
@@ -916,6 +1030,12 @@ describe('the settings', () => {
       { kind: 'setCamera', camera: 'window' }
     );
 
-    expect(set).toEqual({ ...opened, weather: 'snow', sound: true, camera: 'window' });
+    expect(set).toEqual({
+      ...opened,
+      weather: 'snow',
+      sound: true,
+      camera: 'window',
+      cameraOverride: 'window'
+    });
   });
 });

@@ -1,7 +1,9 @@
 import { PerspectiveCamera, Quaternion, Vector3 } from 'three';
 import type { Camera } from '$lib/domain/director';
+import { ZONES } from '$lib/domain/zones';
 import { assetName } from './cabin';
-import type { Cabin, CabinCamera } from './cabin';
+import type { Cabin } from './cabin';
+import { nearest } from './walk';
 
 export interface Size {
   width: number;
@@ -11,34 +13,57 @@ export interface Size {
 export const FLOOR_HALF = { x: 2.5, z: 2 } as const;
 /** Her height, standing (CONVENTIONS.md §5.1): each framed point is fitted here as well as at the floor. */
 export const SETTLE_HEIGHT = 0.55;
-/*
- * What each preset must keep in frame: the places she settles that it looks
- * at. She settles at six points and nowhere else, the spot of each of the five
- * things she walks to and `nav.0`, where she opens. Hearth sees all six;
- * window and chair frame their own subject, and she can leave them while they
- * are chosen, as she can in landscape, until P22 follows her and replaces
- * this table with its zones.
+/**
+ * Every node of the room's walk graph with the nodes one step from it. A step
+ * is a waypoint edge, an approach's `extras.nav`, or a spot's nearest waypoint
+ * as `walk.ts` picks it (the same `extras.nav`-or-nearest rule), and it runs
+ * both ways: a walk leaves an approach for its waypoint and ends on it from
+ * there, so window, which owns nav.2, sees spot.chair beyond it and holds her
+ * over the last segment of a walk to the chair.
  */
-export const FRAMED: Readonly<Record<CabinCamera, readonly string[]>> = {
-  hearth: [
-    'spot.bed',
-    'spot.chair',
-    'item.water.approach',
-    'item.food.approach',
-    'item.toy.approach',
-    'nav.0'
-  ],
-  window: ['spot.chair', 'item.toy.approach', 'nav.0'],
-  chair: ['spot.chair']
-};
+export function neighbours(cabin: Cabin): Map<string, Set<string>> {
+  const graph = new Map<string, Set<string>>();
+  const join = (a: string, b: string): void => {
+    for (const [from, to] of [
+      [a, b],
+      [b, a]
+    ] as const)
+      graph.set(from, (graph.get(from) ?? new Set<string>()).add(to));
+  };
+  for (const [name, waypoint] of cabin.nav) for (const edge of waypoint.edges) join(name, edge);
+  for (const node of [...Object.values(cabin.approaches), ...Object.values(cabin.spots)]) {
+    const reference: unknown = node.userData.nav;
+    join(
+      assetName(node),
+      typeof reference === 'string'
+        ? reference
+        : nearest(cabin, node.getWorldPosition(new Vector3()))
+    );
+  }
+  return graph;
+}
 
-/** The world positions of the nodes a preset frames, in the table's order. */
-export function framedFor(cabin: Cabin, name: CabinCamera): Vector3[] {
+/**
+ * What a preset must keep in frame (TheCameraFollowsHerUntilPinned): every
+ * node of its zone and every node one step beyond it. Under Auto the picture
+ * cuts as she reaches a node of another zone, so every segment she walks
+ * before a cut runs between two nodes of this set, and a frustum is convex.
+ * The zone comes first, in `zones.ts`'s order, then the nodes beyond it.
+ */
+export function frameSet(cabin: Cabin, name: Camera): string[] {
+  const graph = neighbours(cabin);
+  const zone = ZONES[name];
+  const beyond = zone.flatMap((node) => [...(graph.get(node) ?? [])]);
+  return [...new Set([...zone, ...beyond])];
+}
+
+/** The world positions of the nodes a preset frames, in `frameSet`'s order. */
+export function framedFor(cabin: Cabin, name: Camera): Vector3[] {
   const nodes = new Map<string, Vector3>();
   cabin.root.traverse((node) => {
     nodes.set(assetName(node), node.getWorldPosition(new Vector3()));
   });
-  return FRAMED[name].map((spot) => {
+  return frameSet(cabin, name).map((spot) => {
     const point = nodes.get(spot);
     if (!point) throw new Error(`cabin.glb is missing ${spot}, which camera.${name} frames`);
     return point;

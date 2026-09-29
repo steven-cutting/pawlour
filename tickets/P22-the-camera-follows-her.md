@@ -1,7 +1,7 @@
 ---
 id: P22
 title: "The camera follows her: zones, a covering set of presets, and Auto in Settings"
-status: open
+status: done
 depends_on: [P19, P21]
 parallel_with: [P12, P13, P16, P17, P18]
 branch: ticket/p22-the-camera-follows-her
@@ -288,9 +288,165 @@ floor; the new file accepted with one more refused contract in the self-test; gr
 
 ## Hand-back notes
 
-Filled in by the agent that executes this ticket: the final `ZONES` table, every
-preset's position, target and field of view, the approval paths and dates, the manifest
-diff, and the outcome of open point 1.
+Executed on 2026-09-28 on the branch `P22-the-camera-follows-her` (not the `branch:`
+field's name: the worktree was created on that branch, as P21's was).
+
+**Decisions the maintainer took on 2026-09-28, before and during the work.**
+
+- **Bowls cuts at the bowl, not at nav.3.** A probe of P21's fit on the ticket's
+  starting map, with `bowls` owning `nav.3`, put the bowls camera about 10 m through the
+  right wall in portrait (390×844 at (10.2, 3.9, 3.3)), because nav.3's step to nav.7
+  and nav.0 had to be held. So `bowls` owns only the two approaches, `hearth` owns
+  `nav.3`, and the picture stays wide across the room and cuts as she reaches a bowl.
+  Step 3's `reached nav.3` cases became `reached item.water.approach`.
+- **Open point 1: chair owns `spot.chair`,** with the looser crop that holding nav.2
+  costs. Approved at the gate.
+- **Open point 5: a stored pin stays a pin.** There is no migration.
+- **The jar's stand.** From the hearth, the stand at (0.3, 0.45, 1.7) lies in line with
+  `item.jar.approach` (at every size) and `nav.5` (in portrait), both at x = 0.3, and
+  hides them at 0.3 m; at 0.55 m both are clear. A probe found that moving the hearth to
+  (1.2, 1.40, 2.30) would clear them. The maintainer kept the hearth instead, and those
+  two nodes are raycast at 0.55 m only, from the hearth only (`HEAD_ONLY` in
+  `tests/scene-assets.test.ts`, with the reason). She never stands at either in v1: the
+  jar does nothing, and no walk to the five things passes nav.5. This relaxes the
+  ticket's raycast rule for two nodes and one preset. In review (PR #8) Copilot found
+  the guarantee still said "nothing between her and the eye", which the relaxation
+  broke; the maintainer chose to amend the spec, so it now says "nothing between her
+  head and the eye", and knee height stays the test's stricter bar for the room.
+- **The gate** showed both Blender's review PNG and captures of the built app.
+
+**Final `ZONES`** (`src/lib/domain/zones.ts`):
+
+| Preset | Owns | Frame set beyond the zone |
+| --- | --- | --- |
+| hearth | nav.0, nav.1, nav.3, nav.5, nav.7, item.bed.approach, spot.bed, item.lights.approach, item.jar.approach | nav.2, nav.4, nav.6, item.water.approach, item.food.approach |
+| window | nav.2, nav.4, nav.6, item.chair.approach, item.lamp.approach, item.toy.approach | nav.0, spot.chair, nav.5 |
+| chair | spot.chair | nav.2 |
+| bowls | item.water.approach, item.food.approach | nav.3 |
+
+One step is a waypoint edge, an approach's `extras.nav`, or a spot's nearest waypoint,
+taken both ways (`neighbours` in `camera.ts`). Both ways is what puts `spot.chair` in
+window's set and holds her over the last segment, nav.2 → spot.chair.
+
+**Presets** (`blender/cabin/layout.py`; only `bowls` is new, none moved):
+
+| Preset | Position | Target | FOV | Retreat 844×390 | 1200×844 | 390×844 | 320×568 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| hearth | (0.6, 1.40, 2.30) | (−0.5, 0.5, −1.5) | 42° | 1.74 m (was 1.27) | 1.74 m (was 1.50) | 8.82 m | 6.87 m |
+| window | (−0.8, 1.30, 1.60) | (1.8, 0.8, −0.2) | 40° | 1.85 m (was 1.25) | 1.85 m (was 1.25) | 3.66 m | 2.70 m |
+| chair | (0.9, 1.00, 0.90) | (1.7, 0.5, 0.0) | 36° | 1.16 m (was 0.22) | 1.16 m (was 0.22) | 1.41 m (was 0.22) | 1.16 m (was 0.22) |
+| bowls | (0.5, 1.10, 1.30) | (−1.9, 0.4, 0.8) | 40° | 0 | 0 | 0 | 0 |
+
+The raycast from the fitted camera holds the portrait hearth and window retreats, which
+end past the open side (the hearth's above the 2.4 m box and beyond its edge). Every mesh
+under the cabin root is a `cabin.*` material and double-sided, so a ray sees what the
+renderer draws, from either side.
+
+**Approvals, 2026-09-28**, all from the maintainer in this session:
+
+- bowls, new: `ai_tmp/cabin/bowls.png`, and `ai_tmp/p22/sheet-bowls.png` from
+  `ai_tmp/p22/app-bowls-{844x390,1200x844,390x844,320x568}.png`.
+- chair, looser crop: `ai_tmp/p22/sheet-chair.png` and `ai_tmp/cabin/chair.png`.
+- window and hearth, bigger frame sets: `ai_tmp/p22/sheet-window.png` and
+  `ai_tmp/p22/sheet-hearth.png`.
+
+The captures were taken under Auto with reduced motion, sending her to Water, Toy and
+Chair through her control. The `?debug` line read `bowls`, `window` and `chair` in turn,
+and Settings still showed Auto checked at every size.
+
+**Seen with motion on**, in Chromium (SwiftShader) at 390×844 on the built app, with
+`data-animations` on and no page error or console error. She walked to the water, then
+to the chair, and the `?debug` line read hearth → bowls (at the bowl) → hearth (at nav.3
+on the way out) → window (at nav.2) → chair (on the seat). So `reached` crossed from the
+frame loop, through the page's effect, into `scene.apply` without disturbing the walk.
+Captures: `ai_tmp/p22/live-bowls-390x844.png`,
+`ai_tmp/p22/live-window-mid-walk-390x844.png`, `ai_tmp/p22/live-chair-390x844.png`.
+
+**A tick and the camera.** The ticket's step 3 says a `tick` never changes `camera`. The
+test holds that with motion on, where time alone moves nothing. With motion off, a walk
+her own choice starts on a tick arrives on that same tick, and the camera follows her to
+the destination's zone, as the guarantee's last sentence asks. `the-director.md` says it
+that way.
+
+**Red, each step.**
+
+- Zones: the missing module.
+- Director: 12 failing cases (the opening state, the settings case, and ten new).
+- Walker: the named path and the order `nav.0, nav.3, item.water.approach, arrived`.
+- Checker: the committed file refused with `camera.bowls: expected one required node,
+  found 0`.
+- Control: four failing page and dialog cases.
+- The dialog's narrowest story (below).
+
+**Found at the screenshot of the built workshop.** At 320 px, with `TimeControl`'s
+`--s-4` padding, the fifth camera segment (Bowls) ran 3 px past the dialog body and was
+clipped. Neither the 44 px check nor the document-scroll check can see that. The
+`SettingsDialog` narrowest story now asserts that every radio lies inside every ancestor
+that clips: red at `expected 306.64 to be less than or equal to 303.5`, green with
+`--s-2` in `CameraControl`. The segments now measure 46, 59, 67, 49 and 52 px in the
+frame story, and the platform's 44 px floor holds the short words up. H01 already
+carries the fit; a sixth preset would wrap to two rows, as open point 4 says.
+
+**Stub.** `svelte-check` refuses a `.ts` import from the `.mjs` without
+`allowImportingTsExtensions`, so `stubCabin(cameras)` takes the names. The test passes
+`CAMERA_NAMES`, and `just scene-stub` imports `zones.ts` at runtime, where Node strips
+the types. It throws for a preset it has no position for.
+
+**Manifest diff:** `cabin.glb` goes from 586,592 to 586,788 bytes, sha256
+`0990eb38…` → `781d8bd5…`, `source` still `built:2026-09-28`. It is still 25,634
+triangles and 25 primitives, with all 48 positions within 0.01 m.
+
+**Outside the file table:**
+
+- `docs/how-to/test-on-a-phone.md`: the frame-rate run now pins the hearth, so Auto does
+  not cut away mid-measurement.
+- `docs/reference/testing.md`: the rows for the changed tests and a `zones.test.ts` row.
+- `tests/drawn.test.ts`: `passed` and `cameraOverride` added as fields that draw nothing.
+- `stories/Stage.stories.svelte`: `onReached`.
+- `stories/SettingsDialog.stories.svelte`: both Autos, and the clipping check.
+- `tickets/README.md`: P22's row.
+
+**For whoever merges second of P14, P15 and this ticket.** This ticket edits
+`stories/SceneCanvas.stories.svelte` (one `onReached: fn()` line),
+`docs/explanation/the-director.md` (the state, the commands, a new "The camera" section
+and a sentence under "Motion off"), `tests/director.test.ts` (the opening and settings
+cases, and a new `TheCameraFollowsHerUntilPinned` block), and rows of
+`docs/reference/testing.md`. `src/lib/assets/manifest.json` changes in the `cabin.glb`
+row only.
+
+**P21's two open points handed here.** The ceiling plane: the hearth's portrait retreat
+is unchanged at 8.82 and 6.87 m, so the hearth captures show what P21's did, black above
+the wall tops; it stays the PRD's open question. Desktop at 2:1 or wider: no viewport
+wider than 1200×844 was measured. The guarantee is held zone by zone and bounds nothing
+at the walls' ends, so that point stays open in the PRD as well.
+
+**P18.** Under Auto, the runtime may show `bowls` or `chair` where the fallback still
+shows the hearth. The stills stay one per activity and phase, as open point 3 says.
+
+**Residual risk.**
+
+- A walk retargeted mid-segment starts from her nearest waypoint, which may lie outside
+  the current zone's frame set. The guarantee is held node to node.
+- The five segments fit the dialog at 320 px in Chromium with about 10 px to spare, and
+  Safari's text metrics were not measured.
+
+**Verification**, run on 2026-09-28:
+
+```text
+just check-cabin ai_tmp/cabin-before.glb   camera.bowls: expected one required node, found 0 (rc=1)
+just check-specs && just analyse-specs     2 specifications, no diagnostics and no findings
+just cabin-export; just check-cabin blender/out/cabin-raw.glb
+                                           cabin contract valid; 25,634 triangles, 25 primitives, all 48 positions within 0.01 m
+just assets-build cabin                    the same, and check-assets wrote 27 files
+just check-cabin-self-test                 valid input accepted, 17 broken contracts refused (was 16)
+just frontend-coverage                     Test Files 32 passed (32), Tests 418 passed (418)
+                                           100% statements, 97.49% branches, 100% functions, 100% lines
+just storybook-test                        Test Files 14 passed (14), Tests 52 passed (52)
+just check-docs                            Validated 54 pages and 55 canonical topics.
+just check                                 All checks passed and the worktree is unchanged.
+```
+
+Pushing and the pull request were not done; each is a separately authorised action.
 
 ## Open points
 

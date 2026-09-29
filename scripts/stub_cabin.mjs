@@ -4,8 +4,13 @@ import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** A small, uncompressed room for contract tests; never a served game asset. */
-export function stubCabin() {
+/**
+ * A small, uncompressed room for contract tests; never a served game asset.
+ * `cameras` is the director's list (`CAMERA_NAMES`), so a preset added there
+ * cannot pass the stub unplaced.
+ * @param {readonly string[]} cameras
+ */
+export function stubCabin(cameras) {
   const document = new Document();
   const scene = document.createScene();
   const buffer = document.createBuffer();
@@ -87,11 +92,16 @@ export function stubCabin() {
   ].entries()) {
     node(`nav.${index}`, position, { edges: [`nav.${(index + 1) % 4}`, `nav.${(index + 3) % 4}`] });
   }
-  for (const [name, position] of Object.entries({
+  /** @type {Record<string, [number, number, number]>} */
+  const presets = {
     hearth: [0.6, 1.4, 2.3],
     window: [-0.8, 1.3, 1.6],
-    chair: [0.9, 1, 0.9]
-  })) {
+    chair: [0.9, 1, 0.9],
+    bowls: [0.5, 1.1, 1.3]
+  };
+  for (const name of cameras) {
+    const position = presets[name];
+    if (!position) throw new Error(`Stub has no camera ${name}`);
     const camera = new Object3D();
     camera.position.fromArray(position);
     // Object3D looks along +Z; a camera's view is -Z.
@@ -133,6 +143,10 @@ export function stubCabin() {
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   const output = 'ai_tmp/stub-cabin/cabin.glb';
   await mkdir(dirname(output), { recursive: true });
-  await new NodeIO().write(output, stubCabin());
+  // Node strips the types; a static import would need an extension the type checker refuses.
+  const zones = /** @type {typeof import('../src/lib/domain/zones')} */ (
+    await import(new URL('../src/lib/domain/zones.ts', import.meta.url).href)
+  );
+  await new NodeIO().write(output, stubCabin(zones.CAMERAS));
   console.log(output);
 }

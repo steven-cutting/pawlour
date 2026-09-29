@@ -34,8 +34,8 @@
     sound: boolean;
     onenable: () => Promise<void>;
     ondisable: () => void;
-    camera: Camera;
-    oncamera: (camera: Camera) => void;
+    camera: Camera | 'auto';
+    oncamera: (camera: Camera | 'auto') => void;
   } = $props();
 </script>
 
