@@ -128,7 +128,8 @@ describe('the scene asset boundary', () => {
    * stand belongs to one preset (`zones.ts`), and each preset keeps its zone
    * and every node one step beyond it in frame, at the floor and at her
    * height, at the two phone orientations, a desktop and the narrowest width,
-   * with nothing of the room between her and the eye. Each fit backs away no
+   * with nothing of the room between her head and the eye, and her knees in
+   * sight too wherever the room allows it. Each fit backs away no
    * further than the farthest point needs: whenever it has moved at all, that
    * point sits on the 0.96 margin.
    */
@@ -142,12 +143,14 @@ describe('the scene asset boundary', () => {
     `${String(size.width)}x${String(size.height)}`;
 
   /*
-   * From the hearth, the jar's stand (item.jar at x = 0.3, z = 1.7) stands in
-   * line with the two nodes at x = 0.3 behind it and hides them at knee height;
-   * her head is clear. She never stands at either in v1: the jar does nothing,
-   * and no walk to the five things she goes to passes nav.5. The maintainer
-   * kept the hearth where it is on 2026-09-28 rather than move it 0.6 m right
-   * (P22's hand-back), so those two are held at her head alone, from there alone.
+   * The spec asks for her head; knee height is this test's stricter bar for the
+   * room, so a rim or an arm cannot hide most of her. From the hearth, the jar's
+   * stand (item.jar at x = 0.3, z = 1.7) stands in line with the two nodes at
+   * x = 0.3 behind it and hides them at knee height; her head is clear. She
+   * never stands at either in v1: the jar does nothing, and no walk to the five
+   * things she goes to passes nav.5. The maintainer kept the hearth where it is
+   * on 2026-09-28 rather than move it 0.6 m right (P22's hand-back), so those
+   * two are held at her head alone, from there alone.
    */
   const HEAD_ONLY: Partial<Record<Camera, readonly string[]>> = {
     hearth: ['item.jar.approach', 'nav.5']

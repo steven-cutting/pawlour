@@ -8,7 +8,7 @@
  * the two she settles on. The director cannot read the room, so the map lives
  * here, and `tests/scene-assets.test.ts` holds it to the real room: every
  * node named once, and each preset seeing its zone and one step beyond it
- * with nothing in the way.
+ * with nothing between her head and the eye.
  *
  * The bowls are a close-up the picture cuts to as she reaches a bowl, and the
  * chair one it cuts to as she reaches the seat; the hearth, the wide one,

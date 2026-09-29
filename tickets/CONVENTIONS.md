@@ -743,7 +743,7 @@ Required empties (glTF nodes with no mesh), by exact name:
 | `item.<name>.approach` for `bed`, `chair`, `water`, `food`, `toy`, `jar`, `lamp`, `lights` | where she stands to use it, facing −Z toward it; carries `extras.nav` naming its nearest waypoint |
 | `spot.bed`, `spot.chair` | where she lies, with facing; `spot.chair` is on the seat |
 | `nav.0` to `nav.<n>` | waypoints on the floor; each carries `extras.edges`, a list of neighbouring waypoint names; the graph is connected and undirected |
-| `camera.hearth`, `camera.window`, `camera.chair`, `camera.bowls` | the presets, one per name in `CAMERAS` (`src/lib/domain/zones.ts`); position and −Z view direction, level (local +Y up, no roll; corrected by P19), inside the three walls, |x| < 2.5, z > −2, 0 < y < 2.4 (corrected by P22); `extras.fov` vertical degrees |
+| `camera.hearth`, `camera.window`, `camera.chair`, `camera.bowls` | the presets, one per name in `CAMERAS` (`src/lib/domain/zones.ts`); position and −Z view direction, level (local +Y up, no roll; corrected by P19), inside the three walls, x between −2.5 and 2.5, z above −2 and y between 0 and 2.4 (corrected by P22); `extras.fov` vertical degrees |
 | `light.window`, `light.fire`, `light.lamp`, `light.strings.0` to `light.strings.<n>` | positions the lighting rigs place lights at |
 | `glass.window`, `glass.window.left`, `glass.window.hearth` | three pane meshes under `item.window`; weather particles live in the box behind each (`extras.depth` units) |
 | `fire.anchor` | where the flame planes and embers sit |

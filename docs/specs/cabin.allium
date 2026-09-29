@@ -393,8 +393,8 @@ surface Cabin {
         -- into its part of the room, so she is in frame before the cut and
         -- after it. The picture never cuts of its own accord while she is
         -- still; only the player's choice moves it then. From the
-        -- position in use she is in frame, with nothing between her and the
-        -- eye, at every place its part of the room reaches and every place
+        -- position in use she is in frame, with nothing between her head and
+        -- the eye, at every place its part of the room reaches and every place
         -- one step beyond it. A position the player pins holds, in this visit
         -- and the ones after it, until the player hands the choice back;
         -- while it holds she may walk out of frame, and the room says nothing

@@ -309,7 +309,10 @@ field's name: the worktree was created on that branch, as P21's was).
   two nodes are raycast at 0.55 m only, from the hearth only (`HEAD_ONLY` in
   `tests/scene-assets.test.ts`, with the reason). She never stands at either in v1: the
   jar does nothing, and no walk to the five things passes nav.5. This relaxes the
-  ticket's raycast rule for two nodes and one preset.
+  ticket's raycast rule for two nodes and one preset. In review (PR #8) Copilot found
+  the guarantee still said "nothing between her and the eye", which the relaxation
+  broke; the maintainer chose to amend the spec, so it now says "nothing between her
+  head and the eye", and knee height stays the test's stricter bar for the room.
 - **The gate** showed both Blender's review PNG and captures of the built app.
 
 **Final `ZONES`** (`src/lib/domain/zones.ts`):
