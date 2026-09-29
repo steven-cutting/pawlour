@@ -24,12 +24,13 @@ and where this page and the specification disagree, the specification wins.
 thing she is at (`at`, or the floor), where she is going (`target`, a named node in the
 room and the item it belongs to), what she is looking toward (`lookAt`, a floor point or
 an item), the `phase` and any `phaseOverride`, the `weather`, the two practical `lights`,
-the `fire` level, the `camera`, whether `sound` is on, the current `caption` with a
+the `fire` level, the `camera` shown and any `cameraOverride`, whether `sound` is on, the current `caption` with a
 sequence number, and whether `motion` is on.
 
-Five more fields are bookkeeping: `elapsed` in the current activity, `untilIdleChoice`,
-the captions already `shown` this visit, what a pet interrupted (`resume`) and which
-pose she is standing up from (`standFrom`).
+Six more fields are bookkeeping: `elapsed` in the current activity, `untilIdleChoice`,
+the captions already `shown` this visit, what a pet interrupted (`resume`), which
+pose she is standing up from (`standFrom`), and the last place she passed or settled at
+(`passed`, a node name; `nav.0` when the room opens).
 
 The activities are `idle.stand`, `idle.sit`, `walk`, `sit`, `lie`, `stand`, `sleep`,
 `drink`, `eat`, `play` and `pet`. `stand` is the transitions played in reverse. The items
@@ -39,13 +40,15 @@ and `lights`; the jar and the fire are in the room but not in that list until v1
 ## The commands
 
 Each command is an object with a `kind`: `tap` (an item), `tapBiscuit`, `tapFloor` (a
-point), `tick` (milliseconds), `arrived`, `setPhase` (a phase or `auto`), `clockPhase`,
-`setWeather`, `toggleLight`, `setSound`, `setCamera` and `motionChanged`. The page sends
-them; the director never asks for anything.
+point), `tick` (milliseconds), `arrived`, `reached` (a node name), `setPhase` (a phase
+or `auto`), `clockPhase`, `setWeather`, `toggleLight`, `setSound`, `setCamera` (a preset
+or `auto`) and `motionChanged`. The page sends them; the director never asks for
+anything.
 
-`arrived` is the one command the renderer sends. The director does not know how far she
-walks or how fast: it sets `walk` with a target and waits for the scene to say she got
-there.
+`arrived` and `reached` are the two commands the renderer sends. The director does not
+know how far she walks or how fast: it sets `walk` with a target and waits for the scene
+to say she got there, and on the way the scene names each waypoint she passes, and then
+the spot itself, with `reached`.
 
 ## How a tap is answered
 
@@ -90,6 +93,27 @@ the string lights at night only) and the fire (0.35, 0.7, 1.0); a toggled light 
 until the phase actually changes. The weather is drawn once per visit through the random
 port, weighted five clear to three rain to two snow.
 
+## The camera
+
+The room is seen from one of the presets in `src/lib/domain/zones.ts`, `hearth`,
+`window`, `chair` and `bowls`, and `zones.ts` gives each the places it owns
+(`cabin.allium`, TheCameraFollowsHerUntilPinned). Every `reached` and every arrival
+records the node in `passed`. Unless a preset is pinned, it also sets `camera` to the
+preset that owns the node, so the picture cuts as she walks into another part of the
+room: to the bowls as she gets to a bowl, to the chair as she gets onto its seat. A
+`reached` that lands once she has stopped walking, or names a node the map does not
+know, changes nothing. Time alone never moves the camera: only a walk does, and with
+motion off a walk her own choice starts on a tick arrives on that tick, so the camera
+follows her there.
+
+`setCamera` with a preset pins it: `camera` and `cameraOverride` both take it, and it
+holds while she walks out of its frame. `setCamera('auto')` clears the pin and follows
+`passed` at once, the last place she passed, never where a walk in progress is going.
+The page stores a pin under `pawlour.camera`, removes the key on Auto, and reads it back
+on opening; a stored name that is no preset is ignored, which leaves Auto. A pin stored
+before the camera followed her is read the same way: an earlier visit's choice is
+honoured.
+
 ## Captions
 
 A caption is the narrator's one sentence, chosen by `src/lib/domain/captions.ts` from the
@@ -107,7 +131,9 @@ shows it and announces it in the same words.
 With `motion` false, `step` finishes every movement at once after each command: a walk
 arrives and settles, a transition completes, a stand gets up and sets off, a pet hands
 her back. So the state is always one the renderer can draw as a still of her at the
-thing, and every control and caption behaves as it does with motion on.
+thing, and every control and caption behaves as it does with motion on. A walk that
+finishes at once passes nothing on the way, so the camera follows her straight to the
+zone of the spot she arrives at.
 
 ## The ports it runs on
 

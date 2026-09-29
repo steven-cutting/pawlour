@@ -56,12 +56,15 @@ not a game. Everything else on both hub pages stands.
 
 ## The room
 
-One room in v1, the cabin's main room, seen as a diorama from three fixed camera
-positions: **hearth** (the default, the fireplace on the left and her bed in front of
-it), **window** (the armchair under the window, weather behind the glass), and **chair**
-(close on the armchair and the side table). The camera control in Settings moves
-between them; the move is a cut, not a pan. A tap or a swipe on the scene's edge is the
-v1.1 route.
+One room in v1, the cabin's main room, seen as a diorama from four fixed camera
+positions: **hearth** (the opening view, the fireplace on the left and her bed in front
+of it), **window** (the armchair under the window, weather behind the glass), **chair**
+(close on the armchair and the side table) and **bowls** (down on the two bowls). The
+room is divided among them, and the picture cuts to a position as she walks into its
+part of the room; it never cuts while she is still. The camera control in Settings
+offers **Auto**, the default, which follows her, and each position, which pins the
+picture there until Auto is chosen again. Every move is a cut, not a pan (corrected by
+P22). A tap or a swipe on the scene's edge is the v1.1 route.
 
 What is in it:
 

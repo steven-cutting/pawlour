@@ -59,8 +59,8 @@ renderer's own counter, so with motion off the line reads `fps=0` between change
 
 Take each row of [the performance budget](../reference/budget.md) in turn:
 
-- **Frame rate:** the hearth camera, evening, rain, sound off, with her walking between
-  things for two minutes. Record the minimum and the median frame rate.
+- **Frame rate:** the hearth camera, pinned in Settings so Auto does not cut away as she
+  walks, evening, rain, sound off, with her walking between things for two minutes. Record the minimum and the median frame rate.
 - **Device pixel ratio, draw calls, triangles:** from the renderer's own counters.
 - **Served files and first load:** the Network tab with the cache disabled, from a
   reload to the first drawn frame (the hook's `first frame at` line), three times; record
