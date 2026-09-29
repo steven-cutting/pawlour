@@ -47,6 +47,7 @@
   import { cueFor } from '$lib/cues';
   import { drawsTheSame } from '$lib/drawn';
   import { initialState, step } from '$lib/domain/director';
+  import { CAMERAS } from '$lib/domain/zones';
   import type { Camera, Command, SceneState } from '$lib/domain/director';
   import type { Item } from '$lib/domain/items';
   import { phaseAt } from '$lib/domain/phases';
@@ -110,7 +111,6 @@
    */
   const LOADING_MS = 1_000;
   const PHASES: readonly Phase[] = ['morning', 'evening', 'night'];
-  const CAMERAS: readonly Camera[] = ['hearth', 'window', 'chair'];
   const ITEMS: readonly Item[] = ['bed', 'chair', 'water', 'food', 'toy', 'lamp', 'lights'];
   const SOUNDS = { fire, rain, wind, lapping, squeak };
   const STILLS: Readonly<Record<StillKey, string>> = {
@@ -184,6 +184,8 @@
   const motion = $derived(scene.motion);
   const random = $derived(live?.random ?? IDLE_RANDOM);
   const time = $derived<Phase | 'auto'>(scene.phaseOverride ?? 'auto');
+  // The pin, as `time` is the override: Settings shows Auto while the picture follows her.
+  const cameraChoice = $derived<Camera | 'auto'>(scene.cameraOverride ?? 'auto');
 
   // The runtime draws once per state it is handed, and every tick returns a
   // new one. MotionOffIsAStillDiorama: the canvas gets the previous state back
@@ -255,9 +257,10 @@
       p.storage.write('pawlour.time', value);
     }
   }
-  function chooseCamera(camera: Camera): void {
+  function chooseCamera(camera: Camera | 'auto'): void {
     dispatch({ kind: 'setCamera', camera });
-    live?.storage.write('pawlour.camera', camera);
+    if (camera === 'auto') live?.storage.remove('pawlour.camera');
+    else live?.storage.write('pawlour.camera', camera);
   }
 
   // SoundNeverStartsUnasked: `enable()` is reached from the switch's change
@@ -385,7 +388,9 @@
 
     // The room as it opens: the clock's phase unless a stored choice holds it,
     // the weather drawn once for the visit, motion as the device allows, and
-    // the stored camera. Sound is never read back (SoundNeverStartsUnasked).
+    // the camera pinned by a stored preset, or Auto, which follows her, when
+    // none is stored or it names no preset. Sound is never read back
+    // (SoundNeverStartsUnasked).
     let opening = initialState(
       phaseAt(p.clock.now()),
       chooseWeather(p.random),
@@ -550,6 +555,6 @@
   sound={scene.sound}
   onenable={enableSound}
   ondisable={disableSound}
-  camera={scene.camera}
+  camera={cameraChoice}
   oncamera={chooseCamera}
 />
