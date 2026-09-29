@@ -90,8 +90,9 @@
    * each time and nothing here mutates one, so a proxy would only cost.
    * Every command goes through `dispatch`, which also hands the audio port
    * the difference between the old state and the new (`cues.ts`). The canvas
-   * hands back a tap, an `arrived` when a walk reaches its target (P07b), and
-   * whether it could be drawn at all.
+   * hands back a tap, a `reached` at each place a walk passes (P22), an
+   * `arrived` when a walk reaches its target (P07b), and whether it could be
+   * drawn at all.
    *
    * The page has no styles of its own: the layout is `Stage`'s, and the
    * canvas sizes itself to the box `Stage` gives it.
@@ -519,6 +520,9 @@
       onTap={tapped}
       onArrived={() => {
         dispatch({ kind: 'arrived' });
+      }}
+      onReached={(node: string) => {
+        dispatch({ kind: 'reached', node });
       }}
       onContextLost={() => undefined}
     />

@@ -26,6 +26,7 @@ function props() {
     onReady: vi.fn(),
     onTap: vi.fn(),
     onArrived: vi.fn(),
+    onReached: vi.fn(),
     onContextLost: vi.fn(),
     onError: vi.fn(),
     onStill: vi.fn()

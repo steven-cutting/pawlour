@@ -1,4 +1,5 @@
 import { Mesh, Object3D } from 'three';
+import { CAMERAS } from '$lib/domain/zones';
 
 export const ITEM_NAMES = [
   'bed',
@@ -24,7 +25,8 @@ export const APPROACH_NAMES = [
   'lamp',
   'lights'
 ] as const;
-export const CAMERA_NAMES = ['hearth', 'window', 'chair'] as const;
+/** The presets the room carries as `camera.<name>`: the director's, which it follows her with. */
+export const CAMERA_NAMES = CAMERAS;
 export type CabinItem = (typeof ITEM_NAMES)[number];
 export type CabinCamera = (typeof CAMERA_NAMES)[number];
 export interface Waypoint {

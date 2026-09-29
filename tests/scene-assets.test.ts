@@ -3,13 +3,17 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   BoxGeometry,
   DataTexture,
+  DoubleSide,
+  Frustum,
   Group,
   InstancedMesh,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   Object3D,
   PerspectiveCamera,
   Quaternion,
+  Raycaster,
   Scene,
   Vector3
 } from 'three';
@@ -17,19 +21,19 @@ import rig from '../blender/model/rig.json';
 import clips from '../src/lib/assets/biscuit.clips.json';
 import { stubCabin } from '../scripts/stub_cabin.mjs';
 import { initialState } from '../src/lib/domain/director';
-import { activityFor, isWalkItem } from '../src/lib/domain/items';
-import type { Item } from '../src/lib/domain/items';
+import { CAMERAS, ZONES } from '../src/lib/domain/zones';
+import type { Camera } from '../src/lib/domain/zones';
 import { BONE_NAMES, requireBiscuit } from '../src/routes/scene/biscuit';
-import { assetName, CAMERA_NAMES, ITEM_NAMES, requireCabin } from '../src/routes/scene/cabin';
+import { assetName, CAMERA_NAMES, isMesh, requireCabin } from '../src/routes/scene/cabin';
 import type { Cabin } from '../src/routes/scene/cabin';
-import { FRAMED, frameCamera, framedFor, SETTLE_HEIGHT } from '../src/routes/scene/camera';
+import { frameCamera, framedFor, frameSet, SETTLE_HEIGHT } from '../src/routes/scene/camera';
 import { hitAt, tapGesture } from '../src/routes/scene/hit';
 import { disposeObjects } from '../src/routes/scene/scene';
 import { renderOnce, stillFor } from '../src/routes/scene/still';
 import { asset, loader } from './helpers/scene';
 
 async function stub(): Promise<Cabin> {
-  const bytes = await new NodeIO().writeBinary(stubCabin());
+  const bytes = await new NodeIO().writeBinary(stubCabin(CAMERA_NAMES));
   return requireCabin((await loader().parseAsync(new Uint8Array(bytes).buffer, '')).scene);
 }
 
@@ -120,10 +124,11 @@ describe('the scene asset boundary', () => {
   });
 
   /*
-   * Where she settles is six points: the spot of each thing she walks to, from
-   * the director's own table, and `nav.0`, where she opens. Each preset frames
-   * the ones its table names, at the floor and at her height, at the two
-   * phone orientations, a desktop and the narrowest width, and backs away no
+   * TheCameraFollowsHerUntilPinned, on the real room. Every place she can
+   * stand belongs to one preset (`zones.ts`), and each preset keeps its zone
+   * and every node one step beyond it in frame, at the floor and at her
+   * height, at the two phone orientations, a desktop and the narrowest width,
+   * with nothing of the room between her and the eye. Each fit backs away no
    * further than the farthest point needs: whenever it has moved at all, that
    * point sits on the 0.96 margin.
    */
@@ -133,11 +138,26 @@ describe('the scene asset boundary', () => {
     { width: 390, height: 844 },
     { width: 320, height: 568 }
   ] as const;
-  const WALK_ITEMS = ITEM_NAMES.flatMap((name) => {
-    const item = name as Item;
-    return isWalkItem(item) ? [item] : [];
-  });
-  const SETTLES = [...WALK_ITEMS.map((item) => activityFor(item).spot), 'nav.0'];
+  const at = (size: { width: number; height: number }): string =>
+    `${String(size.width)}x${String(size.height)}`;
+
+  /*
+   * From the hearth, the jar's stand (item.jar at x = 0.3, z = 1.7) stands in
+   * line with the two nodes at x = 0.3 behind it and hides them at knee height;
+   * her head is clear. She never stands at either in v1: the jar does nothing,
+   * and no walk to the five things she goes to passes nav.5. The maintainer
+   * kept the hearth where it is on 2026-09-28 rather than move it 0.6 m right
+   * (P22's hand-back), so those two are held at her head alone, from there alone.
+   */
+  const HEAD_ONLY: Partial<Record<Camera, readonly string[]>> = {
+    hearth: ['item.jar.approach', 'nav.5']
+  };
+  function sightHeights(name: Camera, node: string): readonly number[] {
+    // On the furniture only her head: a ray to the seat itself would graze the cushion she sits on.
+    return node.startsWith('spot.') || HEAD_ONLY[name]?.includes(node)
+      ? [SETTLE_HEIGHT]
+      : [0.3, SETTLE_HEIGHT];
+  }
 
   function worldPoint(root: Object3D, name: string): Vector3 {
     let found: Object3D | undefined;
@@ -148,28 +168,57 @@ describe('the scene asset boundary', () => {
     return found.getWorldPosition(new Vector3());
   }
 
-  it('frames only the places she settles, and every one of them from the hearth', () => {
-    expect(SETTLES).toHaveLength(6);
-    for (const name of CAMERA_NAMES) {
-      expect(FRAMED[name].length).toBeGreaterThan(0);
-      for (const spot of FRAMED[name]) expect(SETTLES).toContain(spot);
-    }
-    expect([...FRAMED.hearth].sort()).toEqual([...SETTLES].sort());
+  it('gives every place she can stand to exactly one preset', () => {
+    const places = new Set<string>();
+    cabin.root.traverse((node) => {
+      const name = assetName(node);
+      if (/^nav\.\d+$/.test(name) || /^item\.\w+\.approach$/.test(name) || /^spot\./.test(name))
+        places.add(name);
+    });
+    const named = CAMERAS.flatMap((camera) => ZONES[camera]);
+    expect(places.size).toBe(8 + 8 + 2);
+    expect(named).toHaveLength(places.size);
+    expect([...named].sort()).toEqual([...places].sort());
   });
 
-  for (const name of CAMERA_NAMES)
-    it(`fits ${name}'s settle points at four sizes by the least retreat, without FOV drift`, () => {
+  it('frames each zone with the nodes one step beyond it, both ways along the walk graph', () => {
+    expect(frameSet(cabin, 'bowls')).toEqual([
+      'item.water.approach',
+      'item.food.approach',
+      'nav.3'
+    ]);
+    expect(frameSet(cabin, 'chair')).toEqual(['spot.chair', 'nav.2']);
+    expect(frameSet(cabin, 'window')).toContain('spot.chair');
+    for (const name of CAMERAS)
+      expect(framedFor(cabin, name).map((point) => point.toArray())).toEqual(
+        frameSet(cabin, name).map((node) => worldPoint(cabin.root, node).toArray())
+      );
+  });
+
+  it('holds only the room itself under the cabin root, every face drawn from both sides', () => {
+    let meshes = 0;
+    cabin.root.traverse((node) => {
+      if (!isMesh(node)) return;
+      meshes += 1;
+      for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+        expect(material.name).toMatch(/^cabin\./);
+        // A one-sided face would hide from a ray behind it and show nothing there either.
+        expect(material.side).toBe(DoubleSide);
+      }
+    });
+    expect(meshes).toBeGreaterThan(0);
+  });
+
+  for (const name of CAMERAS)
+    it(`fits ${name}'s zone and the step beyond it at four sizes, with nothing in the way`, () => {
       const preset = cabin.cameras[name];
       const origin = preset.node.getWorldPosition(new Vector3());
       const direction = new Vector3(0, 0, -1).applyQuaternion(
         preset.node.getWorldQuaternion(new Quaternion())
       );
-      const points = SETTLES.filter((spot) => FRAMED[name].includes(spot)).map((spot) =>
-        worldPoint(cabin.root, spot)
-      );
-      expect(framedFor(cabin, name).map((point) => point.toArray())).toEqual(
-        points.map((point) => point.toArray())
-      );
+      const nodes = frameSet(cabin, name);
+      const points = framedFor(cabin, name);
+      const raycaster = new Raycaster();
       // One camera across every size: each fit starts again from the authored preset.
       const camera = new PerspectiveCamera();
       for (const size of SIZES) {
@@ -182,28 +231,40 @@ describe('the scene asset boundary', () => {
         const offset = camera.position.clone().sub(origin);
         expect(offset.clone().cross(direction).length()).toBeLessThan(1e-6);
         expect(offset.dot(direction)).toBeLessThanOrEqual(1e-9);
+        const frustum = new Frustum().setFromProjectionMatrix(
+          new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+        );
         let extreme = 0;
-        for (const point of points)
+        for (const [index, point] of points.entries()) {
+          const node = nodes[index] ?? '';
           for (const height of [0, SETTLE_HEIGHT]) {
-            const projected = point
-              .clone()
-              .setY(point.y + height)
-              .project(camera);
-            expect(
-              Math.abs(projected.x),
-              `${String(size.width)}x${String(size.height)}`
-            ).toBeLessThan(1);
-            expect(
-              Math.abs(projected.y),
-              `${String(size.width)}x${String(size.height)}`
-            ).toBeLessThan(1);
-            expect(Math.abs(projected.z)).toBeLessThan(1);
+            const lifted = point.clone().setY(point.y + height);
+            expect(frustum.containsPoint(lifted), `${node} +${String(height)} at ${at(size)}`).toBe(
+              true
+            );
+            const projected = lifted.clone().project(camera);
             extreme = Math.max(extreme, Math.abs(projected.x), Math.abs(projected.y));
           }
+          // Her body at knee height and at her head, so a rim or an arm cannot hide her.
+          for (const height of sightHeights(name, node)) {
+            const target = point.clone().setY(point.y + height);
+            const ray = target.clone().sub(camera.position);
+            raycaster.set(camera.position, ray.clone().normalize());
+            raycaster.far = ray.length();
+            const hits = raycaster.intersectObject(cabin.root, true);
+            expect(
+              hits.map((hit) => assetName(hit.object)),
+              `${name} to ${node} +${String(height)} at ${at(size)}, from ${camera.position
+                .toArray()
+                .map((value) => value.toFixed(2))
+                .join(', ')}`
+            ).toEqual([]);
+          }
+        }
         if (offset.length() > 1e-6)
           expect(
             Math.abs(extreme - 0.96),
-            `${name} at ${String(size.width)}x${String(size.height)} retreated ${offset.length().toFixed(2)} m`
+            `${name} at ${at(size)} retreated ${offset.length().toFixed(2)} m`
           ).toBeLessThanOrEqual(1e-3);
       }
     });

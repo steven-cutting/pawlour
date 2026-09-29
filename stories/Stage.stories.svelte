@@ -130,6 +130,7 @@
     onReady={fn()}
     onTap={fn()}
     onArrived={fn()}
+    onReached={fn()}
     onContextLost={fn()}
     onError={fn()}
   />

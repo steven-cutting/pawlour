@@ -32,13 +32,16 @@ export function createMotion({
   clips,
   table,
   cabin,
-  onArrived
+  onArrived,
+  onReached
 }: {
   biscuit: Biscuit;
   clips: readonly AnimationClip[];
   table: ClipTable;
   cabin: Cabin;
   onArrived: () => void;
+  /** Each place a walk passes, by name, as she gets to it (`walk.ts`). */
+  onReached: (node: string) => void;
 }) {
   const mixer = new AnimationMixer(biscuit.model);
   const actions = new Map<string, AnimationAction>();
@@ -60,7 +63,7 @@ export function createMotion({
     if (!action) throw new Error(`No action for ${name}`);
     return action;
   };
-  const walker = createWalk(biscuit.root, cabin, walkingSpeed(table, biscuit.scale));
+  const walker = createWalk(biscuit.root, cabin, walkingSpeed(table, biscuit.scale), onReached);
   let state: SceneState | undefined;
   let current: AnimationAction | undefined;
   let key = '';

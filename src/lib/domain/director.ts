@@ -7,15 +7,17 @@
  * `ATapIsAnInvitation` (a tap asks, and she answers once whatever she has
  * settled into has had its minimum; a tap on her is a reaction that hands her
  * back), `ACaptionIsShownAndAnnounced` (one sentence once she has settled, or
- * after a long idle, and never the same one twice), `TimeFollowsTheClockUntilOverridden`
- * and `MotionOffIsAStillDiorama`. The figures are `timing.ts`'s.
+ * after a long idle, and never the same one twice), `TimeFollowsTheClockUntilOverridden`,
+ * `MotionOffIsAStillDiorama` and `TheCameraFollowsHerUntilPinned`. The figures
+ * are `timing.ts`'s, and the part of the room each camera owns is `zones.ts`'s.
  *
  * The runtime plays whatever `activity` says and sequences nothing itself: it
  * reports `arrived` when a walk reaches `target`, because distances are the
  * room's and not the director's. While motion is off nothing walks, so no
  * `arrived` comes: after every command the director resolves anything in
  * motion to where it leads, the way `motionChanged(false)` does, and the still
- * shows her there.
+ * shows her there. On a walk it also reports `reached` at each place she
+ * passes, which is how the camera follows her into another part of the room.
  *
  * Randomness goes through `deps.random` in a fixed order, so a test's fake
  * says which candidate comes next: a caption draws once when there is a
@@ -38,6 +40,10 @@ import {
   TRANSITION
 } from './timing';
 import type { Weather } from './weather';
+import { zoneOf } from './zones';
+import type { Camera } from './zones';
+
+export type { Camera } from './zones';
 
 export type Activity =
   | 'idle.stand'
@@ -51,7 +57,6 @@ export type Activity =
   | 'eat'
   | 'play'
   | 'pet';
-export type Camera = 'hearth' | 'window' | 'chair';
 export interface Point {
   x: number;
   z: number;
@@ -70,7 +75,9 @@ export interface SceneState {
   weather: Weather;
   lights: { lamp: boolean; strings: boolean };
   fire: number;
-  camera: Camera;
+  camera: Camera; // the preset shown
+  cameraOverride?: Camera; // the preset the player pinned, if any
+  passed: string; // the last place she passed or settled at, which Auto follows
   sound: boolean;
   caption?: { text: string; sequence: number };
   motion: boolean;
@@ -86,12 +93,13 @@ export type Command =
   | { kind: 'tapFloor'; point: Point }
   | { kind: 'tick'; ms: number }
   | { kind: 'arrived' }
+  | { kind: 'reached'; node: string }
   | { kind: 'setPhase'; phase: Phase | 'auto' }
   | { kind: 'clockPhase'; phase: Phase }
   | { kind: 'setWeather'; weather: Weather }
   | { kind: 'toggleLight'; light: 'lamp' | 'strings' }
   | { kind: 'setSound'; on: boolean }
-  | { kind: 'setCamera'; camera: Camera }
+  | { kind: 'setCamera'; camera: Camera | 'auto' }
   | { kind: 'motionChanged'; active: boolean };
 export interface Deps {
   random: RandomPort;
@@ -120,6 +128,8 @@ export function initialState(phase: Phase, weather: Weather, motion: boolean): S
     lights: lightsFor(phase),
     fire: fireLevel(phase),
     camera: 'hearth',
+    // She opens standing at nav.0, so a visit that never walked follows the hearth.
+    passed: 'nav.0',
     sound: false,
     motion,
     elapsed: 0,
@@ -147,6 +157,9 @@ function apply(state: SceneState, command: Command, deps: Deps): SceneState {
     case 'arrived':
       // A report that lands after motion went off finds her already there, and changes nothing.
       return state.activity === 'walk' ? arrive(state, heading(state), deps) : state;
+    case 'reached':
+      // Like `arrived`, a report that lands once she has stopped walking changes nothing.
+      return state.activity === 'walk' ? follow(state, command.node) : state;
     case 'setPhase':
       return command.phase === 'auto'
         ? { ...state, phaseOverride: undefined }
@@ -160,7 +173,9 @@ function apply(state: SceneState, command: Command, deps: Deps): SceneState {
     case 'setSound':
       return { ...state, sound: command.on };
     case 'setCamera':
-      return { ...state, camera: command.camera };
+      return command.camera === 'auto'
+        ? follow({ ...state, cameraOverride: undefined }, state.passed)
+        : { ...state, camera: command.camera, cameraOverride: command.camera };
     case 'motionChanged':
       return { ...state, motion: command.active };
   }
@@ -260,13 +275,10 @@ function setOff(state: SceneState, target: Target, deps: Deps): SceneState {
 // ---------------------------------------------------------- activities ---
 
 function arrive(state: SceneState, target: Target, deps: Deps): SceneState {
-  const there: SceneState = {
-    ...state,
-    at: target.item,
-    target: undefined,
-    elapsed: 0,
-    caption: undefined
-  };
+  const there: SceneState = follow(
+    { ...state, at: target.item, target: undefined, elapsed: 0, caption: undefined },
+    target.spot
+  );
   const plan = planAt(target.item);
   if (plan === undefined) {
     return idle(there, 'idle.stand', deps);
@@ -413,6 +425,21 @@ function still(state: SceneState, deps: Deps): SceneState {
     case 'play':
       return state;
   }
+}
+
+// -------------------------------------------------------------- camera ---
+
+/**
+ * She is at `node`: record it, and unless the player has pinned a preset, cut
+ * to the one whose part of the room it is. Only a walk moves her, so only a
+ * `reached`, an arrival and the player handing the choice back come here; a
+ * name the room's map does not know changes nothing.
+ */
+function follow(state: SceneState, node: string): SceneState {
+  const zone = zoneOf(node);
+  return zone === undefined
+    ? state
+    : { ...state, passed: node, camera: state.cameraOverride ?? zone };
 }
 
 // -------------------------------------------------------------- phases ---

@@ -28,20 +28,28 @@ afterEach(() => {
 async function fixture() {
   const gltf = await asset('src/lib/assets/biscuit.glb');
   const biscuit = requireBiscuit(gltf, clips);
-  const arrived = vi.fn();
+  // Every report in the order it came, so a test can say what came before an arrival.
+  const events: string[] = [];
+  const arrived = vi.fn(() => {
+    events.push('arrived');
+  });
+  const reached = vi.fn((node: string) => {
+    events.push(node);
+  });
   const motion = createMotion({
     biscuit,
     clips: gltf.animations,
     table: clips,
     cabin,
-    onArrived: arrived
+    onArrived: arrived,
+    onReached: reached
   });
   cleanup.push(() => {
     motion.dispose();
     biscuit.dispose();
     disposeObjects([biscuit.root]);
   });
-  return { biscuit, motion, arrived, gltf };
+  return { biscuit, motion, arrived, reached, events, gltf };
 }
 function action(
   motion: Awaited<ReturnType<typeof fixture>>['motion'],
@@ -66,7 +74,8 @@ describe('named playback on the real rig', () => {
         clips: gltf.animations.filter((clip) => clip.name !== 'drink'),
         table: clips,
         cabin,
-        onArrived: vi.fn()
+        onArrived: vi.fn(),
+        onReached: vi.fn()
       })
     ).toThrow('missing clip drink');
   });
@@ -164,17 +173,18 @@ describe('the room waypoint graph', () => {
     const speed = walkingSpeed(clips, biscuit.scale);
     expect(speed).toBeCloseTo(0.18276318243234008, 8);
     const path = pathTo(cabin, new Vector3(), 'spot.bed');
-    expect(path.map((point) => point.toArray())).toEqual([
+    expect(path.map(({ name }) => name)).toEqual(['nav.0', 'nav.1', 'spot.bed']);
+    expect(path.map(({ point }) => point.toArray())).toEqual([
       cabin.nav.get('nav.0')?.node.getWorldPosition(new Vector3()).toArray(),
       cabin.nav.get('nav.1')?.node.getWorldPosition(new Vector3()).toArray(),
       cabin.spots.bed.getWorldPosition(new Vector3()).toArray()
     ]);
-    const walk = createWalk(biscuit.root, cabin, speed);
+    const walk = createWalk(biscuit.root, cabin, speed, vi.fn());
     walk.apply('spot.bed');
     walk.update(0.05);
     expect(biscuit.root.position.length()).toBe(0);
     expect(biscuit.root.quaternion.angleTo(new Quaternion())).toBeCloseTo(Math.PI * 0.05);
-    const direction = (path[1] as Vector3).clone().normalize();
+    const direction = (path[1]?.point as Vector3).clone().normalize();
     biscuit.root.quaternion.setFromAxisAngle(
       new Vector3(0, 1, 0),
       Math.atan2(direction.x, direction.z)
@@ -207,6 +217,23 @@ describe('the room waypoint graph', () => {
       expect(action(motion, 'walk').getEffectiveTimeScale()).toBe(1);
     });
 
+  it('names every place she passes, in order, and then arrives once', async () => {
+    const { motion, arrived, reached, events } = await fixture();
+    const walking: SceneState = {
+      ...state,
+      activity: 'walk',
+      target: { item: 'water', spot: 'item.water.approach' }
+    };
+    motion.apply(walking);
+    for (let frame = 0; frame < 1200; frame += 1) {
+      // The page hands each report back as a new state; the walk must not start again.
+      motion.apply({ ...walking, passed: reached.mock.lastCall?.[0] ?? state.passed });
+      motion.update(0.05);
+    }
+    expect(events).toEqual(['nav.0', 'nav.3', 'item.water.approach', 'arrived']);
+    expect(arrived).toHaveBeenCalledTimes(1);
+  });
+
   it('retargets a walk from its current position, and a light look does not restart it', async () => {
     const { biscuit, motion, arrived } = await fixture();
     motion.apply({ ...state, activity: 'walk', target: { item: 'bed', spot: 'spot.bed' } });
@@ -230,7 +257,7 @@ describe('the room waypoint graph', () => {
   it('turns into the destination facing before reporting arrival', async () => {
     const { biscuit } = await fixture();
     biscuit.root.position.copy(cabin.approaches.toy.getWorldPosition(new Vector3()));
-    const walk = createWalk(biscuit.root, cabin, walkingSpeed(clips, biscuit.scale));
+    const walk = createWalk(biscuit.root, cabin, walkingSpeed(clips, biscuit.scale), vi.fn());
     walk.apply('item.toy.approach');
     expect(walk.update(0.05)).toBe(false);
     expect(biscuit.root.quaternion.angleTo(new Quaternion())).toBeCloseTo(Math.PI * 0.05);
