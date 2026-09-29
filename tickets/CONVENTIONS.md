@@ -741,7 +741,7 @@ Required empties (glTF nodes with no mesh), by exact name:
 | `item.<name>.approach` for `bed`, `chair`, `water`, `food`, `toy`, `jar`, `lamp`, `lights` | where she stands to use it, facing −Z toward it; carries `extras.nav` naming its nearest waypoint |
 | `spot.bed`, `spot.chair` | where she lies, with facing; `spot.chair` is on the seat |
 | `nav.0` to `nav.<n>` | waypoints on the floor; each carries `extras.edges`, a list of neighbouring waypoint names; the graph is connected and undirected |
-| `camera.hearth`, `camera.window`, `camera.chair` | the three presets; position and −Z view direction; `extras.fov` vertical degrees |
+| `camera.hearth`, `camera.window`, `camera.chair` | the three presets; position and −Z view direction, level (local +Y up, no roll; corrected by P19); `extras.fov` vertical degrees |
 | `light.window`, `light.fire`, `light.lamp`, `light.strings.0` to `light.strings.<n>` | positions the lighting rigs place lights at |
 | `glass.window`, `glass.window.left`, `glass.window.hearth` | three pane meshes under `item.window`; weather particles live in the box behind each (`extras.depth` units) |
 | `fire.anchor` | where the flame planes and embers sit |
@@ -840,9 +840,9 @@ which:
   set, the places she settles that it looks at (`framedFor`: hearth all six, window
   `spot.chair`, `item.toy.approach` and `nav.0`, chair `spot.chair`), each at the floor
   and at 0.55 up inside a 0.96 margin, by the least retreat along the camera's own axis
-  in either orientation, never fov, and levels the horizon, because the exported presets
-  roll (P07a hand-back; P19 corrects the export); DPR capped at 2, `MAX_PIXEL_RATIO` in
-  `scene.ts` (corrected by P11; corrected by P21).
+  in either orientation, never fov, and levels the horizon, which the exported presets
+  once rolled and now hold level themselves (P07a hand-back; corrected by P19); DPR capped
+  at 2, `MAX_PIXEL_RATIO` in `scene.ts` (corrected by P11; corrected by P21).
 - Applies a `SceneState` (§6.1) each time the page hands it one: her position and facing
   (interpolated along the path by `walk.ts`, §5.1's speed, turning in place before
   setting off), her clip (`motion.ts` crossfades on the `AnimationMixer` over 250 ms;

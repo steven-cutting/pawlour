@@ -228,6 +228,14 @@ def check_nodes(document, findings):
             if node.get("extras", {}).get("fov") != fov:
                 findings.append(f"{name}: extras.fov must be {fov}")
             facing = normalise(tuple(b - a for a, b in zip(expected, target, strict=True)))
+            # Level means no roll: local +Y within a degree of world +Y with the
+            # camera's own -Z taken out, so the pitch is the preset's and a small
+            # error in aim cannot hide roll.
+            aim = normalise(tuple(-matrix[row][2] for row in range(3)))
+            up = normalise(tuple(matrix[row][1] for row in range(3)))
+            level = normalise(tuple(float(axis == 1) - aim[1] * aim[axis] for axis in range(3)))
+            if sum(a * b for a, b in zip(up, level, strict=True)) < math.cos(math.radians(1)):
+                findings.append(f"{name}: rolled; local +Y is {up}, level is {level}")
         if facing:
             actual = normalise(tuple(-matrix[row][2] for row in range(3)))
             if sum(a * b for a, b in zip(actual, facing, strict=True)) < 0.9999:
@@ -369,6 +377,23 @@ def self_test(path):
         ("missing added pane", "glass.window.left", "name", "wrong.pane", "glass.window.left"),
         ("added pane depth", "glass.window.hearth", "extras", {}, "glass.window.hearth"),
         ("item without meshes", "item.bed", "children", [], "mesh descendant"),
+        (
+            # The rotation P05 shipped: the right facing, rolled.
+            "rolled camera",
+            "camera.hearth",
+            "rotation",
+            [0.0762253850698471, 0.16085411608219147, 0.8892382979393005, 0.42139166593551636],
+            "rolled",
+        ),
+        (
+            # 1.2 degrees of roll behind 0.74 of aim, which the facing check allows:
+            # level taken from the target's direction instead of -Z read 0.89.
+            "rolled camera, aim slightly off",
+            "camera.chair",
+            "rotation",
+            [-0.17964, -0.344014, -0.077825, 0.918328],
+            "rolled",
+        ),
     )
     total = 0
     for label, name, key, value, expected in cases:
