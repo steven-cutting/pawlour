@@ -16,13 +16,14 @@
 --   - The hour each phase begins, the least time she gives an activity before
 --     she answers another tap, and the floor under how many captions the
 --     narrator has.
---   - The Cabin surface and its nine guarantees, and the four platform
+--   - The Cabin surface and its ten guarantees, and the four platform
 --     clauses it fulfils in its own right, restated in the platform's words.
 --
 -- Excludes
 --   - What the room is made of and how she is drawn: the model, the room, the
---     clips, the look and the camera positions. They are assets, not
---     behaviour.
+--     clips, the look, and where each camera position is and what it frames.
+--     They are assets, not behaviour. Which position is in use is behaviour,
+--     and TheCameraFollowsHerUntilPinned states it.
 --   - Colour values, markup and mechanism. This module says what is owed,
 --     never what draws it, what listens for a tap, or what plays a sound.
 --   - Sound files, and the licence each one carries.
@@ -383,6 +384,22 @@ surface Cabin {
         -- her at that thing. The lights, the time of day, the captions and
         -- every control still work, and time still passes. Nothing the player
         -- can do depends on motion.
+
+    @guarantee TheCameraFollowsHerUntilPinned
+        -- The room is seen from one of a few fixed positions, and the picture
+        -- moves between them only by a cut, never by a pan. Until the player
+        -- pins one, the room is divided among them: every place she can stand
+        -- belongs to one position, and the picture cuts to it as she walks
+        -- into its part of the room, so she is in frame before the cut and
+        -- after it. The picture never cuts of its own accord while she is
+        -- still; only the player's choice moves it then. From the
+        -- position in use she is in frame, with nothing between her and the
+        -- eye, at every place its part of the room reaches and every place
+        -- one step beyond it. A position the player pins holds, in this visit
+        -- and the ones after it, until the player hands the choice back;
+        -- while it holds she may walk out of frame, and the room says nothing
+        -- about it. While motion is off there is no walk to cut during: the
+        -- still is drawn from the position her destination belongs to.
 
     @guarantee AContextLossLeavesAStill
         -- If the room can no longer be drawn, a still of her doing what she is
